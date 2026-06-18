@@ -1,0 +1,196 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  AGENCY_OWNER
+  MANAGER
+  CHATTER
+  CREATOR
+}
+
+enum CreatorStatus {
+  ACTIVE
+  DISCONNECTED
+  PENDING
+}
+
+enum PostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  FAILED
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  passwordHash  String
+  name          String
+  role          Role           @default(CHATTER)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  // Relations
+  agencyId      String
+  agency        Agency         @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  assignments   ChatterAssignment[]
+  shifts        ShiftLog[]
+}
+
+model Agency {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  users     User[]
+  creators  Creator[]
+}
+
+model Creator {
+  id           String         @id @default(uuid())
+  username     String         @unique // OnlyFans username
+  displayName  String
+  avatarUrl    String?
+  status       CreatorStatus  @default(ACTIVE)
+  
+  // Encrypted Session Tokens (OnlyFans credentials/cookies)
+  authId       String
+  sessCookie   String
+  userAgent    String
+  xBcHeader    String?
+  
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  
+  // Relations
+  agencyId     String
+  agency       Agency         @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  assignments  ChatterAssignment[]
+  fans         Fan[]
+  messages     Message[]
+  mediaItems   MediaItem[]
+  posts        Post[]
+  earnings     EarningRecord[]
+  rules        AutomationRule[]
+}
+
+model ChatterAssignment {
+  id        String   @id @default(uuid())
+  userId    String
+  creatorId String
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creator   Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, creatorId])
+}
+
+model ShiftLog {
+  id        String    @id @default(uuid())
+  userId    String
+  startTime DateTime  @default(now())
+  endTime   DateTime?
+  revenue   Decimal   @default(0.00) @db.Decimal(10, 2)
+  
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Fan {
+  id            String    @id @default(uuid())
+  ofId          String    // OnlyFans Fan UID
+  creatorId     String
+  username      String
+  displayName   String
+  avatarUrl     String?
+  isSubscriber  Boolean   @default(true)
+  totalSpent    Decimal   @default(0.00) @db.Decimal(10, 2)
+  notes         String?
+  customTags    String[]
+  subscribedAt  DateTime
+  expiresAt     DateTime?
+  
+  creator       Creator   @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  messages      Message[]
+  
+  @@unique([ofId, creatorId])
+}
+
+model Message {
+  id            String   @id @default(uuid())
+  ofMessageId   String   @unique // OnlyFans Message UID
+  creatorId     String
+  fanId         String
+  direction     String   // "in" (from fan) or "out" (from creator)
+  text          String?
+  mediaUrls     String[]
+  isTip         Boolean  @default(false)
+  tipAmount     Decimal  @default(0.00) @db.Decimal(10, 2)
+  isPurchased   Boolean  @default(false)
+  sentAt        DateTime
+  
+  creator       Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  fan           Fan      @relation(fields: [fanId], references: [id], onDelete: Cascade)
+}
+
+model MediaItem {
+  id         String   @id @default(uuid())
+  creatorId  String
+  name       String
+  url        String
+  thumbnail  String?
+  fileType   String   // "image", "video", "audio"
+  fileSize   Int
+  folderName String   @default("uncategorized")
+  createdAt  DateTime @default(now())
+  
+  creator    Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+}
+
+model Post {
+  id           String     @id @default(uuid())
+  creatorId    String
+  text         String
+  mediaUrls    String[]
+  scheduledFor DateTime?
+  status       PostStatus @default(DRAFT)
+  price        Decimal    @default(0.00) @db.Decimal(10, 2) // For PPV posts
+  ofPostId     String?    // Nullable until published
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  
+  creator      Creator    @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+}
+
+model EarningRecord {
+  id          String   @id @default(uuid())
+  creatorId   String
+  source      String   // "subscription", "tip", "ppv_chat", "ppv_post"
+  amount      Decimal  @db.Decimal(10, 2)
+  netAmount   Decimal  @db.Decimal(10, 2) // After OF 20% cut
+  fanOfId     String?
+  loggedAt    DateTime
+  
+  creator     Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+}
+
+model AutomationRule {
+  id          String   @id @default(uuid())
+  creatorId   String
+  name        String
+  triggerType String   // "new_subscriber", "keyword_match", "idle_fan"
+  conditions  Json     // Conditions like keyword list, delay duration
+  actionType  String   // "send_message", "add_tag", "send_media"
+  actionData  Json     // Text templates, media asset IDs
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  
+  creator     Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+}
