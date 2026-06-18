@@ -70,4 +70,3 @@ Kre8ors OS is an enterprise-grade SaaS CRM built for OnlyFans Management (OFM) A
 This repository follows a strict daily commit workflow:
 - No unnecessary configuration templates or system logs are committed.
 - Code additions are broken down into **7–8 granular commits per day** to keep PRs clean and trace changes logically.
-- Commit logs follow standard semantic patterns (`feat:`, `fix:`, `style:`, `refactor:`, `docs:`).
