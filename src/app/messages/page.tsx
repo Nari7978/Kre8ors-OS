@@ -31,6 +31,43 @@ export default function MessagesPage() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+// Mock Vault Items corresponding to database seeds
+const vaultItemsList: MediaItem[] = [
+  {
+    id: 'vault_1',
+    name: 'morning_outfit_01.jpg',
+    url: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=400',
+    thumbnail: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=100',
+    fileType: 'image',
+    folderName: 'Outfits',
+  },
+  {
+    id: 'vault_2',
+    name: 'beach_vlog_01.mp4',
+    url: 'https://www.w3schools.com/html/mov_bbb.mp4',
+    thumbnail: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=100',
+    fileType: 'video',
+    folderName: 'Vlogs',
+  },
+  {
+    id: 'vault_3',
+    name: 'backstage_pic.jpg',
+    url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
+    thumbnail: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=100',
+    fileType: 'image',
+    folderName: 'Casual',
+  },
+];
+
+// Toggle media attachment
+const toggleAttachMedia = (url: string) => {
+  if (attachedMedia.includes(url)) {
+    setAttachedMedia((prev) => prev.filter((item) => item !== url));
+  } else {
+    setAttachedMedia((prev) => [...prev, url]);
+  }
+};
+
   // Fetch all creators on mount
   useEffect(() => {
     async function fetchCreators() {
@@ -310,10 +347,46 @@ export default function MessagesPage() {
             </div>
 
             {/* Input Composer Placeholder */}
-            <div className="p-4 border-t border-zinc-800 bg-zinc-900/20">
+            <div className="p-4 border-t border-zinc-800 bg-zinc-900/20 relative">
               <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-center text-sm text-zinc-500">
                 Composer input panel placeholder
               </div>
+
+              {/* Vault Picker (Task 10) */}
+              {vaultOpen && (
+                <div className="absolute bottom-20 left-4 right-4 bg-zinc-900 border border-zinc-800 rounded-xl p-4 shadow-2xl z-55 space-y-4">
+                  <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
+                    <span className="text-sm font-bold flex items-center gap-1 text-zinc-300">
+                      <Folder className="h-4 w-4 text-blue-400" />
+                      Select Creator Vault Media
+                    </span>
+                    <button type="button" onClick={() => setVaultOpen(false)} className="text-zinc-500 hover:text-white">
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {/* Vault grid */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {vaultItemsList.map((item) => {
+                      const isSelected = attachedMedia.includes(item.url);
+                      return (
+                        <button
+                          type="button"
+                          key={item.id}
+                          onClick={() => toggleAttachMedia(item.url)}
+                          className={`relative rounded-lg overflow-hidden border p-1 text-left flex flex-col gap-1 transition-all ${
+                            isSelected ? 'border-blue-500 bg-blue-500/10' : 'border-zinc-800 hover:border-zinc-700 bg-zinc-950'
+                          }`}
+                        >
+                          <img src={item.thumbnail || item.url} alt={item.name} className="h-16 w-full object-cover rounded" />
+                          <span className="text-[10px] text-zinc-400 truncate w-full px-1">{item.name}</span>
+                          <span className="text-[9px] bg-zinc-800 px-1 py-0.2 rounded w-max text-zinc-300 uppercase self-end font-semibold">{item.folderName}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </>
         ) : (
