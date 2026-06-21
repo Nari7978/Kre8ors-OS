@@ -148,6 +148,42 @@ const toggleAttachMedia = (url: string) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Handle Send Message & Compose PPV
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCreatorId || !selectedFan) return;
+    if (!messageText.trim() && attachedMedia.length === 0) return;
+
+    setSendingMessage(true);
+    try {
+      const price = parseFloat(lockPrice) || 0;
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          creatorId: selectedCreatorId,
+          fanId: selectedFan.id,
+          text: messageText,
+          mediaUrls: attachedMedia,
+          price,
+        }),
+      });
+
+      if (res.ok) {
+        const newMessage = await res.json();
+        setMessages((prev) => [...prev, newMessage]);
+        setMessageText('');
+        setAttachedMedia([]);
+        setLockPrice('');
+        setVaultOpen(false);
+      }
+    } catch (err) {
+      console.error('Error sending message:', err);
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
   return (
     <div className="flex h-screen w-full bg-zinc-950 text-white overflow-hidden font-sans">
       {/* Left Panel */}
@@ -367,9 +403,42 @@ const toggleAttachMedia = (url: string) => {
                 </div>
               )}
 
-              <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-center text-sm text-zinc-500">
-                Composer input panel placeholder
-              </div>
+              {/* Composer Input Row */}
+              <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+                {/* Vault Media Toggle */}
+                <button
+                  type="button"
+                  onClick={() => setVaultOpen(!vaultOpen)}
+                  className={`p-2.5 rounded-lg border transition-colors flex-shrink-0 ${
+                    vaultOpen ? 'bg-blue-600 border-blue-500 text-white' : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
+                  }`}
+                  title="Attach from Vault"
+                >
+                  <Paperclip className="h-5 w-5" />
+                </button>
+
+                {/* Main Text Input */}
+                <input
+                  type="text"
+                  placeholder={attachedMedia.length > 0 ? "Add message description to locked media..." : "Type a message..."}
+                  value={messageText}
+                  onChange={(e) => setMessageText(e.target.value)}
+                  className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg py-2.5 px-4 text-sm focus:outline-none focus:border-blue-500 placeholder-zinc-500"
+                />
+
+                {/* Send Button */}
+                <button
+                  type="submit"
+                  disabled={sendingMessage || (!messageText.trim() && attachedMedia.length === 0)}
+                  className="bg-blue-600 hover:bg-blue-500 text-white p-2.5 rounded-lg transition-colors flex-shrink-0 disabled:opacity-50"
+                >
+                  {sendingMessage ? (
+                    <RefreshCw className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <Send className="h-5 w-5" />
+                  )}
+                </button>
+              </form>
 
               {/* Vault Picker (Task 10) */}
               {vaultOpen && (
@@ -403,6 +472,27 @@ const toggleAttachMedia = (url: string) => {
                         </button>
                       );
                     })}
+                  </div>
+
+                  {/* PPV Pricing control */}
+                  <div className="pt-2 border-t border-zinc-800 flex items-center gap-2">
+                    <span className="text-xs font-bold text-amber-400 flex items-center gap-0.5">
+                      <Lock className="h-3.5 w-3.5" />
+                      PPV Price Lock:
+                    </span>
+                    <div className="relative flex-1 max-w-[120px]">
+                      <span className="absolute left-2.5 top-1.5 text-xs text-zinc-500">$</span>
+                      <input
+                        type="number"
+                        placeholder="0.00"
+                        value={lockPrice}
+                        onChange={(e) => setLockPrice(e.target.value)}
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded px-2 pl-6 py-1 text-xs focus:outline-none focus:border-blue-500 text-amber-300 font-semibold"
+                      />
+                    </div>
+                    <span className="text-[10px] text-zinc-500">
+                      (Leave empty or 0 to send as free/unlocked media)
+                    </span>
                   </div>
                 </div>
               )}
