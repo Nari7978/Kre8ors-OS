@@ -72,7 +72,10 @@ export async function POST(request: Request) {
       success: true,
       message: 'PPV unlocked successfully',
       data: {
-        message: updatedMessage,
+        message: {
+          ...updatedMessage,
+          mediaUrls: JSON.parse(updatedMessage.mediaUrls || '[]') as string[],
+        },
         fanSpent: updatedFan.totalSpent,
         earningRecord,
       },

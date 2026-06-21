@@ -1,5 +1,5 @@
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
 }
 
 generator client {
@@ -98,7 +98,7 @@ model ShiftLog {
   userId    String
   startTime DateTime  @default(now())
   endTime   DateTime?
-  revenue   Decimal   @default(0.00) @db.Decimal(10, 2)
+  revenue   Decimal   @default(0.00)
   
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -111,9 +111,9 @@ model Fan {
   displayName   String
   avatarUrl     String?
   isSubscriber  Boolean   @default(true)
-  totalSpent    Decimal   @default(0.00) @db.Decimal(10, 2)
+  totalSpent    Decimal    @default(0.00)
   notes         String?
-  customTags    String[]
+  customTags    String     @default("[]")
   subscribedAt  DateTime
   expiresAt     DateTime?
   
@@ -130,9 +130,9 @@ model Message {
   fanId         String
   direction     String   // "in" (from fan) or "out" (from creator)
   text          String?
-  mediaUrls     String[]
+  mediaUrls     String   @default("[]")
   isTip         Boolean  @default(false)
-  tipAmount     Decimal  @default(0.00) @db.Decimal(10, 2)
+  tipAmount     Decimal  @default(0.00)
   isPurchased   Boolean  @default(false)
   sentAt        DateTime
   
@@ -158,10 +158,10 @@ model Post {
   id           String     @id @default(uuid())
   creatorId    String
   text         String
-  mediaUrls    String[]
+  mediaUrls    String     @default("[]")
   scheduledFor DateTime?
   status       PostStatus @default(DRAFT)
-  price        Decimal    @default(0.00) @db.Decimal(10, 2) // For PPV posts
+  price        Decimal    @default(0.00) // For PPV posts
   ofPostId     String?    // Nullable until published
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
@@ -173,8 +173,8 @@ model EarningRecord {
   id          String   @id @default(uuid())
   creatorId   String
   source      String   // "subscription", "tip", "ppv_chat", "ppv_post"
-  amount      Decimal  @db.Decimal(10, 2)
-  netAmount   Decimal  @db.Decimal(10, 2) // After OF 20% cut
+  amount      Decimal
+  netAmount   Decimal // After OF 20% cut
   fanOfId     String?
   loggedAt    DateTime
   

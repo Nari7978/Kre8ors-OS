@@ -27,7 +27,12 @@ export async function GET(request: Request) {
       },
     });
 
-    return NextResponse.json(messages);
+    const parsedMessages = messages.map((m) => ({
+      ...m,
+      mediaUrls: JSON.parse(m.mediaUrls || '[]') as string[],
+    }));
+
+    return NextResponse.json(parsedMessages);
   } catch (error) {
     console.error('Error fetching chat messages:', error);
     return NextResponse.json(
@@ -64,7 +69,7 @@ export async function POST(request: Request) {
         fanId,
         direction: 'out', // Outgoing from creator
         text: text || null,
-        mediaUrls,
+        mediaUrls: JSON.stringify(mediaUrls),
         isTip: false,
         tipAmount: isPpv ? price : 0.00,
         isPurchased,
@@ -72,7 +77,10 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(message);
+    return NextResponse.json({
+      ...message,
+      mediaUrls: JSON.parse(message.mediaUrls || '[]') as string[],
+    });
   } catch (error) {
     console.error('Error creating chat message:', error);
     return NextResponse.json(

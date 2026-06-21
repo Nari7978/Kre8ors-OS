@@ -1,6 +1,8 @@
 import { PrismaClient, Role, CreatorStatus, PostStatus } from '@prisma/client';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 
-const prisma = new PrismaClient();
+const adapter = new PrismaBetterSqlite3({ url: 'file:./dev.db' });
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log('Cleaning up existing database records...');
@@ -29,7 +31,6 @@ async function main() {
   console.log(`Created Agency: ${agency.name} (${agency.id})`);
 
   // 2. Create Users (Owner, Manager, Chatters)
-  // Password hashes correspond to 'password123'
   const passwordHash = '$2b$10$EPX9kY9bH2K2iT.P581aXeG1W1XzU4b6i.yWnJg55xH9X.32F6P.G'; 
 
   const owner = await prisma.user.create({
@@ -134,16 +135,16 @@ async function main() {
   await prisma.shiftLog.create({
     data: {
       userId: chatter1.id,
-      startTime: new Date(now.getTime() - 8 * 60 * 60 * 1000), // 8 hours ago
-      endTime: new Date(now.getTime() - 2 * 60 * 60 * 1000), // 2 hours ago
+      startTime: new Date(now.getTime() - 8 * 60 * 60 * 1000), 
+      endTime: new Date(now.getTime() - 2 * 60 * 60 * 1000), 
       revenue: 450.50,
     },
   });
   await prisma.shiftLog.create({
     data: {
       userId: chatter2.id,
-      startTime: new Date(now.getTime() - 2 * 60 * 60 * 1000), // 2 hours ago
-      endTime: null, // Active shift
+      startTime: new Date(now.getTime() - 2 * 60 * 60 * 1000), 
+      endTime: null, 
       revenue: 120.00,
     },
   });
@@ -159,9 +160,9 @@ async function main() {
       isSubscriber: true,
       totalSpent: 1250.00,
       notes: 'VIP whale. Likes customized good morning videos. Tips generously on chat PPV.',
-      customTags: ['vip', 'whale', 'active'],
-      subscribedAt: new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000), // 60 days ago
-      expiresAt: new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000), // expires in 15 days
+      customTags: JSON.stringify(['vip', 'whale', 'active']),
+      subscribedAt: new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000), 
+      expiresAt: new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000), 
     },
     {
       ofId: 'fan_of_002',
@@ -171,7 +172,7 @@ async function main() {
       isSubscriber: true,
       totalSpent: 890.00,
       notes: 'Interested in exclusive dynamic sets. Responds well to direct audio notes.',
-      customTags: ['whale', 'crypto'],
+      customTags: JSON.stringify(['whale', 'crypto']),
       subscribedAt: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
       expiresAt: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000),
     },
@@ -183,7 +184,7 @@ async function main() {
       isSubscriber: true,
       totalSpent: 150.00,
       notes: 'Budget subscriber. Occasionally buys cheap PPVs ($15-$25 range).',
-      customTags: ['regular', 'budget'],
+      customTags: JSON.stringify(['regular', 'budget']),
       subscribedAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000),
       expiresAt: new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000),
     },
@@ -195,7 +196,7 @@ async function main() {
       isSubscriber: false,
       totalSpent: 20.00,
       notes: 'Subscribed once, now expired. Send win-back discount rules.',
-      customTags: ['expired', 'dormant'],
+      customTags: JSON.stringify(['expired', 'dormant']),
       subscribedAt: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000),
       expiresAt: new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000),
     },
@@ -222,7 +223,7 @@ async function main() {
       isSubscriber: true,
       totalSpent: 450.00,
       notes: 'Polite fan, chats regularly. Interested in behind-the-scenes content.',
-      customTags: ['active', 'friendly'],
+      customTags: JSON.stringify(['active', 'friendly']),
       subscribedAt: new Date(now.getTime() - 25 * 24 * 60 * 60 * 1000),
       expiresAt: new Date(now.getTime() + 6 * 24 * 60 * 60 * 1000),
     },
@@ -234,7 +235,7 @@ async function main() {
       isSubscriber: true,
       totalSpent: 95.00,
       notes: 'New subscriber, active chat history. Send onboarding series.',
-      customTags: ['new-subscriber'],
+      customTags: JSON.stringify(['new-subscriber']),
       subscribedAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
       expiresAt: new Date(now.getTime() + 28 * 24 * 60 * 60 * 1000),
     },
@@ -253,7 +254,7 @@ async function main() {
   
   console.log('Created Fans for both Sophia Sweet and Emma Rose');
 
-  // 7. Create Messages between Sophia Sweet (creator1) and Johnny Rich (fan_of_001)
+  // 7. Create Messages
   const johnny = seededSophiaFans[0];
   await prisma.message.createMany({
     data: [
@@ -263,11 +264,11 @@ async function main() {
         fanId: johnny.id,
         direction: 'in',
         text: 'Hey Sophia! Hope you had a great day! Can we chat?',
-        mediaUrls: [],
+        mediaUrls: JSON.stringify([]),
         isTip: false,
         tipAmount: 0.00,
         isPurchased: false,
-        sentAt: new Date(now.getTime() - 3 * 60 * 60 * 1000), // 3 hours ago
+        sentAt: new Date(now.getTime() - 3 * 60 * 60 * 1000),
       },
       {
         ofMessageId: 'msg_of_002',
@@ -275,7 +276,7 @@ async function main() {
         fanId: johnny.id,
         direction: 'out',
         text: 'Hey Johnny! Yes, of course! ❤️ I just uploaded some new media to my vault. Check out this private message!',
-        mediaUrls: [],
+        mediaUrls: JSON.stringify([]),
         isTip: false,
         tipAmount: 0.00,
         isPurchased: false,
@@ -287,10 +288,10 @@ async function main() {
         fanId: johnny.id,
         direction: 'out',
         text: 'Exclusive lock set: Good morning outfit reveal! 😉',
-        mediaUrls: ['https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=400'],
+        mediaUrls: JSON.stringify(['https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=400']),
         isTip: false,
-        tipAmount: 0.00,
-        isPurchased: false, // Locked PPV message
+        tipAmount: 20.00,
+        isPurchased: false, 
         sentAt: new Date(now.getTime() - 2.5 * 60 * 60 * 1000),
       },
       {
@@ -299,10 +300,10 @@ async function main() {
         fanId: johnny.id,
         direction: 'in',
         text: 'Wow, unlocked it immediately! Love the colors! Here is an extra tip.',
-        mediaUrls: [],
+        mediaUrls: JSON.stringify([]),
         isTip: true,
         tipAmount: 50.00,
-        isPurchased: true, // Unlocked now
+        isPurchased: true, 
         sentAt: new Date(now.getTime() - 2 * 60 * 60 * 1000),
       },
     ],
@@ -318,7 +319,7 @@ async function main() {
         url: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=400',
         thumbnail: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=100',
         fileType: 'image',
-        fileSize: 1048576, // 1MB
+        fileSize: 1048576, 
         folderName: 'Outfits',
       },
       {
@@ -327,7 +328,7 @@ async function main() {
         url: 'https://www.w3schools.com/html/mov_bbb.mp4',
         thumbnail: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=100',
         fileType: 'video',
-        fileSize: 15728640, // 15MB
+        fileSize: 15728640, 
         folderName: 'Vlogs',
       },
       {
@@ -348,7 +349,7 @@ async function main() {
     data: {
       creatorId: creator1.id,
       text: 'Good morning my loves! Starting the week with positive vibes. Check your DMs for a little surprise! 💖',
-      mediaUrls: ['https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=400'],
+      mediaUrls: JSON.stringify(['https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=400']),
       status: PostStatus.PUBLISHED,
       price: 0.00,
       ofPostId: 'post_of_100203',
@@ -360,27 +361,25 @@ async function main() {
     data: {
       creatorId: creator1.id,
       text: 'EXCLUSIVE set coming tomorrow! Pre-order now to unlock early! 🤫',
-      mediaUrls: [],
+      mediaUrls: JSON.stringify([]),
       status: PostStatus.SCHEDULED,
       price: 15.00,
       ofPostId: null,
-      scheduledFor: new Date(now.getTime() + 24 * 60 * 60 * 1000), // 24 hours from now
+      scheduledFor: new Date(now.getTime() + 24 * 60 * 60 * 1000), 
     },
   });
   console.log('Created Posts');
 
-  // 10. Create Earning Records (Last 30 Days)
+  // 10. Create Earning Records
   const sources = ['subscription', 'tip', 'ppv_chat', 'ppv_post'] as const;
   
-  // Seed Sophia Sweet Earnings
   for (let i = 1; i <= 30; i++) {
     const logDate = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-    // Add 1-3 earning records per day
     const recordsCount = Math.floor(Math.random() * 3) + 1;
     for (let r = 0; r < recordsCount; r++) {
       const source = sources[Math.floor(Math.random() * sources.length)];
       const amount = Math.floor(Math.random() * 80) + 10;
-      const netAmount = amount * 0.8; // 20% OnlyFans cut
+      const netAmount = amount * 0.8;
 
       await prisma.earningRecord.create({
         data: {
@@ -395,7 +394,6 @@ async function main() {
     }
   }
 
-  // Seed Emma Rose Earnings
   for (let i = 1; i <= 30; i++) {
     const logDate = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
     const recordsCount = Math.floor(Math.random() * 2) + 1;
@@ -424,9 +422,9 @@ async function main() {
       creatorId: creator1.id,
       name: 'Welcome Message to New Fans',
       triggerType: 'new_subscriber',
-      conditions: { delayMinutes: 5, requireCustomNote: false },
+      conditions: JSON.stringify({ delayMinutes: 5, requireCustomNote: false }),
       actionType: 'send_message',
-      actionData: { text: 'Hey babe! Thank you so much for subscribing! Tell me what you are looking for... 💋' },
+      actionData: JSON.stringify({ text: 'Hey babe! Thank you so much for subscribing! Tell me what you are looking for... 💋' }),
       isActive: true,
     },
   });
@@ -436,9 +434,9 @@ async function main() {
       creatorId: creator1.id,
       name: 'Tip Auto-Thanks Responder',
       triggerType: 'keyword_match',
-      conditions: { keywords: ['tip', 'sent', 'unlocked'] },
+      conditions: JSON.stringify({ keywords: ['tip', 'sent', 'unlocked'] }),
       actionType: 'send_media',
-      actionData: { text: 'Thank you so much for the tip sweetheart! You make my day. ❤️', mediaItemId: 'some-media-id' },
+      actionData: JSON.stringify({ text: 'Thank you so much for the tip sweetheart! You make my day. ❤️', mediaItemId: 'some-media-id' }),
       isActive: true,
     },
   });

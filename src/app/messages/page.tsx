@@ -3,10 +3,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, User, DollarSign, Image, Video, Paperclip, 
-  Send, X, Plus, Edit2, Check, RefreshCw, Lock, Unlock, ShieldAlert
+  Send, X, Plus, Edit2, Check, RefreshCw, Lock, Unlock, ShieldAlert, Folder
 } from 'lucide-react';
 import { useGlobalStore } from '@/lib/store/global-store';
-import { Creator, Fan, Message, MediaItem } from '@/types';
+import { Creator, Fan, Message } from '@/types';
+
+interface MediaItem {
+  id: string;
+  name: string;
+  url: string;
+  thumbnail: string | null;
+  fileType: string;
+  folderName: string;
+}
 
 export default function MessagesPage() {
   const { activeCreator } = useGlobalStore();

@@ -46,3 +46,9 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# SQLite
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
