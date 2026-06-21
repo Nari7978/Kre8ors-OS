@@ -347,7 +347,26 @@ const toggleAttachMedia = (url: string) => {
             </div>
 
             {/* Input Composer Placeholder */}
-            <div className="p-4 border-t border-zinc-800 bg-zinc-900/20 relative">
+            <div className="p-4 border-t border-zinc-800 bg-zinc-900/20 relative space-y-3">
+              {/* Media Selection Previews (Task 11) */}
+              {attachedMedia.length > 0 && (
+                <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 p-2 rounded-lg">
+                  <span className="text-xs text-zinc-400 flex-1">Attached Media Vault file ready to send:</span>
+                  {attachedMedia.map((url, i) => (
+                    <div key={i} className="relative h-10 w-10 border border-zinc-700 rounded overflow-hidden flex-shrink-0">
+                      <img src={url} className="object-cover h-full w-full" alt="preview" />
+                      <button
+                        type="button"
+                        onClick={() => setAttachedMedia([])}
+                        className="absolute top-0 right-0 bg-red-600 text-white rounded-bl p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-center text-sm text-zinc-500">
                 Composer input panel placeholder
               </div>
