@@ -216,6 +216,14 @@ const toggleAttachMedia = (url: string) => {
     }
   };
 
+  // Save notes locally
+  const handleSaveNotes = () => {
+    if (!selectedFan) return;
+    const updatedFan = { ...selectedFan, notes: notesText };
+    setSelectedFan(updatedFan);
+    setFans((prev) => prev.map((f) => (f.id === selectedFan.id ? updatedFan : f)));
+  };
+
   return (
     <div className="flex h-screen w-full bg-zinc-950 text-white overflow-hidden font-sans">
       {/* Left Panel */}
@@ -565,10 +573,54 @@ const toggleAttachMedia = (url: string) => {
       </div>
 
       {/* Right Panel */}
-      <div className="w-80 border-l border-zinc-800 flex flex-col h-full bg-zinc-900/40">
-        <div className="flex-1 flex items-center justify-center text-zinc-500 text-sm">
-          Fan CRM details placeholder
-        </div>
+      <div className="w-80 border-l border-zinc-800 flex flex-col h-full bg-zinc-900/40 overflow-y-auto p-4">
+        {selectedFan ? (
+          <div className="flex flex-col h-full space-y-5">
+            {/* Fan Bio Card */}
+            <div className="text-center pb-4 border-b border-zinc-800">
+              <div className="h-16 w-16 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center overflow-hidden mx-auto mb-3 shadow-lg">
+                {selectedFan.avatarUrl ? (
+                  <img src={selectedFan.avatarUrl} alt={selectedFan.displayName} className="object-cover h-full w-full" />
+                ) : (
+                  <User className="h-8 w-8 text-zinc-500" />
+                )}
+              </div>
+              <h3 className="font-bold text-zinc-200">{selectedFan.displayName}</h3>
+              <p className="text-xs text-zinc-500">@{selectedFan.username}</p>
+              <div className="mt-2 flex items-center justify-center gap-2">
+                <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${selectedFan.isSubscriber ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                  {selectedFan.isSubscriber ? 'Subscriber' : 'Expired'}
+                </span>
+                <span className="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded border border-zinc-700">
+                  UID: {selectedFan.ofId}
+                </span>
+              </div>
+            </div>
+
+            {/* CRM Notes */}
+            <div className="space-y-2 flex-1 flex flex-col">
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Operator Chat Notes</span>
+              <textarea
+                placeholder="Write specific fan characteristics, content preferences, rules or transaction history records..."
+                value={notesText}
+                onChange={(e) => setNotesText(e.target.value)}
+                className="w-full flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-300 focus:outline-none focus:border-blue-500 resize-none font-sans min-h-[140px]"
+              />
+              <button
+                type="button"
+                onClick={handleSaveNotes}
+                className="w-full bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 font-bold py-2 rounded-lg text-xs transition-colors"
+              >
+                Save Notes locally
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-sm gap-2">
+            <User className="h-8 w-8 text-zinc-700" />
+            <span>Select a subscriber to view details</span>
+          </div>
+        )}
       </div>
     </div>
   );
