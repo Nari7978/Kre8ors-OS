@@ -256,6 +256,39 @@ export default function MessagesPage() {
                                 : 'bg-zinc-800 text-zinc-100 rounded-bl-none'
                             }`}
                           >
+                            {/* Media Vault Attachments */}
+                            {msg.mediaUrls && msg.mediaUrls.length > 0 && (
+                              <div className="mb-2 rounded-lg overflow-hidden relative border border-zinc-950/20">
+                                {msg.mediaUrls.map((url, index) => {
+                                  const isVideo = url.endsWith('.mp4');
+                                  const isLocked = !msg.isPurchased && Number(msg.tipAmount) > 0;
+                                  const price = Number(msg.tipAmount);
+                                  return (
+                                    <div key={index} className="relative">
+                                      {isLocked ? (
+                                        <div className="relative h-48 w-full bg-zinc-950/80 flex flex-col items-center justify-center text-center p-4">
+                                          {isVideo ? (
+                                            <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=100" alt="locked video" className="absolute inset-0 h-full w-full object-cover blur-xl opacity-30" />
+                                          ) : (
+                                            <img src={url} alt="locked content" className="absolute inset-0 h-full w-full object-cover blur-xl opacity-30" />
+                                          )}
+                                          <Lock className="h-8 w-8 text-amber-500 mb-2" />
+                                          <span className="text-xs font-bold text-amber-400">Locked Pay-to-Unlock Content</span>
+                                          <span className="text-[10px] text-zinc-400 mt-1">Unlock for ${price.toFixed(2)}</span>
+                                        </div>
+                                      ) : isVideo ? (
+                                        <video controls className="w-full max-h-64 object-cover">
+                                          <source src={url} type="video/mp4" />
+                                        </video>
+                                      ) : (
+                                        <img src={url} alt="attachment" className="w-full max-h-64 object-cover" />
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+
                             {/* Text */}
                             {msg.text && <p className="leading-relaxed">{msg.text}</p>}
                             
