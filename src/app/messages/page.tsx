@@ -233,8 +233,43 @@ export default function MessagesPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {/* Messages will render here in Task 8 */}
-                  <div className="text-center text-xs text-zinc-600">Conversation started</div>
+                  {messages.map((msg) => {
+                    const isOut = msg.direction === 'out';
+                    return (
+                      <div key={msg.id} className="space-y-1">
+                        {/* Tip Indicator */}
+                        {msg.isTip && (
+                          <div className="flex justify-start">
+                            <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 my-1">
+                              <DollarSign className="h-3.5 w-3.5" />
+                              Tip received: ${Number(msg.tipAmount).toFixed(2)}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Bubble row */}
+                        <div className={`flex ${isOut ? 'justify-end' : 'justify-start'}`}>
+                          <div
+                            className={`max-w-[70%] rounded-2xl px-4 py-2.5 text-sm ${
+                              isOut 
+                                ? 'bg-blue-600 text-white rounded-br-none' 
+                                : 'bg-zinc-800 text-zinc-100 rounded-bl-none'
+                            }`}
+                          >
+                            {/* Text */}
+                            {msg.text && <p className="leading-relaxed">{msg.text}</p>}
+                            
+                            {/* Time stamp */}
+                            <div className="flex justify-end items-center gap-1 mt-1 text-[10px] text-zinc-300 opacity-60">
+                              <span>
+                                {new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                   
                   <div ref={messagesEndRef} />
                 </div>
