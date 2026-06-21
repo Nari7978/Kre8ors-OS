@@ -5,7 +5,7 @@ import {
   Search, User, DollarSign, Image, Video, Paperclip, 
   Send, X, Plus, Edit2, Check, RefreshCw, Lock, Unlock, ShieldAlert
 } from 'lucide-react';
-import { useGlobalStore } from '@/lib/store';
+import { useGlobalStore } from '@/lib/store/global-store';
 import { Creator, Fan, Message, MediaItem } from '@/types';
 
 export default function MessagesPage() {
@@ -220,6 +220,28 @@ const toggleAttachMedia = (url: string) => {
   const handleSaveNotes = () => {
     if (!selectedFan) return;
     const updatedFan = { ...selectedFan, notes: notesText };
+    setSelectedFan(updatedFan);
+    setFans((prev) => prev.map((f) => (f.id === selectedFan.id ? updatedFan : f)));
+  };
+
+  // Add search profile tag
+  const handleAddTag = () => {
+    if (!selectedFan || !newTag.trim()) return;
+    const tag = newTag.trim().toLowerCase();
+    if (selectedFan.customTags.includes(tag)) return;
+
+    const updatedTags = [...selectedFan.customTags, tag];
+    const updatedFan = { ...selectedFan, customTags: updatedTags };
+    setSelectedFan(updatedFan);
+    setFans((prev) => prev.map((f) => (f.id === selectedFan.id ? updatedFan : f)));
+    setNewTag('');
+  };
+
+  // Remove search profile tag
+  const handleRemoveTag = (tagToRemove: string) => {
+    if (!selectedFan) return;
+    const updatedTags = selectedFan.customTags.filter((t) => t !== tagToRemove);
+    const updatedFan = { ...selectedFan, customTags: updatedTags };
     setSelectedFan(updatedFan);
     setFans((prev) => prev.map((f) => (f.id === selectedFan.id ? updatedFan : f)));
   };
@@ -594,6 +616,49 @@ const toggleAttachMedia = (url: string) => {
                 <span className="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded border border-zinc-700">
                   UID: {selectedFan.ofId}
                 </span>
+              </div>
+            </div>
+
+            {/* CRM Custom Tagging */}
+            <div className="space-y-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Subscriber Custom Tags</span>
+              
+              {/* Tags grid */}
+              <div className="flex flex-wrap gap-1">
+                {selectedFan.customTags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="text-xs bg-blue-500/10 border border-blue-500/20 text-blue-400 pl-2.5 pr-1.5 py-1 rounded-full flex items-center gap-1 font-semibold"
+                  >
+                    #{tag}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTag(tag)}
+                      className="text-zinc-500 hover:text-white rounded-full p-0.5 hover:bg-zinc-800"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+
+              {/* Tag Add Composer */}
+              <div className="flex items-center gap-1.5 mt-2">
+                <input
+                  type="text"
+                  placeholder="new-tag..."
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
+                  className="flex-1 bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-300 focus:outline-none focus:border-blue-500"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddTag}
+                  className="bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 p-1.5 rounded transition-colors text-xs flex items-center justify-center font-bold"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
               </div>
             </div>
 
