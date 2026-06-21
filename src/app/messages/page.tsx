@@ -184,6 +184,38 @@ const toggleAttachMedia = (url: string) => {
     }
   };
 
+  // Handle PPV Unlocking Simulator
+  const handleUnlockMessage = async (messageId: string) => {
+    setUnlockingMessageId(messageId);
+    try {
+      const res = await fetch('/api/messages/unlock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageId }),
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        // Update message local state
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === messageId ? { ...msg, isPurchased: true } : msg
+          )
+        );
+        // Sync the fan state and list record totalSpent
+        const updatedTotal = Number(result.data.fanSpent);
+        setSelectedFan((prev) => (prev ? { ...prev, totalSpent: updatedTotal } : null));
+        setFans((prev) =>
+          prev.map((f) => (f.id === selectedFan?.id ? { ...f, totalSpent: updatedTotal } : f))
+        );
+      }
+    } catch (err) {
+      console.error('Error unlocking message:', err);
+    } finally {
+      setUnlockingMessageId(null);
+    }
+  };
+
   return (
     <div className="flex h-screen w-full bg-zinc-950 text-white overflow-hidden font-sans">
       {/* Left Panel */}
@@ -308,6 +340,8 @@ const toggleAttachMedia = (url: string) => {
                 <div className="space-y-4">
                   {messages.map((msg) => {
                     const isOut = msg.direction === 'out';
+                    const isLocked = !msg.isPurchased && Number(msg.tipAmount) > 0;
+                    const price = Number(msg.tipAmount);
                     return (
                       <div key={msg.id} className="space-y-1">
                         {/* Tip Indicator */}
@@ -334,8 +368,6 @@ const toggleAttachMedia = (url: string) => {
                               <div className="mb-2 rounded-lg overflow-hidden relative border border-zinc-950/20">
                                 {msg.mediaUrls.map((url, index) => {
                                   const isVideo = url.endsWith('.mp4');
-                                  const isLocked = !msg.isPurchased && Number(msg.tipAmount) > 0;
-                                  const price = Number(msg.tipAmount);
                                   return (
                                     <div key={index} className="relative">
                                       {isLocked ? (
@@ -371,6 +403,32 @@ const toggleAttachMedia = (url: string) => {
                                 {new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </span>
                             </div>
+
+                            {/* Locked PPV Purchase Simulator Trigger (Task 13) */}
+                            {isLocked && (
+                              <div className="mt-3 pt-3 border-t border-white/10 flex flex-col gap-2">
+                                <div className="flex items-center justify-between text-xs text-amber-200">
+                                  <span className="flex items-center gap-1 font-semibold">
+                                    <Lock className="h-3.5 w-3.5" />
+                                    Locked: ${price.toFixed(2)}
+                                  </span>
+                                  <span className="text-[10px] bg-amber-500/20 px-2 py-0.5 rounded text-amber-300 uppercase font-bold">PPV</span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUnlockMessage(msg.id)}
+                                  disabled={unlockingMessageId === msg.id}
+                                  className="w-full bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold py-1.5 px-3 rounded-lg text-xs flex items-center justify-center gap-1 transition-all disabled:opacity-50"
+                                >
+                                  {unlockingMessageId === msg.id ? (
+                                    <RefreshCw className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <Unlock className="h-3.5 w-3.5" />
+                                  )}
+                                  Simulate Unlock (Buy)
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
