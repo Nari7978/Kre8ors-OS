@@ -135,13 +135,37 @@ export default function MessagesPage() {
                   selectedFan?.id === fan.id ? 'bg-zinc-800/80 border-l-2 border-blue-500' : 'hover:bg-zinc-900/50'
                 }`}
               >
-                <div>
-                  <span className="font-semibold text-sm truncate text-zinc-200">
-                    {fan.displayName}
-                  </span>
+                {/* Fan Avatar */}
+                <div className="h-10 w-10 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+                  {fan.avatarUrl ? (
+                    <img src={fan.avatarUrl} alt={fan.displayName} className="object-cover h-full w-full" />
+                  ) : (
+                    <User className="h-5 w-5 text-zinc-500" />
+                  )}
+                </div>
+
+                {/* Chat details */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-sm truncate text-zinc-200">
+                      {fan.displayName}
+                    </span>
+                    <span className="text-xs font-bold text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded-full flex items-center gap-0.5">
+                      <DollarSign className="h-3 w-3 text-emerald-500" />
+                      {Number(fan.totalSpent).toFixed(2)}
+                    </span>
+                  </div>
                   <p className="text-xs text-zinc-500 truncate mt-1">
                     @{fan.username}
                   </p>
+                  
+                  {/* Subscriber Tag */}
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <span className={`inline-block h-2 w-2 rounded-full ${fan.isSubscriber ? 'bg-green-500' : 'bg-red-500'}`} />
+                    <span className="text-[10px] uppercase font-bold text-zinc-400">
+                      {fan.isSubscriber ? 'Subscribed' : 'Expired'}
+                    </span>
+                  </div>
                 </div>
               </button>
             ))
