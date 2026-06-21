@@ -83,6 +83,34 @@ export default function MessagesPage() {
     return () => clearTimeout(timer);
   }, [selectedCreatorId, searchQuery]);
 
+  // Fetch messages when active fan is selected
+  useEffect(() => {
+    if (!selectedCreatorId || !selectedFan) return;
+
+    const fanId = selectedFan.id;
+    const fanNotes = selectedFan.notes;
+
+    async function fetchMessages() {
+      setLoadingMessages(true);
+      try {
+        const res = await fetch(`/api/messages?creatorId=${selectedCreatorId}&fanId=${fanId}`);
+        const data = await res.json();
+        setMessages(Array.isArray(data) ? data : []);
+        setNotesText(fanNotes || '');
+      } catch (err) {
+        console.error('Error fetching messages:', err);
+      } finally {
+        setLoadingMessages(false);
+      }
+    }
+    fetchMessages();
+  }, [selectedCreatorId, selectedFan]);
+
+  // Scroll to bottom of conversation
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
   return (
     <div className="flex h-screen w-full bg-zinc-950 text-white overflow-hidden font-sans">
       {/* Left Panel */}
@@ -175,9 +203,57 @@ export default function MessagesPage() {
 
       {/* Center Panel */}
       <div className="flex-1 flex flex-col h-full bg-zinc-950">
-        <div className="flex-1 flex items-center justify-center text-zinc-500 text-sm">
-          Conversation viewport placeholder
-        </div>
+        {selectedFan ? (
+          <>
+            {/* Thread Header */}
+            <div className="p-4 border-b border-zinc-800 bg-zinc-900/10 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-lg text-zinc-100">{selectedFan.displayName}</h3>
+                <p className="text-xs text-zinc-500">@{selectedFan.username}</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="text-sm font-bold text-zinc-400 bg-zinc-900 border border-zinc-800 px-3 py-1 rounded-full flex items-center gap-1">
+                  <DollarSign className="h-4 w-4 text-emerald-500" />
+                  Spent: <strong className="text-zinc-200">${Number(selectedFan.totalSpent).toFixed(2)}</strong>
+                </span>
+              </div>
+            </div>
+
+            {/* Messages Viewport */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {loadingMessages ? (
+                <div className="h-full flex items-center justify-center text-zinc-500 text-sm gap-2">
+                  <RefreshCw className="h-4 w-4 animate-spin text-blue-500" />
+                  Loading messages...
+                </div>
+              ) : messages.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-zinc-500 text-sm gap-2">
+                  <span className="p-3 bg-zinc-900/60 rounded-full border border-zinc-800">💬</span>
+                  No messages yet. Send a message to start the conversation!
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Messages will render here in Task 8 */}
+                  <div className="text-center text-xs text-zinc-600">Conversation started</div>
+                  
+                  <div ref={messagesEndRef} />
+                </div>
+              )}
+            </div>
+
+            {/* Input Composer Placeholder */}
+            <div className="p-4 border-t border-zinc-800 bg-zinc-900/20">
+              <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-center text-sm text-zinc-500">
+                Composer input panel placeholder
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-sm gap-3">
+            <span className="text-4xl">💬</span>
+            Select a subscriber from the sidebar to start live chatting
+          </div>
+        )}
       </div>
 
       {/* Right Panel */}
