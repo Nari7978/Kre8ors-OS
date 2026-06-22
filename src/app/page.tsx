@@ -5,7 +5,8 @@ import { useGlobalStore } from '@/lib/store/global-store';
 import { Creator } from '@/types';
 import { 
   TrendingUp, DollarSign, Users, Award, ShieldAlert,
-  Clock, Play, Square, Settings, RefreshCw, CheckCircle2, AlertTriangle, ToggleLeft
+  Clock, Play, Square, Settings, RefreshCw, CheckCircle2, AlertTriangle, ToggleLeft,
+  Wallet
 } from 'lucide-react';
 
 interface EarningsSummary {
@@ -83,13 +84,110 @@ export default function DashboardPage() {
 
       {/* Grid Layout Shell */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Creator Analytics Cards (Placeholder for Commit 6) */}
+        {/* Left Column: Creator Analytics Cards */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm min-h-[250px] flex items-center justify-center">
-            <div className="text-center text-zinc-500 space-y-2">
-              <TrendingUp className="h-8 w-8 mx-auto text-blue-500/60" />
-              <p className="text-sm font-semibold">Loading Creator Financial Analytics...</p>
+          {/* Earnings Overview stats cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Total Revenue card */}
+            <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-5 backdrop-blur-sm relative overflow-hidden group hover:border-zinc-700/80 transition-all">
+              <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-15 transition-opacity">
+                <DollarSign className="h-20 w-20 text-blue-500" />
+              </div>
+              <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider">Gross Earnings</p>
+              <h3 className="text-2xl font-bold text-zinc-100 mt-2">
+                ${earnings ? earnings.summary.totalRevenue.toFixed(2) : '0.00'}
+              </h3>
+              <p className="text-[10px] text-zinc-400 mt-1 flex items-center gap-1">
+                <span className="text-green-500 font-bold">↑ 12%</span> vs last month
+              </p>
             </div>
+
+            {/* Net Agency Commission card */}
+            <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-5 backdrop-blur-sm relative overflow-hidden group hover:border-zinc-700/80 transition-all">
+              <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-15 transition-opacity">
+                <Wallet className="h-20 w-20 text-indigo-500" />
+              </div>
+              <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider">Net (After OF 20% Cut)</p>
+              <h3 className="text-2xl font-bold text-zinc-100 mt-2">
+                ${earnings ? earnings.summary.totalNet.toFixed(2) : '0.00'}
+              </h3>
+              <p className="text-[10px] text-zinc-400 mt-1 flex items-center gap-1">
+                OnlyFans 80% standard share
+              </p>
+            </div>
+
+            {/* Performance Level */}
+            <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-5 backdrop-blur-sm relative overflow-hidden group hover:border-zinc-700/80 transition-all">
+              <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-15 transition-opacity">
+                <Award className="h-20 w-20 text-amber-500" />
+              </div>
+              <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider">Performance tier</p>
+              <h3 className="text-2xl font-bold text-amber-400 mt-2">Elite Creator</h3>
+              <p className="text-[10px] text-zinc-400 mt-1">
+                Top 0.5% of Agency portfolio
+              </p>
+            </div>
+          </div>
+
+          {/* Revenue Source Breakdown & Timeline */}
+          <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-6">
+            <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-blue-500" />
+              Revenue Source Breakdown
+            </h3>
+
+            {earnings ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Source list progress */}
+                <div className="space-y-4">
+                  {[
+                    { label: 'Subscriptions', key: 'subscription', color: 'bg-blue-500' },
+                    { label: 'Tips & Donations', key: 'tip', color: 'bg-emerald-500' },
+                    { label: 'PPV Chat Unlock Messages', key: 'ppv_chat', color: 'bg-amber-500' },
+                    { label: 'PPV Scheduled Posts', key: 'ppv_post', color: 'bg-purple-500' },
+                  ].map((src) => {
+                    const amt = earnings.summary.bySource[src.key as keyof typeof earnings.summary.bySource] || 0;
+                    const pct = earnings.summary.totalRevenue > 0 
+                      ? (amt / earnings.summary.totalRevenue) * 100 
+                      : 0;
+                    return (
+                      <div key={src.key} className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs font-semibold">
+                          <span className="text-zinc-400">{src.label}</span>
+                          <span className="text-zinc-200">${amt.toFixed(2)} ({pct.toFixed(1)}%)</span>
+                        </div>
+                        <div className="h-2 w-full bg-zinc-800 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full ${src.color} transition-all duration-500`} 
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Timeline recent entries table */}
+                <div className="space-y-3">
+                  <span className="text-xs text-zinc-500 font-bold uppercase tracking-wider block">Recent Daily Earnings</span>
+                  <div className="max-h-[160px] overflow-y-auto border border-zinc-800/80 rounded-xl divide-y divide-zinc-800/60 bg-zinc-950/20">
+                    {earnings.dailyTimeline.slice(-5).reverse().map((day) => (
+                      <div key={day.date} className="p-2.5 flex items-center justify-between text-xs hover:bg-zinc-900/30 transition-colors">
+                        <span className="text-zinc-400 font-medium">
+                          {new Date(day.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                        </span>
+                        <span className="font-semibold text-zinc-200">${day.total.toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="p-12 text-center text-zinc-500 text-xs flex items-center justify-center gap-2">
+                <RefreshCw className="h-4 w-4 animate-spin text-blue-500" />
+                Aggregating database logs...
+              </div>
+            )}
           </div>
         </div>
 
