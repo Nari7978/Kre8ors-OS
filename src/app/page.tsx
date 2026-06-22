@@ -30,7 +30,14 @@ interface TimelineItem {
 }
 
 export default function DashboardPage() {
-  const { activeCreator, setActiveCreator } = useGlobalStore();
+  const { 
+    activeCreator, 
+    setActiveCreator,
+    isShiftActive,
+    activeShiftId,
+    startShift,
+    endShift
+  } = useGlobalStore();
   const [loading, setLoading] = useState(false);
   const [earnings, setEarnings] = useState<{ summary: EarningsSummary; dailyTimeline: TimelineItem[] } | null>(null);
   
@@ -38,6 +45,12 @@ export default function DashboardPage() {
   const [connectionChecklist, setConnectionChecklist] = useState<any>(null);
   const [checkingConnection, setCheckingConnection] = useState(false);
   const [updatingConnection, setUpdatingConnection] = useState(false);
+
+  // Shifts state
+  const [completedShifts, setCompletedShifts] = useState<any[]>([]);
+  const [activeShiftDetails, setActiveShiftDetails] = useState<any>(null);
+  const [shiftTimer, setShiftTimer] = useState('00:00:00');
+  const [loadingShifts, setLoadingShifts] = useState(false);
 
   // Load active creator earnings metrics
   useEffect(() => {
@@ -104,6 +117,118 @@ export default function DashboardPage() {
       setUpdatingConnection(false);
     }
   }
+
+  // Load shift logs on mount
+  useEffect(() => {
+    loadShifts();
+  }, []);
+
+  // Timer interval for active shifts
+  useEffect(() => {
+    if (!isShiftActive || !activeShiftDetails) {
+      setShiftTimer('00:00:00');
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const start = new Date(activeShiftDetails.startTime).getTime();
+      const now = new Date().getTime();
+      const diff = now - start;
+
+      if (diff > 0) {
+        const hrs = Math.floor(diff / (1000 * 60 * 60));
+        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+        setShiftTimer(
+          `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+        );
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isShiftActive, activeShiftDetails]);
+
+  async function loadShifts() {
+    setLoadingShifts(true);
+    try {
+      const res = await fetch('/api/shifts');
+      if (res.ok) {
+        const data = await res.json();
+        setCompletedShifts(data.completedShifts || []);
+        if (data.activeShift) {
+          setActiveShiftDetails(data.activeShift);
+          startShift(data.activeShift.id);
+        } else {
+          setActiveShiftDetails(null);
+          endShift();
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching shifts:', err);
+    } finally {
+      setLoadingShifts(false);
+    }
+  }
+
+  async function handleStartShift() {
+    try {
+      const res = await fetch('/api/shifts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'start' }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setActiveShiftDetails(data.shift);
+        startShift(data.shift.id);
+        loadShifts();
+      }
+    } catch (err) {
+      console.error('Error starting shift:', err);
+    }
+  }
+
+  async function handleEndShift() {
+    try {
+      const res = await fetch('/api/shifts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'end' }),
+      });
+      if (res.ok) {
+        setActiveShiftDetails(null);
+        endShift();
+        loadShifts();
+      }
+    } catch (err) {
+      console.error('Error ending shift:', err);
+    }
+  }
+
+  async function handleSimulateShiftEarning() {
+    if (!activeCreator) return;
+    try {
+      const res = await fetch('/api/shifts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'simulate_earning', amount: 25.00 }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setActiveShiftDetails(data.shift);
+        // Refresh earnings metrics too since we generated some revenue!
+        const resEarnings = await fetch(`/api/earnings?creatorId=${activeCreator.id}`);
+        if (resEarnings.ok) {
+          const dataEarnings = await resEarnings.json();
+          setEarnings(dataEarnings);
+        }
+      }
+    } catch (err) {
+      console.error('Error simulating shift earning:', err);
+    }
+  }
+
 
 
   if (!activeCreator) {
@@ -337,9 +462,103 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Shifts tracker Card */}
-          <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm flex items-center justify-center min-h-[180px]">
-            <p className="text-zinc-500 text-sm">Shifts Tracker Loading...</p>
+          {/* Operator Shifts Tracker Board */}
+          <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+                <Clock className="h-4 w-4 text-blue-500" />
+                Shift Log & Tracker
+              </h3>
+              <span className={`text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-full border ${
+                isShiftActive 
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                  : 'bg-zinc-800 text-zinc-400 border-zinc-700/60'
+              }`}>
+                {isShiftActive ? 'Active' : 'Offline'}
+              </span>
+            </div>
+
+            {loadingShifts ? (
+              <div className="py-6 text-center text-zinc-500 text-xs flex items-center justify-center gap-2">
+                <RefreshCw className="h-3.5 w-3.5 animate-spin text-blue-500" />
+                Loading shift database...
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {isShiftActive ? (
+                  <div className="space-y-3 bg-zinc-950/40 border border-zinc-800/60 p-4 rounded-xl">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-zinc-400">Duration Elapsed:</span>
+                      <span className="font-mono font-bold text-blue-400">{shiftTimer}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-zinc-400">Shift Revenue:</span>
+                      <span className="font-semibold text-emerald-400">
+                        ${activeShiftDetails ? Number(activeShiftDetails.revenue).toFixed(2) : '0.00'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={handleSimulateShiftEarning}
+                        className="bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 text-zinc-200 text-[10px] font-bold py-1.5 rounded transition-colors"
+                      >
+                        Simulate +$25.00
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleEndShift}
+                        className="bg-red-950/40 border border-red-500/20 hover:bg-red-950/60 text-red-400 text-[10px] font-bold py-1.5 rounded transition-colors flex items-center justify-center gap-1"
+                      >
+                        <Square className="h-3 w-3" /> End Shift
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-xs text-zinc-500 italic">
+                      No active shift. Start a shift to track work duration and document live earnings metrics.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleStartShift}
+                      className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      <Play className="h-3.5 w-3.5 fill-current" />
+                      Start Chat Shift
+                    </button>
+                  </div>
+                )}
+
+                {/* Shift logs list (completed) */}
+                {completedShifts.length > 0 && (
+                  <div className="space-y-2">
+                    <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider block">Completed Shifts</span>
+                    <div className="max-h-[120px] overflow-y-auto border border-zinc-800/80 rounded-xl divide-y divide-zinc-800/60 bg-zinc-950/20 text-[10px]">
+                      {completedShifts.map((log) => {
+                        const start = new Date(log.startTime);
+                        const end = log.endTime ? new Date(log.endTime) : start;
+                        const durationMins = Math.round((end.getTime() - start.getTime()) / (1000 * 60));
+                        return (
+                          <div key={log.id} className="p-2 flex items-center justify-between hover:bg-zinc-900/30 transition-colors">
+                            <div className="text-zinc-400">
+                              <span className="font-semibold block">
+                                {start.toLocaleDateString()}
+                              </span>
+                              <span>{durationMins}m elapsed</span>
+                            </div>
+                            <span className="font-bold text-zinc-200">
+                              +${Number(log.revenue).toFixed(2)}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Automations Card */}
