@@ -30,9 +30,14 @@ interface TimelineItem {
 }
 
 export default function DashboardPage() {
-  const { activeCreator } = useGlobalStore();
+  const { activeCreator, setActiveCreator } = useGlobalStore();
   const [loading, setLoading] = useState(false);
   const [earnings, setEarnings] = useState<{ summary: EarningsSummary; dailyTimeline: TimelineItem[] } | null>(null);
+  
+  // Connection status board state
+  const [connectionChecklist, setConnectionChecklist] = useState<any>(null);
+  const [checkingConnection, setCheckingConnection] = useState(false);
+  const [updatingConnection, setUpdatingConnection] = useState(false);
 
   // Load active creator earnings metrics
   useEffect(() => {
@@ -54,6 +59,52 @@ export default function DashboardPage() {
     }
     loadEarnings();
   }, [activeCreator]);
+
+  // Load connection status
+  useEffect(() => {
+    if (!activeCreator) return;
+    loadConnectionStatus();
+  }, [activeCreator]);
+
+  async function loadConnectionStatus() {
+    setCheckingConnection(true);
+    try {
+      const res = await fetch(`/api/creators/${activeCreator!.id}/status`);
+      if (res.ok) {
+        const data = await res.json();
+        setConnectionChecklist(data);
+      }
+    } catch (err) {
+      console.error('Error checking connection status:', err);
+    } finally {
+      setCheckingConnection(false);
+    }
+  }
+
+  async function handleConnectionToggle(action: 'connect' | 'disconnect') {
+    setUpdatingConnection(true);
+    try {
+      const res = await fetch(`/api/creators/${activeCreator!.id}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: action === 'connect' ? 'reconnect' : 'disconnect' }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // Update global store status
+        setActiveCreator({
+          ...activeCreator!,
+          status: data.creator.status,
+        });
+        loadConnectionStatus();
+      }
+    } catch (err) {
+      console.error('Error toggling connection status:', err);
+    } finally {
+      setUpdatingConnection(false);
+    }
+  }
+
 
   if (!activeCreator) {
     return (
@@ -193,9 +244,97 @@ export default function DashboardPage() {
 
         {/* Right Column: Connection Status & Shift Tracker & Automations (Placeholder for Commits 7, 8, 9) */}
         <div className="space-y-6">
-          {/* Creator Status Board Card */}
-          <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm flex items-center justify-center min-h-[180px]">
-            <p className="text-zinc-500 text-sm">Connection Status Loading...</p>
+          {/* Creator Connection Status Checker Board */}
+          <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+                <Settings className="h-4 w-4 text-blue-500" />
+                Integration Status
+              </h3>
+              {connectionChecklist && (
+                <span className={`text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-full border ${
+                  activeCreator.status === 'ACTIVE' 
+                    ? 'bg-green-500/10 text-green-400 border-green-500/20' 
+                    : activeCreator.status === 'PENDING'
+                    ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'
+                    : 'bg-red-500/10 text-red-400 border-red-500/20'
+                }`}>
+                  {activeCreator.status}
+                </span>
+              )}
+            </div>
+
+            {connectionChecklist ? (
+              <div className="space-y-3.5">
+                {/* Connection Checklist Items */}
+                <div className="space-y-2 text-xs">
+                  <div className="flex items-center justify-between text-zinc-400">
+                    <span>OnlyFans API key</span>
+                    <span className="text-green-400 flex items-center gap-1 font-semibold">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Valid
+                    </span>
+                  </div>
+
+                  {[
+                    { label: 'Session Cookie Loaded', val: connectionChecklist.checklist.sessionCookieLoaded },
+                    { label: 'User Agent Configured', val: connectionChecklist.checklist.userAgentMatch },
+                    { label: 'X-BC Header Verified', val: connectionChecklist.checklist.xbcHeaderConfigured },
+                    { label: 'Auth ID Verification', val: connectionChecklist.checklist.authIdVerified },
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between text-zinc-400">
+                      <span>{item.label}</span>
+                      {item.val ? (
+                        <span className="text-green-400 flex items-center gap-1 font-semibold">
+                          <CheckCircle2 className="h-3.5 w-3.5" /> Synced
+                        </span>
+                      ) : (
+                        <span className="text-red-400 flex items-center gap-1 font-semibold">
+                          <AlertTriangle className="h-3.5 w-3.5" /> Missing
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Disconnect or Reconnect Button */}
+                <div className="pt-2 border-t border-zinc-800/60">
+                  {activeCreator.status === 'ACTIVE' ? (
+                    <button
+                      type="button"
+                      disabled={updatingConnection}
+                      onClick={() => handleConnectionToggle('disconnect')}
+                      className="w-full bg-red-950/40 border border-red-500/20 hover:bg-red-950/60 text-red-400 text-xs font-bold py-2 rounded-lg transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+                    >
+                      {updatingConnection ? (
+                        <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <ShieldAlert className="h-3.5 w-3.5" />
+                      )}
+                      Simulate Disconnect API
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={updatingConnection}
+                      onClick={() => handleConnectionToggle('connect')}
+                      className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 rounded-lg transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+                    >
+                      {updatingConnection ? (
+                        <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-3.5 w-3.5" />
+                      )}
+                      Simulate Reconnect Credentials
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="py-6 text-center text-zinc-500 text-xs flex items-center justify-center gap-2">
+                <RefreshCw className="h-3.5 w-3.5 animate-spin text-blue-500" />
+                Querying API integration...
+              </div>
+            )}
           </div>
 
           {/* Shifts tracker Card */}
