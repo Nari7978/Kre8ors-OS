@@ -52,14 +52,18 @@ export default function DashboardPage() {
   const [shiftTimer, setShiftTimer] = useState('00:00:00');
   const [loadingShifts, setLoadingShifts] = useState(false);
 
-  // Load active creator earnings metrics
+  // Automations state
+  const [automationRules, setAutomationRules] = useState<any[]>([]);
+  const [loadingAutomations, setLoadingAutomations] = useState(false);
+
   useEffect(() => {
     if (!activeCreator) return;
+    const creatorId = activeCreator.id;
 
     async function loadEarnings() {
       setLoading(true);
       try {
-        const res = await fetch(`/api/earnings?creatorId=${activeCreator.id}`);
+        const res = await fetch(`/api/earnings?creatorId=${creatorId}`);
         if (res.ok) {
           const data = await res.json();
           setEarnings(data);
@@ -78,6 +82,45 @@ export default function DashboardPage() {
     if (!activeCreator) return;
     loadConnectionStatus();
   }, [activeCreator]);
+
+  // Load automation rules
+  useEffect(() => {
+    if (!activeCreator) return;
+    loadAutomations();
+  }, [activeCreator]);
+
+  async function loadAutomations() {
+    setLoadingAutomations(true);
+    try {
+      const res = await fetch(`/api/automations?creatorId=${activeCreator!.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setAutomationRules(data || []);
+      }
+    } catch (err) {
+      console.error('Error loading automation rules:', err);
+    } finally {
+      setLoadingAutomations(false);
+    }
+  }
+
+  async function handleRuleToggle(ruleId: string, currentStatus: boolean) {
+    try {
+      const res = await fetch('/api/automations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ruleId, isActive: !currentStatus }),
+      });
+      if (res.ok) {
+        setAutomationRules((prev) =>
+          prev.map((r) => (r.id === ruleId ? { ...r, isActive: !currentStatus } : r))
+        );
+      }
+    } catch (err) {
+      console.error('Error toggling rule status:', err);
+    }
+  }
+
 
   async function loadConnectionStatus() {
     setCheckingConnection(true);
@@ -561,9 +604,70 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Automations Card */}
-          <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm flex items-center justify-center min-h-[180px]">
-            <p className="text-zinc-500 text-sm">Automation Rules Loading...</p>
+          {/* Automation Rules Board */}
+          <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-4">
+            <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+              <ToggleLeft className="h-4 w-4 text-blue-500" />
+              Creator Auto-Responders
+            </h3>
+
+            {loadingAutomations ? (
+              <div className="py-6 text-center text-zinc-500 text-xs flex items-center justify-center gap-2">
+                <RefreshCw className="h-3.5 w-3.5 animate-spin text-blue-500" />
+                Loading rules...
+              </div>
+            ) : automationRules.length === 0 ? (
+              <p className="text-xs text-zinc-500 italic">
+                No automation rules loaded for this creator.
+              </p>
+            ) : (
+              <div className="space-y-3.5">
+                {automationRules.map((rule) => {
+                  let conditionSummary = '';
+                  try {
+                    const conditions = typeof rule.conditions === 'string' 
+                      ? JSON.parse(rule.conditions) 
+                      : rule.conditions;
+                    if (conditions.delayMinutes) {
+                      conditionSummary = `Runs after ${conditions.delayMinutes}m`;
+                    } else if (conditions.keywords) {
+                      conditionSummary = `Matches: ${conditions.keywords.join(', ')}`;
+                    }
+                  } catch (e) {
+                    conditionSummary = 'Active triggers';
+                  }
+
+                  return (
+                    <div key={rule.id} className="p-3 bg-zinc-950/40 border border-zinc-800/60 rounded-xl space-y-2 hover:border-zinc-700/60 transition-colors">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <h4 className="text-xs font-bold text-zinc-200">{rule.name}</h4>
+                          <span className="text-[9px] uppercase tracking-wide text-zinc-500 font-bold block mt-0.5">
+                            Trigger: {rule.triggerType}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRuleToggle(rule.id, rule.isActive)}
+                          className={`w-8 h-4 rounded-full relative transition-colors duration-200 flex-shrink-0 ${
+                            rule.isActive ? 'bg-blue-600' : 'bg-zinc-800'
+                          }`}
+                        >
+                          <span className={`block w-3 h-3 rounded-full bg-white absolute top-0.5 transition-transform duration-200 ${
+                            rule.isActive ? 'translate-x-4.5' : 'translate-x-0.5'
+                          }`} />
+                        </button>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[10px] text-zinc-400">
+                        <span>{conditionSummary}</span>
+                        <span className="text-blue-400 font-semibold uppercase">{rule.actionType}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>
