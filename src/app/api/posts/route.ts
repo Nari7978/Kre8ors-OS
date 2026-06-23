@@ -104,3 +104,95 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json();
+    const { postId, action } = body;
+
+    if (!postId) {
+      return NextResponse.json(
+        { error: 'postId is required' },
+        { status: 400 }
+      );
+    }
+
+    const existingPost = await db.post.findUnique({
+      where: { id: postId },
+    });
+
+    if (!existingPost) {
+      return NextResponse.json(
+        { error: 'Post not found' },
+        { status: 404 }
+      );
+    }
+
+    let updatedPost;
+
+    if (action === 'publish_now') {
+      updatedPost = await db.post.update({
+        where: { id: postId },
+        data: {
+          status: PostStatus.PUBLISHED,
+          ofPostId: `post_of_${Math.floor(Math.random() * 1000000)}`,
+          scheduledFor: null,
+        },
+      });
+    } else {
+      return NextResponse.json(
+        { error: 'Invalid action parameter' },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({
+      ...updatedPost,
+      mediaUrls: JSON.parse(updatedPost.mediaUrls || '[]') as string[],
+      price: Number(updatedPost.price),
+    });
+  } catch (error) {
+    console.error('Error updating post:', error);
+    return NextResponse.json(
+      { error: 'Failed to update post' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const postId = searchParams.get('postId');
+
+    if (!postId) {
+      return NextResponse.json(
+        { error: 'postId query parameter is required' },
+        { status: 400 }
+      );
+    }
+
+    const post = await db.post.findUnique({
+      where: { id: postId },
+    });
+
+    if (!post) {
+      return NextResponse.json(
+        { error: 'Post not found' },
+        { status: 404 }
+      );
+    }
+
+    await db.post.delete({
+      where: { id: postId },
+    });
+
+    return NextResponse.json({ success: true, message: 'Post successfully cancelled' });
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete/cancel post' },
+      { status: 500 }
+    );
+  }
+}
