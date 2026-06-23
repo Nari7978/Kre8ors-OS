@@ -19,7 +19,12 @@ export async function GET(request: Request) {
     const fileType = searchParams.get('fileType');
     const search = searchParams.get('search');
 
-    const where: any = {
+    const where: {
+      creatorId: string;
+      folderName?: string;
+      fileType?: string;
+      name?: { contains: string };
+    } = {
       creatorId,
     };
 
