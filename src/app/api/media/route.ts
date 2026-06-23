@@ -53,3 +53,40 @@ export async function GET(request: Request) {
     );
   }
 }
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { creatorId, name, url, fileType, fileSize, folderName } = body;
+
+    if (!creatorId || !name || !url || !fileType) {
+      return NextResponse.json(
+        { error: 'creatorId, name, url, and fileType are required' },
+        { status: 400 }
+      );
+    }
+
+    const size = parseInt(fileSize) || 1024 * 1024; // default 1MB
+    const folder = folderName || 'uncategorized';
+
+    const mediaItem = await db.mediaItem.create({
+      data: {
+        creatorId,
+        name,
+        url,
+        thumbnail: fileType === 'video' ? 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=100' : url,
+        fileType,
+        fileSize: size,
+        folderName: folder,
+      },
+    });
+
+    return NextResponse.json(mediaItem);
+  } catch (error) {
+    console.error('Error creating media item:', error);
+    return NextResponse.json(
+      { error: 'Failed to create media item' },
+      { status: 500 }
+    );
+  }
+}
