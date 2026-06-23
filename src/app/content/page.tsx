@@ -133,6 +133,42 @@ export default function ContentQueuePage() {
     }
   };
 
+  // Simulate immediate publishing for a scheduled post
+  const handlePublishNow = async (postId: string) => {
+    try {
+      const res = await fetch('/api/posts', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          postId,
+          action: 'publish_now',
+        }),
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        setPosts((prev) => prev.map((p) => (p.id === postId ? updated : p)));
+      }
+    } catch (err) {
+      console.error('Error simulating immediate publish:', err);
+    }
+  };
+
+  // Delete/Cancel a scheduled post
+  const handleCancelPost = async (postId: string) => {
+    try {
+      const res = await fetch(`/api/posts?postId=${postId}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        setPosts((prev) => prev.filter((p) => p.id !== postId));
+      }
+    } catch (err) {
+      console.error('Error cancelling scheduled post:', err);
+    }
+  };
+
   // Media picker toggles
   const handleToggleMediaSelect = (url: string) => {
     if (selectedMedia.includes(url)) {
@@ -150,6 +186,12 @@ export default function ContentQueuePage() {
       </div>
     );
   }
+
+  // Filter posts list
+  const filteredPosts = posts.filter((p) => {
+    if (activeTab === 'all') return true;
+    return p.status.toLowerCase() === activeTab;
+  });
 
   return (
     <div className="flex-1 overflow-y-auto bg-zinc-950 p-6 md:p-8 text-white space-y-8 max-w-7xl mx-auto w-full">
@@ -344,12 +386,152 @@ export default function ContentQueuePage() {
           </div>
         </div>
 
-        {/* Right Column outline (commit 9) */}
-        <div className="space-y-6 lg:col-span-2 flex flex-col justify-center items-center border border-dashed border-zinc-850 rounded-2xl p-6 min-h-[300px]">
-          <span className="text-xl">📅</span>
-          <p className="text-xs text-zinc-500 mt-2">
-            Scheduled calendar queue list and status badges will load in next commit...
-          </p>
+        {/* Right Column: Scheduled List / Queue */}
+        <div className="space-y-6 lg:col-span-2">
+          {/* Tab selectors */}
+          <div className="flex border-b border-zinc-800/60 gap-1.5">
+            {[
+              { id: 'all', label: 'All Posts' },
+              { id: 'scheduled', label: 'Scheduled Queue' },
+              { id: 'published', label: 'Published Logs' },
+              { id: 'draft', label: 'Drafts' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as 'all' | 'scheduled' | 'published' | 'draft')}
+                className={`px-4 py-2.5 text-xs font-bold border-b-2 tracking-wide transition-all ${
+                  activeTab === tab.id
+                    ? 'border-blue-500 text-white'
+                    : 'border-transparent text-zinc-500 hover:text-zinc-300'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Posts list */}
+          {loadingPosts ? (
+            <div className="py-12 text-center text-zinc-500 text-sm flex items-center justify-center gap-2">
+              <RefreshCw className="h-5 w-5 animate-spin text-blue-500" />
+              Syncing scheduled publisher queue...
+            </div>
+          ) : filteredPosts.length === 0 ? (
+            <div className="py-20 text-center text-zinc-500 text-xs flex flex-col items-center justify-center gap-2 border border-dashed border-zinc-800 rounded-2xl bg-zinc-900/10">
+              <span className="text-xl">📅</span>
+              <p className="font-semibold text-zinc-400">No posts in this category</p>
+              <p className="text-zinc-600">Compose and save a new post to schedule it here.</p>
+            </div>
+          ) : (
+            <div className="space-y-4 max-h-[640px] overflow-y-auto pr-1">
+              {filteredPosts.map((post) => {
+                const isScheduled = post.status === 'SCHEDULED';
+                const isPublished = post.status === 'PUBLISHED';
+                const isDraft = post.status === 'DRAFT';
+                const isPPV = post.price > 0;
+
+                return (
+                  <div
+                    key={post.id}
+                    className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-5 backdrop-blur-sm hover:border-zinc-700/60 transition-all duration-150 flex flex-col md:flex-row gap-4 justify-between"
+                  >
+                    <div className="flex-1 space-y-3 min-w-0">
+                      {/* Status row */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`text-[9px] uppercase font-extrabold px-2.5 py-0.5 rounded-full border ${
+                          isPublished
+                            ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                            : isScheduled
+                            ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                            : 'bg-zinc-800 text-zinc-400 border-zinc-700/60'
+                        }`}>
+                          {post.status}
+                        </span>
+
+                        {isPPV && (
+                          <span className="text-[9px] uppercase font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/25 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                            <Lock className="h-3 w-3" />
+                            PPV: ${post.price.toFixed(2)}
+                          </span>
+                        )}
+
+                        {post.scheduledFor && (
+                          <span className="text-xs text-zinc-400 flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5 text-zinc-500" />
+                            Schedule: {new Date(post.scheduledFor).toLocaleString()}
+                          </span>
+                        )}
+                        
+                        {post.ofPostId && (
+                          <span className="text-[10px] text-zinc-500 font-mono bg-zinc-950 px-2 py-0.5 rounded border border-zinc-800">
+                            ID: {post.ofPostId}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Content Caption */}
+                      {post.text && (
+                        <p className="text-xs text-zinc-200 leading-relaxed font-sans font-medium whitespace-pre-line">
+                          {post.text}
+                        </p>
+                      )}
+
+                      {/* Attachments preview row */}
+                      {post.mediaUrls && post.mediaUrls.length > 0 && (
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {post.mediaUrls.map((url, idx) => (
+                            <div key={idx} className="h-16 w-16 border border-zinc-800 rounded-lg overflow-hidden bg-zinc-950 relative">
+                              <img src={url} className="object-cover h-full w-full" alt="preview" />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Actions Panel */}
+                    <div className="flex md:flex-col items-end md:justify-center gap-2 flex-wrap border-t md:border-t-0 border-zinc-800/40 pt-3 md:pt-0">
+                      {isScheduled && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handlePublishNow(post.id)}
+                            className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold py-1.5 px-3 rounded-lg transition-all flex items-center gap-1 shadow-md shadow-blue-500/10 cursor-pointer"
+                          >
+                            <Globe className="h-3 w-3" /> Publish Now
+                          </button>
+                          
+                          <button
+                            type="button"
+                            onClick={() => handleCancelPost(post.id)}
+                            className="bg-zinc-800 hover:bg-red-950/40 hover:text-red-400 border border-zinc-700 hover:border-red-500/20 text-zinc-300 text-[10px] font-bold py-1.5 px-3 rounded-lg transition-all flex items-center gap-1 cursor-pointer"
+                          >
+                            <Trash2 className="h-3 w-3" /> Cancel
+                          </button>
+                        </>
+                      )}
+                      
+                      {isDraft && (
+                        <button
+                          type="button"
+                          onClick={() => handleCancelPost(post.id)}
+                          className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px] font-bold py-1.5 px-3 rounded-lg transition-all flex items-center gap-1 cursor-pointer"
+                        >
+                          <Trash2 className="h-3 w-3" /> Delete Draft
+                        </button>
+                      )}
+
+                      {isPublished && (
+                        <span className="text-[10px] text-zinc-500 font-bold flex items-center gap-1 bg-green-500/5 px-2 py-1 rounded-lg border border-green-500/10">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                          Live on OnlyFans
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
