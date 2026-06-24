@@ -112,3 +112,13 @@ export interface AutomationRule {
   isActive: boolean;
   createdAt: Date | string;
 }
+
+export interface Story {
+  id: string;
+  creatorId: string;
+  mediaUrl: string;
+  scheduledFor: Date | string;
+  status: 'DRAFT' | 'SCHEDULED' | 'PUBLISHED' | 'FAILED';
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}

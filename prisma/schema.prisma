@@ -79,6 +79,7 @@ model Creator {
   posts        Post[]
   earnings     EarningRecord[]
   rules        AutomationRule[]
+  stories      Story[]
 }
 
 model ChatterAssignment {
@@ -193,4 +194,16 @@ model AutomationRule {
   createdAt   DateTime @default(now())
   
   creator     Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+}
+
+model Story {
+  id           String   @id @default(uuid())
+  creatorId    String
+  mediaUrl     String
+  scheduledFor DateTime
+  status       String   // "DRAFT", "SCHEDULED", "PUBLISHED", "FAILED"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  creator      Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 }
