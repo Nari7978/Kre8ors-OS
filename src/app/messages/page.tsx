@@ -38,6 +38,10 @@ export default function MessagesPage() {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [unlockingMessageId, setUnlockingMessageId] = useState<string | null>(null);
 
+  // AI suggestions states
+  const [aiSuggestions, setAiSuggestions] = useState<{ id: string; label: string; text: string }[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [vaultItemsList, setVaultItemsList] = useState<MediaItem[]>([]);
@@ -127,6 +131,32 @@ const toggleAttachMedia = (url: string) => {
       }
     }
     fetchMessages();
+  }, [selectedCreatorId, selectedFan]);
+
+  // Fetch AI response suggestions when fan changes
+  useEffect(() => {
+    if (!selectedCreatorId || !selectedFan) {
+      setAiSuggestions([]);
+      return;
+    }
+
+    const fanId = selectedFan.id;
+
+    async function fetchSuggestions() {
+      setLoadingSuggestions(true);
+      try {
+        const res = await fetch(`/api/ai/suggest?creatorId=${selectedCreatorId}&fanId=${fanId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setAiSuggestions(data);
+        }
+      } catch (err) {
+        console.error('Error fetching AI suggestions:', err);
+      } finally {
+        setLoadingSuggestions(false);
+      }
+    }
+    fetchSuggestions();
   }, [selectedCreatorId, selectedFan]);
 
   // Scroll to bottom of conversation
@@ -506,6 +536,36 @@ const toggleAttachMedia = (url: string) => {
                       </button>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* AI response suggestions bar */}
+              {selectedFan && (
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                  <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider whitespace-nowrap flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+                    AI Suggestions:
+                  </span>
+                  {loadingSuggestions ? (
+                    <span className="text-[10px] text-zinc-500 italic">Generating replies...</span>
+                  ) : aiSuggestions.length === 0 ? (
+                    <span className="text-[10px] text-zinc-500 italic">No suggestions</span>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      {aiSuggestions.map((sug) => (
+                        <button
+                          type="button"
+                          key={sug.id}
+                          onClick={() => setMessageText(sug.text)}
+                          className="bg-zinc-950 border border-zinc-800 hover:border-zinc-700/80 px-2.5 py-1 rounded-full text-[10px] text-zinc-300 font-semibold transition-all max-w-[200px] truncate hover:text-white cursor-pointer"
+                          title={sug.text}
+                        >
+                          <strong className="text-blue-400 mr-1 font-bold">{sug.label}:</strong>
+                          {sug.text}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
