@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useGlobalStore } from '@/lib/store/global-store';
 import { Creator } from '@/types';
-import { LayoutDashboard, MessageSquare, User, RefreshCw, LogOut, Play, Folder, Calendar, Tv, DollarSign } from 'lucide-react';
+import { LayoutDashboard, MessageSquare, User, RefreshCw, LogOut, Play, Folder, Calendar, Tv, DollarSign, Users, Settings } from 'lucide-react';
 
 export default function GlobalHeader() {
   const pathname = usePathname();
@@ -121,6 +121,28 @@ export default function GlobalHeader() {
           >
             <DollarSign className="h-3.5 w-3.5" />
             Earnings
+          </Link>
+          <Link
+            href="/team"
+            className={`px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center gap-1.5 ${
+              pathname.startsWith('/team')
+                ? 'bg-zinc-800 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+            }`}
+          >
+            <Users className="h-3.5 w-3.5" />
+            Team
+          </Link>
+          <Link
+            href="/settings"
+            className={`px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center gap-1.5 ${
+              pathname.startsWith('/settings')
+                ? 'bg-zinc-800 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+            }`}
+          >
+            <Settings className="h-3.5 w-3.5" />
+            Settings
           </Link>
         </nav>
       </div>
