@@ -31,6 +31,23 @@ export default function AutomationsPage() {
     }
   }
 
+  async function handleToggleRule(ruleId: string, currentStatus: boolean) {
+    try {
+      const res = await fetch('/api/automations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ruleId, isActive: !currentStatus }),
+      });
+      if (res.ok) {
+        setRules((prev) =>
+          prev.map((r) => (r.id === ruleId ? { ...r, isActive: !currentStatus } : r))
+        );
+      }
+    } catch (err) {
+      console.error('Error toggling rule:', err);
+    }
+  }
+
   // Derived statistics metrics
   const activeRulesCount = rules.filter((r) => r.isActive).length;
   const triggerStats = {
@@ -164,6 +181,18 @@ export default function AutomationsPage() {
                         </span>
                       </div>
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleToggleRule(rule.id, rule.isActive)}
+                      className={`w-9 h-5 rounded-full relative transition-colors duration-200 flex-shrink-0 flex items-center ${
+                        rule.isActive ? 'bg-indigo-600' : 'bg-zinc-800 border border-zinc-700'
+                      }`}
+                    >
+                      <span className={`block w-3.5 h-3.5 rounded-full bg-white absolute transition-all duration-200 ${
+                        rule.isActive ? 'translate-x-4.5' : 'translate-x-0.5'
+                      }`} />
+                    </button>
                   </div>
 
                   <div className="bg-zinc-950/30 border border-zinc-800/40 p-3 rounded-xl space-y-2 text-xs">
