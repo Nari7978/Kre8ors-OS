@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useGlobalStore } from '@/lib/store/global-store';
 import { AutomationRule } from '@/types';
-import { Cpu, Plus } from 'lucide-react';
+import { Cpu, Plus, Clock, MessageSquare, RefreshCw } from 'lucide-react';
 
 export default function AutomationsPage() {
   const { activeCreator } = useGlobalStore();
@@ -97,6 +97,96 @@ export default function AutomationsPage() {
           <h3 className="text-2xl font-black text-blue-400 mt-2">{triggerStats.keyword}</h3>
           <p className="text-[9px] text-zinc-400 mt-1">Auto-replies in chat</p>
         </div>
+      </div>
+      {/* Main Grid: Info Banner & Rules Cards */}
+      <div className="grid grid-cols-1 gap-6">
+        {loading ? (
+          <div className="py-20 text-center text-zinc-500 text-sm flex flex-col items-center justify-center gap-3">
+            <RefreshCw className="h-6 w-6 animate-spin text-indigo-500" />
+            <span>Loading configured creator rules...</span>
+          </div>
+        ) : rules.length === 0 ? (
+          <div className="py-24 border border-dashed border-zinc-800 rounded-2xl text-center flex flex-col items-center justify-center space-y-4">
+            <div className="h-12 w-12 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-center text-zinc-600">
+              <Cpu className="h-6 w-6" />
+            </div>
+            <div className="space-y-1 max-w-sm">
+              <h3 className="text-sm font-semibold text-zinc-300">No automation rules configured</h3>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {rules.map((rule) => {
+              let conditionDetails = '';
+              try {
+                const cond = typeof rule.conditions === 'string' ? JSON.parse(rule.conditions) : rule.conditions;
+                if (rule.triggerType === 'new_subscriber') {
+                  conditionDetails = cond.delayMinutes 
+                    ? `Fires ${cond.delayMinutes} minutes after subscribe` 
+                    : 'Fires instantly on subscribe';
+                } else if (rule.triggerType === 'keyword_match') {
+                  conditionDetails = cond.keywords 
+                    ? `Matches keywords: ${cond.keywords.map((k: string) => `"${k}"`).join(', ')}` 
+                    : 'Matches keywords';
+                }
+              } catch (e) {
+                conditionDetails = 'Conditions defined';
+              }
+
+              let actionPreview = '';
+              try {
+                const act = typeof rule.actionData === 'string' ? JSON.parse(rule.actionData) : rule.actionData;
+                if (rule.actionType === 'send_message') {
+                  actionPreview = act.text || 'Send custom text';
+                } else if (rule.actionType === 'add_tag') {
+                  actionPreview = `Apply custom badge tag: "${act.tag}"`;
+                }
+              } catch (e) {
+                actionPreview = 'Action payload';
+              }
+
+              return (
+                <div
+                  key={rule.id}
+                  className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-5 hover:border-zinc-700/60 transition-all flex flex-col justify-between space-y-4"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                      <h4 className="text-sm font-bold text-zinc-100 flex items-center gap-1.5">
+                        {rule.name}
+                      </h4>
+                      <div className="flex items-center gap-1.5 pt-0.5">
+                        <span className="text-[9px] uppercase tracking-wide font-extrabold px-2 py-0.5 rounded-md border bg-indigo-500/10 text-indigo-400 border-indigo-500/20">
+                          Trigger: {rule.triggerType}
+                        </span>
+                        <span className="text-[9px] uppercase tracking-wide font-extrabold px-2 py-0.5 rounded-md border bg-purple-500/10 text-purple-400 border-purple-500/20">
+                          Action: {rule.actionType}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-zinc-950/30 border border-zinc-800/40 p-3 rounded-xl space-y-2 text-xs">
+                    <div className="flex items-center gap-1.5 text-zinc-400">
+                      <Clock className="h-3.5 w-3.5 text-indigo-400" />
+                      <span className="font-semibold text-zinc-300">Condition:</span>
+                      <span className="truncate">{conditionDetails}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-zinc-400">
+                      <MessageSquare className="h-3.5 w-3.5 text-purple-400 mt-0.5" />
+                      <div className="space-y-0.5 flex-1 min-w-0">
+                        <span className="font-semibold text-zinc-300 block">Payload:</span>
+                        <p className="text-zinc-400 italic line-clamp-2 leading-relaxed">
+                          {actionPreview}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
