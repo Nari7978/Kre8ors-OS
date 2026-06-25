@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useGlobalStore } from '@/lib/store/global-store';
 import { Creator } from '@/types';
-import { LayoutDashboard, MessageSquare, User, RefreshCw, LogOut, Play, Folder, Calendar, Tv, DollarSign, Users, Settings } from 'lucide-react';
+import { LayoutDashboard, MessageSquare, User, RefreshCw, LogOut, Play, Folder, Calendar, Tv, DollarSign, Users, Settings, Cpu } from 'lucide-react';
 
 export default function GlobalHeader() {
   const pathname = usePathname();
