@@ -10,6 +10,21 @@ export default function AutomationsPage() {
   const [rules, setRules] = useState<AutomationRule[]>([]);
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newRuleName, setNewRuleName] = useState('');
+  const [newTriggerType, setNewTriggerType] = useState<'new_subscriber' | 'keyword_match' | 'idle_fan'>('new_subscriber');
+  const [newActionType, setNewActionType] = useState<'send_message' | 'add_tag' | 'send_media'>('send_message');
+
+  // Trigger conditions state
+  const [delayMinutes, setDelayMinutes] = useState<number>(5);
+  const [keywordsString, setKeywordsString] = useState<string>('');
+  const [idleHours, setIdleHours] = useState<number>(24);
+
+  // Action data state
+  const [messageText, setMessageText] = useState<string>('');
+  const [tagName, setTagName] = useState<string>('');
+  const [mediaUrl, setMediaUrl] = useState<string>('');
 
   useEffect(() => {
     if (activeCreator) {
@@ -65,6 +80,70 @@ export default function AutomationsPage() {
     }
   }
 
+  function resetForm() {
+    setNewRuleName('');
+    setNewTriggerType('new_subscriber');
+    setNewActionType('send_message');
+    setDelayMinutes(5);
+    setKeywordsString('');
+    setIdleHours(24);
+    setMessageText('');
+    setTagName('');
+    setMediaUrl('');
+  }
+
+  async function handleCreateRule(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newRuleName.trim()) return;
+
+    setSaving(true);
+
+    const conditions: Record<string, any> = {};
+    if (newTriggerType === 'new_subscriber') {
+      conditions.delayMinutes = Number(delayMinutes);
+    } else if (newTriggerType === 'keyword_match') {
+      conditions.keywords = keywordsString.split(',').map((k) => k.trim().toLowerCase()).filter(Boolean);
+    } else if (newTriggerType === 'idle_fan') {
+      conditions.idleHours = Number(idleHours);
+    }
+
+    const actionData: Record<string, any> = {};
+    if (newActionType === 'send_message') {
+      actionData.text = messageText;
+    } else if (newActionType === 'add_tag') {
+      actionData.tag = tagName;
+    } else if (newActionType === 'send_media') {
+      actionData.text = messageText;
+      actionData.mediaUrl = mediaUrl;
+    }
+
+    try {
+      const res = await fetch('/api/automations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          creatorId: activeCreator!.id,
+          name: newRuleName,
+          triggerType: newTriggerType,
+          conditions,
+          actionType: newActionType,
+          actionData,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setRules((prev) => [data.rule, ...prev]);
+        setIsModalOpen(false);
+        resetForm();
+      }
+    } catch (err) {
+      console.error('Error creating rule:', err);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   // Derived statistics metrics
   const activeRulesCount = rules.filter((r) => r.isActive).length;
   const triggerStats = {
@@ -95,6 +174,7 @@ export default function AutomationsPage() {
           </p>
         </div>
         <button
+          onClick={() => setIsModalOpen(true)}
           className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-md shadow-indigo-600/10 flex items-center justify-center gap-1.5 self-start md:self-auto hover:scale-[1.02] active:scale-[0.98]"
         >
           <Plus className="h-4 w-4" />
@@ -253,6 +333,128 @@ export default function AutomationsPage() {
           </div>
         )}
       </div>
+
+      {/* Creation Modal Form */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-xl p-6 relative shadow-2xl max-h-[90vh] overflow-y-auto">
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="absolute top-4 right-4 text-zinc-500 hover:text-zinc-200"
+            >
+              ✕
+            </button>
+            <h3 className="text-lg font-extrabold text-zinc-100 mb-4">
+              Configure Auto-Responder Rule
+            </h3>
+            <form onSubmit={handleCreateRule} className="space-y-4">
+              <div>
+                <label className="text-xs text-zinc-400 block mb-1">Rule Name</label>
+                <input
+                  type="text"
+                  required
+                  value={newRuleName}
+                  onChange={(e) => setNewRuleName(e.target.value)}
+                  placeholder="e.g. Welcome Discount Prompt"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs focus:outline-none focus:border-indigo-500 text-white"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs text-zinc-400 block mb-1">Trigger Event</label>
+                  <select
+                    value={newTriggerType}
+                    onChange={(e) => setNewTriggerType(e.target.value as any)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs focus:outline-none focus:border-indigo-500 text-white"
+                  >
+                    <option value="new_subscriber">New Subscriber</option>
+                    <option value="keyword_match">Keyword Match</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-zinc-400 block mb-1">Action Type</label>
+                  <select
+                    value={newActionType}
+                    onChange={(e) => setNewActionType(e.target.value as any)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs focus:outline-none focus:border-indigo-500 text-white"
+                  >
+                    <option value="send_message">Send Message</option>
+                    <option value="add_tag">Add Tag</option>
+                  </select>
+                </div>
+              </div>
+              
+              {newTriggerType === 'new_subscriber' && (
+                <div>
+                  <label className="text-xs text-zinc-400 block mb-1">Delay (Minutes)</label>
+                  <input
+                    type="number"
+                    value={delayMinutes}
+                    onChange={(e) => setDelayMinutes(Number(e.target.value))}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white"
+                  />
+                </div>
+              )}
+
+              {newTriggerType === 'keyword_match' && (
+                <div>
+                  <label className="text-xs text-zinc-400 block mb-1">Keywords (comma separated)</label>
+                  <input
+                    type="text"
+                    value={keywordsString}
+                    onChange={(e) => setKeywordsString(e.target.value)}
+                    placeholder="e.g. video, photo"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white"
+                  />
+                </div>
+              )}
+
+              {newActionType === 'send_message' && (
+                <div>
+                  <label className="text-xs text-zinc-400 block mb-1">Message Text</label>
+                  <textarea
+                    required
+                    value={messageText}
+                    onChange={(e) => setMessageText(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white"
+                  />
+                </div>
+              )}
+
+              {newActionType === 'add_tag' && (
+                <div>
+                  <label className="text-xs text-zinc-400 block mb-1">Tag Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={tagName}
+                    onChange={(e) => setTagName(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white"
+                  />
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="bg-zinc-800 hover:bg-zinc-750 text-zinc-400 text-xs py-2 px-4 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs py-2 px-4 rounded-xl"
+                >
+                  Save Rule
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
