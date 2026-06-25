@@ -52,8 +52,33 @@ export async function POST(request: Request) {
         rule: updatedRule,
       });
     }
+
+    // Create new rule
+    if (!creatorId || !name || !triggerType || !actionType) {
+      return NextResponse.json({ error: 'Missing required creation fields' }, { status: 400 });
+    }
+
+    const parsedConditions = typeof conditions === 'string' ? JSON.parse(conditions) : conditions;
+    const parsedActionData = typeof actionData === 'string' ? JSON.parse(actionData) : actionData;
+
+    const newRule = await db.automationRule.create({
+      data: {
+        creatorId,
+        name,
+        triggerType,
+        conditions: parsedConditions || {},
+        actionType,
+        actionData: parsedActionData || {},
+        isActive: true,
+      },
+    });
+
+    return NextResponse.json({
+      message: 'Rule created successfully',
+      rule: newRule,
+    });
   } catch (error) {
-    console.error('Error updating automation rule status:', error);
-    return NextResponse.json({ error: 'Failed to update rule status' }, { status: 500 });
+    console.error('Error handling automations POST:', error);
+    return NextResponse.json({ error: 'Failed to process request' }, { status: 500 });
   }
 }
