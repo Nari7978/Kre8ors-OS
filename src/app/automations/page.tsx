@@ -3,12 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { useGlobalStore } from '@/lib/store/global-store';
 import { AutomationRule } from '@/types';
-import { Cpu, Plus, Clock, MessageSquare, RefreshCw } from 'lucide-react';
+import { Cpu, Plus, Clock, MessageSquare, RefreshCw, Trash2 } from 'lucide-react';
 
 export default function AutomationsPage() {
   const { activeCreator } = useGlobalStore();
   const [rules, setRules] = useState<AutomationRule[]>([]);
   const [loading, setLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (activeCreator) {
@@ -45,6 +46,22 @@ export default function AutomationsPage() {
       }
     } catch (err) {
       console.error('Error toggling rule:', err);
+    }
+  }
+
+  async function handleDeleteRule(ruleId: string) {
+    setDeletingId(ruleId);
+    try {
+      const res = await fetch(`/api/automations?ruleId=${ruleId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setRules((prev) => prev.filter((r) => r.id !== ruleId));
+      }
+    } catch (err) {
+      console.error('Error deleting rule:', err);
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -210,6 +227,25 @@ export default function AutomationsPage() {
                         </p>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Bottom: Action buttons (Delete) */}
+                  <div className="flex items-center justify-between border-t border-zinc-800/60 pt-3">
+                    <span className="text-[10px] text-zinc-500">
+                      Created on {new Date(rule.createdAt).toLocaleDateString()}
+                    </span>
+                    <button
+                      onClick={() => handleDeleteRule(rule.id)}
+                      disabled={deletingId === rule.id}
+                      className="text-zinc-500 hover:text-red-400 hover:bg-red-500/10 p-1.5 rounded-lg transition-colors flex items-center gap-1 disabled:opacity-50"
+                    >
+                      {deletingId === rule.id ? (
+                        <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5" />
+                      )}
+                      <span className="text-[10px] font-bold">Remove</span>
+                    </button>
                   </div>
                 </div>
               );
