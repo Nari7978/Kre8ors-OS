@@ -112,6 +112,17 @@ export default function GlobalHeader() {
             Stories Queue
           </Link>
           <Link
+            href="/automations"
+            className={`px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center gap-1.5 ${
+              pathname.startsWith('/automations')
+                ? 'bg-zinc-800 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+            }`}
+          >
+            <Cpu className="h-3.5 w-3.5" />
+            Automations
+          </Link>
+          <Link
             href="/earnings"
             className={`px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center gap-1.5 ${
               pathname.startsWith('/earnings')
