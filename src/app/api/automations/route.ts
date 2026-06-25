@@ -25,25 +25,33 @@ export async function GET(request: Request) {
   }
 }
 
-// POST: Toggle rule isActive state
+// POST: Toggle rule isActive state OR create a new rule
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { ruleId, isActive } = body;
+    const {
+      ruleId,
+      isActive,
+      creatorId,
+      name,
+      triggerType,
+      conditions,
+      actionType,
+      actionData,
+    } = body;
 
-    if (!ruleId) {
-      return NextResponse.json({ error: 'ruleId is required' }, { status: 400 });
+    // Toggle rule
+    if (ruleId !== undefined && isActive !== undefined) {
+      const updatedRule = await db.automationRule.update({
+        where: { id: ruleId },
+        data: { isActive },
+      });
+
+      return NextResponse.json({
+        message: 'Rule status updated successfully',
+        rule: updatedRule,
+      });
     }
-
-    const updatedRule = await db.automationRule.update({
-      where: { id: ruleId },
-      data: { isActive },
-    });
-
-    return NextResponse.json({
-      message: 'Rule status updated successfully',
-      rule: updatedRule,
-    });
   } catch (error) {
     console.error('Error updating automation rule status:', error);
     return NextResponse.json({ error: 'Failed to update rule status' }, { status: 500 });
