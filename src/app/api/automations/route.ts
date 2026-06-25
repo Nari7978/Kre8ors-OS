@@ -82,3 +82,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to process request' }, { status: 500 });
   }
 }
+
+// DELETE: Delete an automation rule
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const ruleId = searchParams.get('ruleId');
+
+    if (!ruleId) {
+      return NextResponse.json({ error: 'ruleId is required' }, { status: 400 });
+    }
+
+    await db.automationRule.delete({
+      where: { id: ruleId },
+    });
+
+    return NextResponse.json({
+      message: 'Rule deleted successfully',
+    });
+  } catch (error) {
+    console.error('Error deleting automation rule:', error);
+    return NextResponse.json({ error: 'Failed to delete rule' }, { status: 500 });
+  }
+}
