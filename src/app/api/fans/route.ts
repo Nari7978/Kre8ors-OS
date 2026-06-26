@@ -75,3 +75,41 @@ export async function GET(request: Request) {
     );
   }
 }
+
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json();
+    const { fanId, notes, customTags } = body;
+
+    if (!fanId) {
+      return NextResponse.json(
+        { error: 'fanId is required' },
+        { status: 400 }
+      );
+    }
+
+    const data: any = {};
+    if (notes !== undefined) {
+      data.notes = notes;
+    }
+    if (customTags !== undefined) {
+      data.customTags = JSON.stringify(customTags);
+    }
+
+    const updatedFan = await db.fan.update({
+      where: { id: fanId },
+      data,
+    });
+
+    return NextResponse.json({
+      ...updatedFan,
+      customTags: JSON.parse(updatedFan.customTags || '[]') as string[],
+    });
+  } catch (error) {
+    console.error('Error updating fan details:', error);
+    return NextResponse.json(
+      { error: 'Failed to update fan details' },
+      { status: 500 }
+    );
+  }
+}
