@@ -156,6 +156,96 @@ export default function AnalyticsPage() {
               </div>
             </div>
           </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            {/* Cohort Retention Card */}
+            <div className="bg-zinc-900/40 border border-zinc-850 rounded-2xl p-6 backdrop-blur-sm space-y-4">
+              <h2 className="text-sm font-bold text-zinc-200 flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-blue-400" />
+                Subscriber Cohort Retention Grid
+              </h2>
+              <p className="text-zinc-500 text-xs font-semibold">
+                Monthly active status tracking of new subscribers starting from their initial sign-up month.
+              </p>
+
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-xs text-left">
+                  <thead>
+                    <tr className="border-b border-zinc-850 text-zinc-400 font-bold">
+                      <th className="p-3">Cohort</th>
+                      <th className="p-3">Size</th>
+                      <th className="p-3 text-center">Month 0</th>
+                      <th className="p-3 text-center">Month 1</th>
+                      <th className="p-3 text-center">Month 2</th>
+                      <th className="p-3 text-center">Month 3</th>
+                      <th className="p-3 text-center">Month 4</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-900">
+                    {cohortData.map((row) => (
+                      <tr key={row.cohort} className="hover:bg-zinc-900/20 transition-colors">
+                        <td className="p-3 font-bold text-zinc-300">{row.cohort}</td>
+                        <td className="p-3 font-semibold text-zinc-400">{row.size} fans</td>
+                        {row.retention.map((rate, idx) => {
+                          let bgClass = "bg-zinc-950 text-zinc-600";
+                          if (rate > 0) {
+                            if (rate >= 80) bgClass = "bg-indigo-600 text-white font-black";
+                            else if (rate >= 60) bgClass = "bg-indigo-600/70 text-indigo-100 font-bold";
+                            else if (rate >= 40) bgClass = "bg-indigo-600/50 text-indigo-200 font-semibold";
+                            else bgClass = "bg-indigo-600/30 text-indigo-300 font-semibold";
+                          }
+                          return (
+                            <td key={idx} className="p-1 text-center">
+                              <div className={`py-2 px-1.5 rounded-lg text-[10px] ${bgClass}`}>
+                                {rate > 0 ? `${rate}%` : '-'}
+                              </div>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* PPV Conversion Chart Card */}
+            <div className="bg-zinc-900/40 border border-zinc-850 rounded-2xl p-6 backdrop-blur-sm space-y-4">
+              <h2 className="text-sm font-bold text-zinc-200 flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-emerald-400" />
+                PPV Price Tier Conversion Rates
+              </h2>
+              <p className="text-zinc-500 text-xs font-semibold">
+                Unlock conversion rates segmented by pay-per-view price ranges.
+              </p>
+
+              <div className="space-y-5 pt-2">
+                {conversionData?.priceTiers && conversionData.priceTiers.length > 0 ? (
+                  conversionData.priceTiers.map((tier) => (
+                    <div key={tier.tier} className="space-y-2">
+                      <div className="flex items-center justify-between text-xs font-semibold">
+                        <span className="text-zinc-300 font-bold">{tier.tier} Tier</span>
+                        <div className="flex items-center gap-2 text-zinc-500">
+                          <span>{tier.unlocked} / {tier.sent} sold</span>
+                          <span className="text-emerald-400 font-extrabold">{tier.rate.toFixed(1)}%</span>
+                        </div>
+                      </div>
+                      <div className="w-full bg-zinc-950 h-3 rounded-full overflow-hidden border border-zinc-900">
+                        <div
+                          className="bg-gradient-to-r from-emerald-600 to-emerald-400 h-full rounded-full transition-all duration-500"
+                          style={{ width: `${tier.rate}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="py-8 text-center text-zinc-500 text-xs italic">
+                    No PPV pricing data registered yet
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </>
       )}
     </div>
