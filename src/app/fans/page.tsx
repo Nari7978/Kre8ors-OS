@@ -20,6 +20,7 @@ export default function FansCRMPage() {
   const [selectedFan, setSelectedFan] = useState<Fan | null>(null);
   const [notesText, setNotesText] = useState('');
   const [newTag, setNewTag] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (selectedFan) {
@@ -67,6 +68,51 @@ export default function FansCRMPage() {
       setLoading(false);
     }
   }
+
+  const handleAddTag = () => {
+    if (!selectedFan || !newTag.trim()) return;
+    const tag = newTag.trim().toLowerCase();
+    if (selectedFan.customTags.includes(tag)) return;
+    const updatedTags = [...selectedFan.customTags, tag];
+    setSelectedFan({ ...selectedFan, customTags: updatedTags });
+    setNewTag('');
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    if (!selectedFan) return;
+    const updatedTags = selectedFan.customTags.filter((t) => t !== tagToRemove);
+    setSelectedFan({ ...selectedFan, customTags: updatedTags });
+  };
+
+  const handleSaveDetails = async () => {
+    if (!selectedFan) return;
+    setSaving(true);
+    try {
+      const res = await fetch('/api/fans', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fanId: selectedFan.id,
+          notes: notesText,
+          customTags: selectedFan.customTags,
+        }),
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        // Update fan in list state
+        setFans((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
+        // Close modal
+        setSelectedFan(null);
+      } else {
+        console.error('Failed to save fan details');
+      }
+    } catch (err) {
+      console.error('Error saving fan details:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Calculate metrics (always on un-filtered stats or filtered stats? Let's keep it on filtered stats for real-time segmented visibility)
   const totalFans = fans.length;
@@ -400,7 +446,10 @@ export default function FansCRMPage() {
                   {selectedFan.customTags.map((tag) => (
                     <span key={tag} className="text-xs bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 pl-2.5 pr-1.5 py-1 rounded-full flex items-center gap-1 font-semibold">
                       #{tag}
-                      <button className="text-zinc-500 hover:text-white rounded-full p-0.5">
+                      <button
+                        onClick={() => handleRemoveTag(tag)}
+                        className="text-zinc-500 hover:text-white rounded-full p-0.5"
+                      >
                         <X className="h-3 w-3" />
                       </button>
                     </span>
@@ -412,9 +461,18 @@ export default function FansCRMPage() {
                     placeholder="New tag..."
                     value={newTag}
                     onChange={(e) => setNewTag(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddTag();
+                      }
+                    }}
                     className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-indigo-500"
                   />
-                  <button className="bg-zinc-850 hover:bg-zinc-800 text-zinc-300 p-2 rounded-xl border border-zinc-800 text-xs font-semibold">
+                  <button
+                    onClick={handleAddTag}
+                    className="bg-zinc-850 hover:bg-zinc-800 text-zinc-300 p-2 rounded-xl border border-zinc-800 text-xs font-semibold"
+                  >
                     Add
                   </button>
                 </div>
@@ -440,8 +498,12 @@ export default function FansCRMPage() {
               >
                 Close Profile
               </button>
-              <button className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs py-2 px-4 rounded-xl font-semibold">
-                Save Notes & Tags
+              <button
+                onClick={handleSaveDetails}
+                disabled={saving}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs py-2 px-4 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {saving ? 'Saving...' : 'Save Notes & Tags'}
               </button>
             </div>
           </div>
