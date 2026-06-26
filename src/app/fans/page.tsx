@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useGlobalStore } from '@/lib/store/global-store';
 import { Fan } from '@/types';
-import { Users, UserCheck, UserMinus, DollarSign, Search, RefreshCw, Filter, SlidersHorizontal, Tag, Eye } from 'lucide-react';
+import { Users, UserCheck, UserMinus, DollarSign, Search, RefreshCw, Filter, SlidersHorizontal, Tag, Eye, X, Plus } from 'lucide-react';
 
 export default function FansCRMPage() {
   const { activeCreator } = useGlobalStore();
@@ -18,6 +18,15 @@ export default function FansCRMPage() {
 
   // Active fan detail drawer modal state
   const [selectedFan, setSelectedFan] = useState<Fan | null>(null);
+  const [notesText, setNotesText] = useState('');
+  const [newTag, setNewTag] = useState('');
+
+  useEffect(() => {
+    if (selectedFan) {
+      setNotesText(selectedFan.notes || '');
+      setNewTag('');
+    }
+  }, [selectedFan]);
 
   useEffect(() => {
     if (!activeCreator) return;
@@ -320,6 +329,124 @@ export default function FansCRMPage() {
           </div>
         )}
       </div>
+      {/* Detail Slide-out Drawer Modal */}
+      {selectedFan && (
+        <div className="fixed inset-0 bg-zinc-950/80 backdrop-blur-sm z-50 flex justify-end">
+          <div className="w-full max-w-md h-full bg-zinc-900 border-l border-zinc-800 p-6 shadow-2xl flex flex-col justify-between overflow-y-auto">
+            <div className="space-y-6">
+              {/* Drawer Header */}
+              <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+                <h2 className="text-md font-bold text-zinc-100 flex items-center gap-2">
+                  <Tag className="h-4 w-4 text-indigo-400" />
+                  Subscriber Profile Detail
+                </h2>
+                <button
+                  onClick={() => setSelectedFan(null)}
+                  className="text-zinc-500 hover:text-white p-1 rounded-lg hover:bg-zinc-800 transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Fan Details Avatar Card */}
+              <div className="flex flex-col items-center text-center p-4 bg-zinc-950/30 border border-zinc-800/60 rounded-2xl">
+                <div className="h-16 w-16 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center overflow-hidden mb-3">
+                  {selectedFan.avatarUrl ? (
+                    <img src={selectedFan.avatarUrl} alt={selectedFan.displayName} className="object-cover h-full w-full" />
+                  ) : (
+                    <Users className="h-8 w-8 text-zinc-500" />
+                  )}
+                </div>
+                <h3 className="font-bold text-sm text-zinc-200">{selectedFan.displayName}</h3>
+                <p className="text-xs text-zinc-500">@{selectedFan.username}</p>
+                <div className="flex items-center gap-1.5 mt-2 bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">
+                  <DollarSign className="h-3.5 w-3.5 text-emerald-500" />
+                  <span className="text-xs font-black text-zinc-300">LTV Spent: ${Number(selectedFan.totalSpent).toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Sub Details Info */}
+              <div className="bg-zinc-950/20 border border-zinc-850 p-4 rounded-xl space-y-2 text-xs">
+                <div className="flex justify-between text-zinc-400">
+                  <span>OnlyFans UID:</span>
+                  <span className="font-semibold text-zinc-300">{selectedFan.ofId}</span>
+                </div>
+                <div className="flex justify-between text-zinc-400">
+                  <span>Subscription State:</span>
+                  <span className={`font-bold ${selectedFan.isSubscriber ? 'text-green-400' : 'text-red-400'}`}>
+                    {selectedFan.isSubscriber ? 'Active' : 'Expired'}
+                  </span>
+                </div>
+                <div className="flex justify-between text-zinc-400">
+                  <span>Subscribed Date:</span>
+                  <span className="font-semibold text-zinc-300">
+                    {new Date(selectedFan.subscribedAt).toLocaleDateString()}
+                  </span>
+                </div>
+                {selectedFan.expiresAt && (
+                  <div className="flex justify-between text-zinc-400">
+                    <span>Expiration Date:</span>
+                    <span className="font-semibold text-zinc-300">
+                      {new Date(selectedFan.expiresAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* CRM Tags section layout placeholder */}
+              <div className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Custom CRM Badging Tags</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedFan.customTags.map((tag) => (
+                    <span key={tag} className="text-xs bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 pl-2.5 pr-1.5 py-1 rounded-full flex items-center gap-1 font-semibold">
+                      #{tag}
+                      <button className="text-zinc-500 hover:text-white rounded-full p-0.5">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 mt-2">
+                  <input
+                    type="text"
+                    placeholder="New tag..."
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-indigo-500"
+                  />
+                  <button className="bg-zinc-850 hover:bg-zinc-800 text-zinc-300 p-2 rounded-xl border border-zinc-800 text-xs font-semibold">
+                    Add
+                  </button>
+                </div>
+              </div>
+
+              {/* CRM Notes Textarea layout placeholder */}
+              <div className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Operator Profile Notes</span>
+                <textarea
+                  placeholder="Enter details like fan characteristics, PPV conversion conversions records..."
+                  value={notesText}
+                  onChange={(e) => setNotesText(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs text-zinc-300 focus:outline-none focus:border-indigo-500 h-28 resize-none font-sans"
+                />
+              </div>
+            </div>
+
+            {/* Save notes button */}
+            <div className="pt-4 border-t border-zinc-800 mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setSelectedFan(null)}
+                className="bg-zinc-850 hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs py-2 px-4 rounded-xl border border-zinc-800 font-semibold"
+              >
+                Close Profile
+              </button>
+              <button className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs py-2 px-4 rounded-xl font-semibold">
+                Save Notes & Tags
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
