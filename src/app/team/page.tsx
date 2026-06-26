@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useGlobalStore } from '@/lib/store/global-store';
 import { 
-  Users, UserCheck, Sliders, RefreshCw, X, Check, Search, DollarSign, Clock
+  Users, UserCheck, Sliders, RefreshCw, X, Check, Search, DollarSign, Clock,
+  Trash2, Plus
 } from 'lucide-react';
 import { Creator } from '@/types';
 
@@ -39,6 +40,15 @@ export default function TeamPage() {
   const [creators, setCreators] = useState<Creator[]>([]);
   const [loading, setLoading] = useState(false);
   const [updatingAssignment, setUpdatingAssignment] = useState<string | null>(null);
+
+  // Invitation Form State
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newName, setNewName] = useState('');
+  const [newRole, setNewRole] = useState<'AGENCY_OWNER' | 'MANAGER' | 'CHATTER'>('CHATTER');
+  const [createError, setCreateError] = useState('');
+  const [creating, setCreating] = useState(false);
 
   // Filter and Search States
   const [searchTerm, setSearchTerm] = useState('');
@@ -103,6 +113,25 @@ export default function TeamPage() {
     }
   };
 
+  const handleCreateMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreateError('');
+    if (!newEmail.trim() || !newPassword.trim() || !newName.trim() || !newRole) {
+      setCreateError('Please fill out all fields.');
+      return;
+    }
+    if (!newEmail.includes('@')) {
+      setCreateError('Please enter a valid email address.');
+      return;
+    }
+    console.log('Mock create operator payload:', { newEmail, newPassword, newName, newRole });
+    setCreateOpen(false);
+  };
+
+  const handleDeleteMember = async (userId: string) => {
+    console.log('Mock delete operator:', userId);
+  };
+
   // Filter logic
   const filteredTeam = team.filter((member) => {
     const matchesSearch = 
@@ -137,14 +166,23 @@ export default function TeamPage() {
             Manage agency roles, chatter assignments to creators, and track live shift revenue logs.
           </p>
         </div>
-        <button
-          onClick={loadTeamData}
-          disabled={loading}
-          className="text-xs bg-zinc-900 border border-zinc-800 hover:bg-zinc-805 px-3.5 py-1.5 rounded-lg text-zinc-300 flex items-center gap-1.5 transition-all disabled:opacity-50 cursor-pointer"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin text-blue-500' : 'text-zinc-400'}`} />
-          Refresh Registry
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setCreateOpen(true)}
+            className="text-xs bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-xl text-white font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-lg shadow-indigo-600/10 border-0"
+          >
+            <Plus className="h-4 w-4" />
+            Add Team Member
+          </button>
+          <button
+            onClick={loadTeamData}
+            disabled={loading}
+            className="text-xs bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 px-3.5 py-1.5 rounded-lg text-zinc-300 flex items-center gap-1.5 transition-all disabled:opacity-50 cursor-pointer"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin text-blue-500' : 'text-zinc-400'}`} />
+            Refresh Registry
+          </button>
+        </div>
       </div>
 
       {/* Aggregate metrics grid */}
@@ -428,6 +466,106 @@ export default function TeamPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Floating Add Team Member drawer overlay */}
+      {createOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-end">
+          <form 
+            onSubmit={handleCreateMember}
+            className="h-full w-full max-w-md bg-zinc-950 border-l border-zinc-800 p-6 flex flex-col justify-between shadow-2xl relative"
+          >
+            <div className="space-y-6">
+              <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+                <div className="flex items-center gap-2">
+                  <Plus className="h-5 w-5 text-indigo-400" />
+                  <h3 className="font-extrabold text-white text-sm">Add Team Member</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCreateOpen(false)}
+                  className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 p-1.5 rounded-lg text-zinc-400 hover:text-white transition-all cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {createError && (
+                <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-xl font-semibold">
+                  {createError}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold text-zinc-450">Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="E.g. Sarah Connor"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-indigo-500 text-zinc-200"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold text-zinc-450">Email Address</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="sarah@agency.com"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-indigo-500 text-zinc-200"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold text-zinc-450">Password</label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="••••••••"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-indigo-500 text-zinc-200"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold text-zinc-450">Agency Role</label>
+                  <select
+                    value={newRole}
+                    onChange={(e) => setNewRole(e.target.value as any)}
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 text-xs focus:outline-none focus:border-indigo-500 text-zinc-200 cursor-pointer"
+                  >
+                    <option value="CHATTER">Chatter (Operator)</option>
+                    <option value="MANAGER">Manager (Administrator)</option>
+                    <option value="AGENCY_OWNER">Agency Owner (Full Access)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-zinc-800 pt-4 mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setCreateOpen(false)}
+                className="bg-zinc-900 hover:bg-zinc-850 text-zinc-400 hover:text-white font-bold text-xs py-2.5 px-4 rounded-lg transition-colors cursor-pointer border border-zinc-800"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={creating}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-2.5 px-4 rounded-lg transition-colors cursor-pointer border-0 disabled:opacity-50"
+              >
+                {creating ? 'Inviting...' : 'Add Operator'}
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>
