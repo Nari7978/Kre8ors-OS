@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useGlobalStore } from '@/lib/store/global-store';
 import { Creator } from '@/types';
-import { LayoutDashboard, MessageSquare, User, RefreshCw, LogOut, Play, Folder, Calendar, Tv, DollarSign, Users, Settings, Cpu } from 'lucide-react';
+import { LayoutDashboard, MessageSquare, User, RefreshCw, LogOut, Play, Folder, Calendar, Tv, DollarSign, Users, Settings, Cpu, UserCheck, TrendingUp } from 'lucide-react';
 
 export default function GlobalHeader() {
   const pathname = usePathname();
@@ -143,6 +143,28 @@ export default function GlobalHeader() {
           >
             <Users className="h-3.5 w-3.5" />
             Team
+          </Link>
+          <Link
+            href="/fans"
+            className={`px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center gap-1.5 ${
+              pathname.startsWith('/fans')
+                ? 'bg-zinc-800 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+            }`}
+          >
+            <UserCheck className="h-3.5 w-3.5 text-blue-400" />
+            Fans CRM
+          </Link>
+          <Link
+            href="/analytics"
+            className={`px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center gap-1.5 ${
+              pathname.startsWith('/analytics')
+                ? 'bg-zinc-800 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+            }`}
+          >
+            <TrendingUp className="h-3.5 w-3.5 text-indigo-400" />
+            Analytics
           </Link>
           <Link
             href="/settings"
