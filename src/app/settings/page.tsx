@@ -446,6 +446,44 @@ export default function SettingsPage() {
             {/* Event Composer panel */}
             <div className="lg:col-span-5 space-y-4">
               <div className="space-y-1.5">
+                <span className="text-[10px] font-bold text-zinc-400 uppercase block">Quick Test Templates</span>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSimEventType('new_subscriber');
+                      setSimUsername('new_joiner');
+                    }}
+                    className="bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-white px-2 py-1.5 rounded-lg text-[9px] font-bold text-zinc-400 text-center transition-colors cursor-pointer"
+                  >
+                    Welcome Sub
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSimEventType('incoming_message');
+                      setSimUsername('chat_tester');
+                      setSimText('send catalog info');
+                    }}
+                    className="bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-white px-2 py-1.5 rounded-lg text-[9px] font-bold text-zinc-400 text-center transition-colors cursor-pointer"
+                  >
+                    Keyword Match
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSimEventType('tip_received');
+                      setSimUsername('big_tipper');
+                      setSimAmount('50.00');
+                    }}
+                    className="bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-white px-2 py-1.5 rounded-lg text-[9px] font-bold text-zinc-400 text-center transition-colors cursor-pointer"
+                  >
+                    $50 Tip Trigger
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-zinc-400 uppercase">Simulated Event Type</label>
                 <select
                   value={simEventType}
