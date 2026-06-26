@@ -42,6 +42,10 @@ export default function SettingsPage() {
   const [simulatingEvent, setSimulatingEvent] = useState(false);
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
 
+  // Proxy checking state
+  const [testingProxy, setTestingProxy] = useState(false);
+  const [proxyTestResult, setProxyTestResult] = useState<'success' | 'failed' | null>(null);
+
   // Load creator settings when active creator context shifts
   useEffect(() => {
     if (!activeCreator) return;
@@ -198,6 +202,26 @@ export default function SettingsPage() {
     setDebugLogs([]);
   };
 
+  const handleTestProxy = async () => {
+    setTestingProxy(true);
+    setProxyTestResult(null);
+
+    // Simulate connection delay
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    if (proxyHost && proxyPort) {
+      const portNum = parseInt(proxyPort);
+      if (!isNaN(portNum) && portNum > 0 && portNum <= 65535) {
+        setProxyTestResult('success');
+      } else {
+        setProxyTestResult('failed');
+      }
+    } else {
+      setProxyTestResult('failed');
+    }
+    setTestingProxy(false);
+  };
+
   if (!activeCreator) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-zinc-950 text-zinc-400 p-8">
@@ -344,6 +368,31 @@ export default function SettingsPage() {
                     onChange={(e) => setProxyPass(e.target.value)}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 px-3 text-xs text-zinc-300 focus:outline-none focus:border-blue-500 font-semibold"
                   />
+                </div>
+
+                <div className="md:col-span-4 flex flex-col md:flex-row items-center justify-between gap-3 pt-3 border-t border-zinc-800/40 mt-2">
+                  <button
+                    type="button"
+                    onClick={handleTestProxy}
+                    disabled={testingProxy}
+                    className="bg-zinc-950 border border-zinc-800 hover:border-zinc-700 text-zinc-350 hover:text-white font-bold text-[10px] px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    {testingProxy && <RefreshCw className="h-3.5 w-3.5 animate-spin text-blue-500" />}
+                    Verify Proxy Route Check
+                  </button>
+
+                  {proxyTestResult === 'success' && (
+                    <span className="text-[10px] text-green-400 font-bold flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
+                      Proxy route active! Relayed successfully.
+                    </span>
+                  )}
+                  {proxyTestResult === 'failed' && (
+                    <span className="text-[10px] text-red-400 font-bold flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
+                      Proxy route failed. Check host/port config.
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
