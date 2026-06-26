@@ -124,12 +124,57 @@ export default function TeamPage() {
       setCreateError('Please enter a valid email address.');
       return;
     }
-    console.log('Mock create operator payload:', { newEmail, newPassword, newName, newRole });
-    setCreateOpen(false);
+
+    setCreating(true);
+    try {
+      const res = await fetch('/api/team', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: newEmail.trim(),
+          password: newPassword.trim(),
+          name: newName.trim(),
+          role: newRole,
+        }),
+      });
+
+      if (res.ok) {
+        const created = await res.json();
+        setTeam((prev) => [...prev, created]);
+        
+        // Reset form
+        setNewEmail('');
+        setNewPassword('');
+        setNewName('');
+        setNewRole('CHATTER');
+        setCreateOpen(false);
+      } else {
+        const data = await res.json();
+        setCreateError(data.error || 'Failed to create team member');
+      }
+    } catch (err) {
+      console.error('Error creating team member:', err);
+      setCreateError('Failed to connect to team registry server');
+    } finally {
+      setCreating(false);
+    }
   };
 
   const handleDeleteMember = async (userId: string) => {
-    console.log('Mock delete operator:', userId);
+    if (!confirm('Are you sure you want to remove this team member from the registry?')) return;
+    try {
+      const res = await fetch(`/api/team?userId=${userId}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        setTeam((prev) => prev.filter((m) => m.id !== userId));
+      } else {
+        console.error('Failed to delete team member from API');
+      }
+    } catch (err) {
+      console.error('Error deleting team member:', err);
+    }
   };
 
   // Filter logic
@@ -302,9 +347,21 @@ export default function TeamPage() {
                       <p className="text-zinc-550 text-[11px] font-semibold tracking-wide truncate max-w-[180px]">{member.email}</p>
                     </div>
 
-                    <span className={`text-[9px] uppercase font-extrabold px-2.5 py-0.5 rounded-full border ${roleColorMap[member.role]}`}>
-                      {roleLabelMap[member.role]}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-[9px] uppercase font-extrabold px-2.5 py-0.5 rounded-full border ${roleColorMap[member.role]}`}>
+                        {roleLabelMap[member.role]}
+                      </span>
+                      {member.role !== 'CREATOR' && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteMember(member.id)}
+                          className="text-zinc-500 hover:text-red-400 p-1 rounded hover:bg-zinc-800 transition-colors border-0 bg-transparent cursor-pointer"
+                          title="Remove operator"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Status Indicator Bar */}
