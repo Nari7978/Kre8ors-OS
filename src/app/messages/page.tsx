@@ -37,6 +37,7 @@ export default function MessagesPage() {
   const [notesText, setNotesText] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
   const [unlockingMessageId, setUnlockingMessageId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   // AI suggestions states
   const [aiSuggestions, setAiSuggestions] = useState<{ id: string; label: string; text: string }[]>([]);
@@ -264,12 +265,33 @@ const toggleAttachMedia = (url: string) => {
     }
   };
 
-  // Save notes locally
-  const handleSaveNotes = () => {
+  // Save notes and tags to database
+  const handleSaveNotes = async () => {
     if (!selectedFan) return;
-    const updatedFan = { ...selectedFan, notes: notesText };
-    setSelectedFan(updatedFan);
-    setFans((prev) => prev.map((f) => (f.id === selectedFan.id ? updatedFan : f)));
+    setSaving(true);
+    try {
+      const res = await fetch('/api/fans', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fanId: selectedFan.id,
+          notes: notesText,
+          customTags: selectedFan.customTags,
+        }),
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        setSelectedFan(updated);
+        setFans((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
+      } else {
+        console.error('Failed to save notes & tags');
+      }
+    } catch (err) {
+      console.error('Error saving notes & tags:', err);
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Add search profile tag
@@ -763,9 +785,10 @@ const toggleAttachMedia = (url: string) => {
               <button
                 type="button"
                 onClick={handleSaveNotes}
-                className="w-full bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 font-bold py-2 rounded-lg text-xs transition-colors"
+                disabled={saving}
+                className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed font-bold py-2 rounded-lg text-xs transition-colors text-white"
               >
-                Save Notes locally
+                {saving ? 'Saving...' : 'Save Notes & Tags'}
               </button>
             </div>
           </div>
