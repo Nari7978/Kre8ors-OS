@@ -246,6 +246,69 @@ export default function AnalyticsPage() {
               </div>
             </div>
           </div>
+
+          {/* Operator Performance Leaderboard Card */}
+          <div className="bg-zinc-900/40 border border-zinc-850 rounded-2xl p-6 backdrop-blur-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-850 pb-4">
+              <div>
+                <h2 className="text-sm font-bold text-zinc-200 flex items-center gap-2">
+                  <Trophy className="h-4 w-4 text-amber-400" />
+                  Operator Performance Leaderboard
+                </h2>
+                <p className="text-zinc-500 text-xs font-semibold mt-1">
+                  Active agency chat operators rank based on total sales generated and average shift hourly rates.
+                </p>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              {operatorData.length === 0 ? (
+                <div className="py-8 text-center text-zinc-500 text-xs italic">
+                  No operator shift logs registered yet
+                </div>
+              ) : (
+                <table className="w-full border-collapse text-xs text-left">
+                  <thead>
+                    <tr className="border-b border-zinc-850 text-zinc-400 font-bold">
+                      <th className="p-3">Chatter Name</th>
+                      <th className="p-3">Role</th>
+                      <th className="p-3 text-center">Total Shifts</th>
+                      <th className="p-3 text-center">Hours Worked</th>
+                      <th className="p-3 text-right">Avg Revenue/Hour</th>
+                      <th className="p-3 text-right">Total Revenue</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-900">
+                    {operatorData
+                      .sort((a, b) => b.totalRevenue - a.totalRevenue)
+                      .map((op) => (
+                        <tr key={op.id} className="hover:bg-zinc-900/20 transition-colors">
+                          <td className="p-3">
+                            <span className="font-bold text-zinc-200 block">{op.name}</span>
+                            <span className="text-[10px] text-zinc-500 block">@{op.email.split('@')[0]}</span>
+                          </td>
+                          <td className="p-3">
+                            <span className="inline-block bg-zinc-800 border border-zinc-700 px-2 py-0.5 rounded text-[10px] font-semibold text-zinc-300 capitalize">
+                              {op.role}
+                            </span>
+                          </td>
+                          <td className="p-3 text-center text-zinc-300 font-semibold">{op.totalShifts}</td>
+                          <td className="p-3 text-center text-zinc-400 font-semibold">
+                            {op.totalHours.toFixed(1)} hrs
+                          </td>
+                          <td className="p-3 text-right text-emerald-400 font-bold">
+                            ${op.averageRevenuePerHour.toFixed(2)}/hr
+                          </td>
+                          <td className="p-3 text-right text-zinc-200 font-black">
+                            ${op.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
         </>
       )}
     </div>
