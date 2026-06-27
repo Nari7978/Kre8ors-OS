@@ -18,6 +18,11 @@ export async function GET(request: Request) {
     const search = searchParams.get('search');
     const isSubscriber = searchParams.get('isSubscriber');
     const minSpent = searchParams.get('minSpent');
+    const maxSpent = searchParams.get('maxSpent');
+    const joinedBefore = searchParams.get('joinedBefore');
+    const joinedAfter = searchParams.get('joinedAfter');
+    const expiresBefore = searchParams.get('expiresBefore');
+    const expiresAfter = searchParams.get('expiresAfter');
     const tagsParam = searchParams.get('tags');
     const sortBy = searchParams.get('sortBy') || 'totalSpent';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
@@ -38,12 +43,39 @@ export async function GET(request: Request) {
       where.isSubscriber = isSubscriber === 'true';
     }
 
-    if (minSpent) {
-      const minSpentVal = parseFloat(minSpent);
-      if (!isNaN(minSpentVal)) {
-        where.totalSpent = {
-          gte: minSpentVal,
-        };
+    if (minSpent || maxSpent) {
+      where.totalSpent = {};
+      if (minSpent) {
+        const minVal = parseFloat(minSpent);
+        if (!isNaN(minVal)) {
+          where.totalSpent.gte = minVal;
+        }
+      }
+      if (maxSpent) {
+        const maxVal = parseFloat(maxSpent);
+        if (!isNaN(maxVal)) {
+          where.totalSpent.lte = maxVal;
+        }
+      }
+    }
+
+    if (joinedBefore || joinedAfter) {
+      where.subscribedAt = {};
+      if (joinedBefore) {
+        where.subscribedAt.lte = new Date(joinedBefore);
+      }
+      if (joinedAfter) {
+        where.subscribedAt.gte = new Date(joinedAfter);
+      }
+    }
+
+    if (expiresBefore || expiresAfter) {
+      where.expiresAt = {};
+      if (expiresBefore) {
+        where.expiresAt.lte = new Date(expiresBefore);
+      }
+      if (expiresAfter) {
+        where.expiresAt.gte = new Date(expiresAfter);
       }
     }
 
@@ -72,6 +104,36 @@ export async function GET(request: Request) {
           tagsList.every((t) => fan.customTags.map((ct) => ct.toLowerCase()).includes(t))
         );
       }
+    }
+
+    const pageParam = searchParams.get('page');
+    const limitParam = searchParams.get('limit');
+
+    if (pageParam || limitParam) {
+      const page = parseInt(pageParam || '1');
+      const limit = parseInt(limitParam || '10');
+      const totalCount = parsedFans.length;
+      const paginatedFans = parsedFans.slice((page - 1) * limit, page * limit);
+      
+      // Calculate summary metrics on the filtered dataset
+      const totalFans = parsedFans.length;
+      const activeSubscribers = parsedFans.filter((f) => f.isSubscriber).length;
+      const expiredSubscribers = totalFans - activeSubscribers;
+      const totalLTV = parsedFans.reduce((acc, cur) => acc + Number(cur.totalSpent || 0), 0);
+
+      return NextResponse.json({
+        fans: paginatedFans,
+        totalCount,
+        page,
+        limit,
+        totalPages: Math.ceil(totalCount / limit),
+        summary: {
+          totalFans,
+          activeSubscribers,
+          expiredSubscribers,
+          totalLTV,
+        }
+      });
     }
 
     return NextResponse.json(parsedFans);
