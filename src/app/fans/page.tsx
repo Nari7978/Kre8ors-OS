@@ -54,6 +54,11 @@ export default function FansCRMPage() {
   // Bulk selection state
   const [selectedFanIds, setSelectedFanIds] = useState<string[]>([]);
 
+  // Bulk tagging states
+  const [bulkTagAction, setBulkTagAction] = useState<'add' | 'remove' | null>(null);
+  const [bulkTagText, setBulkTagText] = useState('');
+  const [bulkProcessing, setBulkProcessing] = useState(false);
+
   // Toggle selection for a single fan
   const handleToggleSelectFan = (fanId: string) => {
     setSelectedFanIds((prev) =>
@@ -220,6 +225,36 @@ export default function FansCRMPage() {
       }
     } catch (err) {
       console.error('Error removing quick tag:', err);
+    }
+  };
+
+  const handleBulkTagSubmit = async () => {
+    if (!bulkTagAction || !bulkTagText.trim() || selectedFanIds.length === 0) return;
+    setBulkProcessing(true);
+    try {
+      const res = await fetch('/api/fans', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fanIds: selectedFanIds,
+          bulkAction: bulkTagAction,
+          tag: bulkTagText.trim(),
+        }),
+      });
+      if (res.ok) {
+        // Reload fans to get fresh details
+        await loadFans();
+        // Clear bulk state
+        setSelectedFanIds([]);
+        setBulkTagAction(null);
+        setBulkTagText('');
+      } else {
+        console.error('Failed to update bulk tags');
+      }
+    } catch (err) {
+      console.error('Error updating bulk tags:', err);
+    } finally {
+      setBulkProcessing(false);
     }
   };
 
@@ -1019,47 +1054,81 @@ export default function FansCRMPage() {
 
       {/* Bulk Action Dock */}
       {selectedFanIds.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-zinc-900/90 border border-zinc-800 hover:border-zinc-700 px-6 py-4 rounded-2xl shadow-2xl flex items-center justify-between gap-8 z-40 text-xs text-white backdrop-blur-md animate-in slide-in-from-bottom-5 duration-300 max-w-xl w-11/12">
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
-            <span className="font-extrabold text-zinc-200">{selectedFanIds.length} subscribers selected</span>
-          </div>
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-zinc-900/90 border border-zinc-800 hover:border-zinc-700 px-6 py-4 rounded-2xl shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-8 z-40 text-xs text-white backdrop-blur-md animate-in slide-in-from-bottom-5 duration-300 max-w-xl w-11/12">
+          {bulkTagAction ? (
+            <div className="flex items-center gap-3 w-full justify-between">
+              <span className="font-extrabold text-zinc-350">
+                {bulkTagAction === 'add' ? 'Add tag to' : 'Remove tag from'} {selectedFanIds.length} subscribers:
+              </span>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="tag name..."
+                  value={bulkTagText}
+                  onChange={(e) => setBulkTagText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleBulkTagSubmit();
+                  }}
+                  className="bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-indigo-500 w-32 font-bold"
+                />
+                <button
+                  onClick={handleBulkTagSubmit}
+                  disabled={bulkProcessing || !bulkTagText.trim()}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1.5 rounded-xl disabled:opacity-55"
+                >
+                  {bulkProcessing ? 'Applying...' : 'Confirm'}
+                </button>
+                <button
+                  onClick={() => {
+                    setBulkTagAction(null);
+                    setBulkTagText('');
+                  }}
+                  className="text-zinc-500 hover:text-zinc-300 font-semibold px-2 py-1.5"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+                <span className="font-extrabold text-zinc-200">{selectedFanIds.length} subscribers selected</span>
+              </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                // To be implemented in next commits
-              }}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3.5 py-2 rounded-xl transition-all"
-            >
-              Add Tag
-            </button>
-            <button
-              onClick={() => {
-                // To be implemented in next commits
-              }}
-              className="bg-zinc-850 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 hover:border-zinc-700 px-3.5 py-2 rounded-xl transition-all font-bold"
-            >
-              Remove Tag
-            </button>
-            <button
-              onClick={() => {
-                // To be implemented in next commits
-              }}
-              className="bg-zinc-850 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 hover:border-zinc-700 px-3.5 py-2 rounded-xl transition-all font-bold"
-            >
-              Send Message
-            </button>
-            
-            <div className="w-[1px] h-6 bg-zinc-800 mx-1" />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setBulkTagAction('add')}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3.5 py-2 rounded-xl transition-all"
+                >
+                  Add Tag
+                </button>
+                <button
+                  onClick={() => setBulkTagAction('remove')}
+                  className="bg-zinc-850 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 hover:border-zinc-700 px-3.5 py-2 rounded-xl transition-all font-bold"
+                >
+                  Remove Tag
+                </button>
+                <button
+                  onClick={() => {
+                    // Message action to be done in next commit
+                  }}
+                  className="bg-zinc-850 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 hover:border-zinc-700 px-3.5 py-2 rounded-xl transition-all font-bold"
+                >
+                  Send Message
+                </button>
+                
+                <div className="w-[1px] h-6 bg-zinc-800 mx-1" />
 
-            <button
-              onClick={() => setSelectedFanIds([])}
-              className="text-zinc-500 hover:text-zinc-300 font-semibold transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
+                <button
+                  onClick={() => setSelectedFanIds([])}
+                  className="text-zinc-500 hover:text-zinc-300 font-semibold transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>

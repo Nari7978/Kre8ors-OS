@@ -149,7 +149,47 @@ export async function GET(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const body = await request.json();
-    const { fanId, notes, customTags } = body;
+    const { fanId, fanIds, notes, customTags, bulkAction, tag } = body;
+
+    // Handle bulk updates
+    if (fanIds && Array.isArray(fanIds)) {
+      if (!tag || !bulkAction) {
+        return NextResponse.json(
+          { error: 'tag and bulkAction are required for bulk updates' },
+          { status: 400 }
+        );
+      }
+
+      const normalizedTag = tag.trim().toLowerCase();
+
+      const updatedFans = await Promise.all(
+        fanIds.map(async (id) => {
+          const fan = await db.fan.findUnique({ where: { id } });
+          if (!fan) return null;
+
+          let tagsList = JSON.parse(fan.customTags || '[]') as string[];
+          if (bulkAction === 'add') {
+            if (!tagsList.includes(normalizedTag)) {
+              tagsList.push(normalizedTag);
+            }
+          } else if (bulkAction === 'remove') {
+            tagsList = tagsList.filter((t) => t !== normalizedTag);
+          }
+
+          return db.fan.update({
+            where: { id },
+            data: {
+              customTags: JSON.stringify(tagsList),
+            },
+          });
+        })
+      );
+
+      return NextResponse.json({
+        success: true,
+        updatedCount: updatedFans.filter(Boolean).length,
+      });
+    }
 
     if (!fanId) {
       return NextResponse.json(
