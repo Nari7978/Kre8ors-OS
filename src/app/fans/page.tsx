@@ -33,6 +33,14 @@ export default function FansCRMPage() {
     totalLTV: 0,
   });
 
+  // Advanced Filters States
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [maxSpent, setMaxSpent] = useState('');
+  const [joinedAfter, setJoinedAfter] = useState('');
+  const [joinedBefore, setJoinedBefore] = useState('');
+  const [expiresAfter, setExpiresAfter] = useState('');
+  const [expiresBefore, setExpiresBefore] = useState('');
+
   // Active fan detail drawer modal state
   const [selectedFan, setSelectedFan] = useState<Fan | null>(null);
   const [notesText, setNotesText] = useState('');
@@ -49,7 +57,7 @@ export default function FansCRMPage() {
   // Reset page when filters change
   useEffect(() => {
     setPage(1);
-  }, [search, statusFilter, minSpent, tagFilter, sortBy, sortOrder]);
+  }, [search, statusFilter, minSpent, maxSpent, tagFilter, joinedAfter, joinedBefore, expiresAfter, expiresBefore, sortBy, sortOrder]);
 
   useEffect(() => {
     if (!activeCreator) return;
@@ -59,7 +67,10 @@ export default function FansCRMPage() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [activeCreator, search, statusFilter, minSpent, tagFilter, sortBy, sortOrder, page, limit]);
+  }, [
+    activeCreator, search, statusFilter, minSpent, maxSpent, tagFilter, 
+    joinedAfter, joinedBefore, expiresAfter, expiresBefore, sortBy, sortOrder, page, limit
+  ]);
 
   async function loadFans() {
     if (!activeCreator) return;
@@ -74,6 +85,21 @@ export default function FansCRMPage() {
       }
       if (minSpent.trim()) {
         url += `&minSpent=${minSpent.trim()}`;
+      }
+      if (maxSpent.trim()) {
+        url += `&maxSpent=${maxSpent.trim()}`;
+      }
+      if (joinedAfter.trim()) {
+        url += `&joinedAfter=${joinedAfter.trim()}`;
+      }
+      if (joinedBefore.trim()) {
+        url += `&joinedBefore=${joinedBefore.trim()}`;
+      }
+      if (expiresAfter.trim()) {
+        url += `&expiresAfter=${expiresAfter.trim()}`;
+      }
+      if (expiresBefore.trim()) {
+        url += `&expiresBefore=${expiresBefore.trim()}`;
       }
       if (tagFilter.trim()) {
         url += `&tags=${encodeURIComponent(tagFilter.trim())}`;
@@ -233,10 +259,24 @@ export default function FansCRMPage() {
 
       {/* Filters Board Dashboard */}
       <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-4">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-2">
-          <SlidersHorizontal className="h-4 w-4 text-indigo-400" />
-          Directory Segmentation Filters
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-2">
+            <SlidersHorizontal className="h-4 w-4 text-indigo-400" />
+            Directory Segmentation Filters
+          </h3>
+          <button
+            onClick={() => setAdvancedOpen(!advancedOpen)}
+            className={`text-xs px-3 py-1.5 rounded-xl border transition-all font-bold flex items-center gap-1.5 ${
+              advancedOpen 
+                ? 'bg-indigo-600/10 border-indigo-500/35 text-indigo-400 hover:bg-indigo-600/20' 
+                : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
+            }`}
+          >
+            <Filter className="h-3.5 w-3.5" />
+            {advancedOpen ? 'Hide Advanced Filters' : 'Show Advanced Filters'}
+          </button>
+        </div>
+        
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Search Box */}
           <div className="relative">
@@ -290,6 +330,67 @@ export default function FansCRMPage() {
             />
           </div>
         </div>
+
+        {/* Advanced Filters Expandable Box */}
+        {advancedOpen && (
+          <div className="pt-4 border-t border-zinc-800/60 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+            {/* Max Spent Input */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Max Spent ($)</label>
+              <input
+                type="number"
+                placeholder="Upper LTV limit..."
+                value={maxSpent}
+                onChange={(e) => setMaxSpent(e.target.value)}
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 px-3 text-xs text-zinc-200 focus:outline-none focus:border-indigo-500 transition-colors"
+              />
+            </div>
+
+            {/* Joined After Date Input */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Joined After</label>
+              <input
+                type="date"
+                value={joinedAfter}
+                onChange={(e) => setJoinedAfter(e.target.value)}
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 px-3 text-xs text-zinc-300 focus:outline-none focus:border-indigo-500 transition-colors"
+              />
+            </div>
+
+            {/* Joined Before Date Input */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Joined Before</label>
+              <input
+                type="date"
+                value={joinedBefore}
+                onChange={(e) => setJoinedBefore(e.target.value)}
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 px-3 text-xs text-zinc-300 focus:outline-none focus:border-indigo-500 transition-colors"
+              />
+            </div>
+
+            {/* Expires After Date Input */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Expires After</label>
+              <input
+                type="date"
+                value={expiresAfter}
+                onChange={(e) => setExpiresAfter(e.target.value)}
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 px-3 text-xs text-zinc-300 focus:outline-none focus:border-indigo-500 transition-colors"
+              />
+            </div>
+
+            {/* Expires Before Date Input */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Expires Before</label>
+              <input
+                type="date"
+                value={expiresBefore}
+                onChange={(e) => setExpiresBefore(e.target.value)}
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 px-3 text-xs text-zinc-300 focus:outline-none focus:border-indigo-500 transition-colors"
+              />
+            </div>
+          </div>
+        )}
 
         {/* Sorting & Layout control bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-zinc-800/60 text-xs">
@@ -354,7 +455,12 @@ export default function FansCRMPage() {
                 setSearch('');
                 setStatusFilter('all');
                 setMinSpent('');
+                setMaxSpent('');
                 setTagFilter('');
+                setJoinedAfter('');
+                setJoinedBefore('');
+                setExpiresAfter('');
+                setExpiresBefore('');
               }}
               className="text-xs text-indigo-400 font-bold hover:underline"
             >
