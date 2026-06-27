@@ -51,6 +51,30 @@ export default function FansCRMPage() {
   const [activeCardTagInput, setActiveCardTagInput] = useState<string | null>(null);
   const [quickTagText, setQuickTagText] = useState('');
 
+  // Bulk selection state
+  const [selectedFanIds, setSelectedFanIds] = useState<string[]>([]);
+
+  // Toggle selection for a single fan
+  const handleToggleSelectFan = (fanId: string) => {
+    setSelectedFanIds((prev) =>
+      prev.includes(fanId) ? prev.filter((id) => id !== fanId) : [...prev, fanId]
+    );
+  };
+
+  // Toggle select all fans in the current page view
+  const handleToggleSelectAll = () => {
+    if (selectedFanIds.length === fans.length && fans.length > 0) {
+      setSelectedFanIds([]);
+    } else {
+      setSelectedFanIds(fans.map((f) => f.id));
+    }
+  };
+
+  // Reset selection on filter change
+  useEffect(() => {
+    setSelectedFanIds([]);
+  }, [activeCreator, search, statusFilter, minSpent, maxSpent, tagFilter, joinedAfter, joinedBefore, expiresAfter, expiresBefore, sortBy, sortOrder]);
+
   useEffect(() => {
     if (selectedFan) {
       setNotesText(selectedFan.notes || '');
@@ -526,6 +550,14 @@ export default function FansCRMPage() {
             <table className="w-full border-collapse text-left text-xs">
               <thead>
                 <tr className="border-b border-zinc-800/80 bg-zinc-900/20 text-zinc-400 font-bold uppercase tracking-wider text-[10px]">
+                  <th className="p-4 w-10">
+                    <input
+                      type="checkbox"
+                      checked={selectedFanIds.length === fans.length && fans.length > 0}
+                      onChange={handleToggleSelectAll}
+                      className="rounded border-zinc-800 bg-zinc-950 text-indigo-600 focus:ring-indigo-500 cursor-pointer h-3.5 w-3.5"
+                    />
+                  </th>
                   <th className="p-4">Fan Account Details</th>
                   <th className="p-4">Subscription Status</th>
                   <th className="p-4">Registration Dates</th>
@@ -536,7 +568,20 @@ export default function FansCRMPage() {
               </thead>
               <tbody className="divide-y divide-zinc-800/50">
                 {fans.map((fan) => (
-                  <tr key={fan.id} className="hover:bg-zinc-900/20 transition-colors">
+                  <tr 
+                    key={fan.id} 
+                    className={`hover:bg-zinc-900/20 transition-colors ${
+                      selectedFanIds.includes(fan.id) ? 'bg-indigo-600/5' : ''
+                    }`}
+                  >
+                    <td className="p-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedFanIds.includes(fan.id)}
+                        onChange={() => handleToggleSelectFan(fan.id)}
+                        className="rounded border-zinc-800 bg-zinc-950 text-indigo-600 focus:ring-indigo-500 cursor-pointer h-3.5 w-3.5"
+                      />
+                    </td>
                     {/* Account Details */}
                     <td className="p-4 flex items-center gap-3 min-w-[200px]">
                       <div className="h-9 w-9 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center overflow-hidden flex-shrink-0">
@@ -658,12 +703,22 @@ export default function FansCRMPage() {
               return (
                 <div 
                   key={fan.id} 
-                  className="group relative bg-zinc-900/30 border border-zinc-800/85 hover:border-indigo-500/50 rounded-2xl p-5 backdrop-blur-sm transition-all duration-300 flex flex-col justify-between hover:shadow-lg hover:shadow-indigo-500/5 hover:-translate-y-0.5"
+                  className={`group relative border rounded-2xl p-5 backdrop-blur-sm transition-all duration-300 flex flex-col justify-between hover:shadow-lg hover:shadow-indigo-500/5 hover:-translate-y-0.5 ${
+                    selectedFanIds.includes(fan.id)
+                      ? 'bg-indigo-600/5 border-indigo-500/60 shadow-md shadow-indigo-500/5'
+                      : 'bg-zinc-900/30 border-zinc-800/85 hover:border-indigo-500/50'
+                  }`}
                 >
                   <div className="space-y-4">
                     {/* Top avatar and status row */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
+                        <input
+                          type="checkbox"
+                          checked={selectedFanIds.includes(fan.id)}
+                          onChange={() => handleToggleSelectFan(fan.id)}
+                          className="rounded border-zinc-800 bg-zinc-950 text-indigo-600 focus:ring-indigo-500 cursor-pointer h-3.5 w-3.5 flex-shrink-0 mt-1"
+                        />
                         <div className="h-12 w-12 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center overflow-hidden flex-shrink-0 group-hover:border-indigo-500/30 transition-colors">
                           {fan.avatarUrl ? (
                             <img src={fan.avatarUrl} alt={fan.displayName} className="object-cover h-full w-full" />
@@ -958,6 +1013,52 @@ export default function FansCRMPage() {
                 {saving ? 'Saving...' : 'Save Notes & Tags'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Action Dock */}
+      {selectedFanIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-zinc-900/90 border border-zinc-800 hover:border-zinc-700 px-6 py-4 rounded-2xl shadow-2xl flex items-center justify-between gap-8 z-40 text-xs text-white backdrop-blur-md animate-in slide-in-from-bottom-5 duration-300 max-w-xl w-11/12">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+            <span className="font-extrabold text-zinc-200">{selectedFanIds.length} subscribers selected</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                // To be implemented in next commits
+              }}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3.5 py-2 rounded-xl transition-all"
+            >
+              Add Tag
+            </button>
+            <button
+              onClick={() => {
+                // To be implemented in next commits
+              }}
+              className="bg-zinc-850 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 hover:border-zinc-700 px-3.5 py-2 rounded-xl transition-all font-bold"
+            >
+              Remove Tag
+            </button>
+            <button
+              onClick={() => {
+                // To be implemented in next commits
+              }}
+              className="bg-zinc-850 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 hover:border-zinc-700 px-3.5 py-2 rounded-xl transition-all font-bold"
+            >
+              Send Message
+            </button>
+            
+            <div className="w-[1px] h-6 bg-zinc-800 mx-1" />
+
+            <button
+              onClick={() => setSelectedFanIds([])}
+              className="text-zinc-500 hover:text-zinc-300 font-semibold transition-colors"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}
