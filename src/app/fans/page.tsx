@@ -59,6 +59,11 @@ export default function FansCRMPage() {
   const [bulkTagText, setBulkTagText] = useState('');
   const [bulkProcessing, setBulkProcessing] = useState(false);
 
+  // Bulk messaging states
+  const [bulkMessageModalOpen, setBulkMessageModalOpen] = useState(false);
+  const [bulkMessageText, setBulkMessageText] = useState('');
+  const [sendingBulkMessage, setSendingBulkMessage] = useState(false);
+
   // Toggle selection for a single fan
   const handleToggleSelectFan = (fanId: string) => {
     setSelectedFanIds((prev) =>
@@ -255,6 +260,34 @@ export default function FansCRMPage() {
       console.error('Error updating bulk tags:', err);
     } finally {
       setBulkProcessing(false);
+    }
+  };
+
+  const handleSendBulkMessage = async () => {
+    if (!bulkMessageText.trim() || selectedFanIds.length === 0 || !activeCreator) return;
+    setSendingBulkMessage(true);
+    try {
+      const res = await fetch('/api/fans/bulk-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          creatorId: activeCreator.id,
+          fanIds: selectedFanIds,
+          text: bulkMessageText.trim(),
+        }),
+      });
+      if (res.ok) {
+        setBulkMessageModalOpen(false);
+        setBulkMessageText('');
+        setSelectedFanIds([]);
+        alert(`Successfully queued messages for ${selectedFanIds.length} subscribers!`);
+      } else {
+        console.error('Failed to send bulk messages');
+      }
+    } catch (err) {
+      console.error('Error sending bulk messages:', err);
+    } finally {
+      setSendingBulkMessage(false);
     }
   };
 
@@ -1110,9 +1143,7 @@ export default function FansCRMPage() {
                   Remove Tag
                 </button>
                 <button
-                  onClick={() => {
-                    // Message action to be done in next commit
-                  }}
+                  onClick={() => setBulkMessageModalOpen(true)}
                   className="bg-zinc-850 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 hover:border-zinc-700 px-3.5 py-2 rounded-xl transition-all font-bold"
                 >
                   Send Message
@@ -1129,6 +1160,55 @@ export default function FansCRMPage() {
               </div>
             </>
           )}
+        </div>
+      )}
+
+      {/* Bulk Message Modal */}
+      {bulkMessageModalOpen && (
+        <div className="fixed inset-0 bg-zinc-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <h3 className="font-extrabold text-sm text-zinc-150 flex items-center gap-2">
+                <Send className="h-4 w-4 text-indigo-400" />
+                Bulk Message Outreach ({selectedFanIds.length} selected)
+              </h3>
+              <button
+                onClick={() => setBulkMessageModalOpen(false)}
+                className="text-zinc-500 hover:text-white p-1 rounded-lg hover:bg-zinc-800 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider block">Message Template</span>
+              <textarea
+                placeholder="Type your message here. Use {name} to personalize each recipient's name (e.g. Hey {name}!)..."
+                value={bulkMessageText}
+                onChange={(e) => setBulkMessageText(e.target.value)}
+                className="w-full bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-xs text-zinc-300 focus:outline-none focus:border-indigo-500 h-32 resize-none font-sans"
+              />
+              <p className="text-[10px] text-zinc-500 italic font-medium">
+                * Dynamic tags supported: <strong className="text-zinc-300">{`{name}`}</strong> will be replaced by the subscriber's display first name.
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-3 border-t border-zinc-800">
+              <button
+                onClick={() => setBulkMessageModalOpen(false)}
+                className="bg-zinc-850 hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs py-2 px-4 rounded-xl border border-zinc-800 font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSendBulkMessage}
+                disabled={sendingBulkMessage || !bulkMessageText.trim()}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs py-2 px-4 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {sendingBulkMessage ? 'Sending...' : 'Dispatch Message'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
