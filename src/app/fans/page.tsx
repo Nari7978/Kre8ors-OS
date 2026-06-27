@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useGlobalStore } from '@/lib/store/global-store';
 import { Fan } from '@/types';
-import { Users, UserCheck, UserMinus, DollarSign, Search, RefreshCw, Filter, SlidersHorizontal, Tag, Eye, X, Plus } from 'lucide-react';
+import { Users, UserCheck, UserMinus, DollarSign, Search, RefreshCw, Filter, SlidersHorizontal, Tag, Eye, X, Plus, Send } from 'lucide-react';
 
 export default function FansCRMPage() {
   const { activeCreator } = useGlobalStore();
