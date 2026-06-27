@@ -16,6 +16,11 @@ export default function FansCRMPage() {
   const [minSpent, setMinSpent] = useState('');
   const [tagFilter, setTagFilter] = useState('');
 
+  // Sorting & Layout States
+  const [sortBy, setSortBy] = useState<'totalSpent' | 'subscribedAt' | 'expiresAt' | 'displayName'>('totalSpent');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+
   // Active fan detail drawer modal state
   const [selectedFan, setSelectedFan] = useState<Fan | null>(null);
   const [notesText, setNotesText] = useState('');
@@ -37,7 +42,7 @@ export default function FansCRMPage() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [activeCreator, search, statusFilter, minSpent, tagFilter]);
+  }, [activeCreator, search, statusFilter, minSpent, tagFilter, sortBy, sortOrder]);
 
   async function loadFans() {
     if (!activeCreator) return;
@@ -56,6 +61,8 @@ export default function FansCRMPage() {
       if (tagFilter.trim()) {
         url += `&tags=${encodeURIComponent(tagFilter.trim())}`;
       }
+      // Add sorting query params
+      url += `&sortBy=${sortBy}&sortOrder=${sortOrder}`;
 
       const res = await fetch(url);
       if (res.ok) {
@@ -256,6 +263,53 @@ export default function FansCRMPage() {
               onChange={(e) => setTagFilter(e.target.value)}
               className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 pl-9 pr-4 text-xs text-zinc-200 focus:outline-none focus:border-indigo-500 transition-colors"
             />
+          </div>
+        </div>
+
+        {/* Sorting & Layout control bar */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-zinc-800/60 text-xs">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <span className="text-zinc-500 font-bold uppercase tracking-wider text-[10px]">Sort By:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="bg-zinc-950 border border-zinc-800 rounded-xl py-1.5 px-3 text-zinc-300 focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
+            >
+              <option value="totalSpent">LTV Spend</option>
+              <option value="subscribedAt">Join Date</option>
+              <option value="expiresAt">Expiry Date</option>
+              <option value="displayName">Name</option>
+            </select>
+            
+            <button
+              onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+              className="bg-zinc-950 border border-zinc-800 hover:border-zinc-700 text-zinc-300 px-3 py-1.5 rounded-xl transition-all flex items-center justify-center gap-1 font-semibold"
+              title={`Sort ${sortOrder === 'asc' ? 'Ascending' : 'Descending'}`}
+            >
+              <span className="text-[10px] uppercase font-bold text-zinc-400">Order: {sortOrder.toUpperCase()}</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <span className="text-zinc-500 font-bold uppercase tracking-wider text-[10px]">Layout:</span>
+            <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-0.5 flex">
+              <button
+                onClick={() => setViewMode('table')}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all ${
+                  viewMode === 'table' ? 'bg-zinc-850 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                Table
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all ${
+                  viewMode === 'grid' ? 'bg-zinc-850 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                Grid
+              </button>
+            </div>
           </div>
         </div>
       </div>
