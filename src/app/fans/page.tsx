@@ -21,6 +21,18 @@ export default function FansCRMPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
 
+  // Pagination States
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [summary, setSummary] = useState({
+    totalFans: 0,
+    activeSubscribers: 0,
+    expiredSubscribers: 0,
+    totalLTV: 0,
+  });
+
   // Active fan detail drawer modal state
   const [selectedFan, setSelectedFan] = useState<Fan | null>(null);
   const [notesText, setNotesText] = useState('');
@@ -34,6 +46,11 @@ export default function FansCRMPage() {
     }
   }, [selectedFan]);
 
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter, minSpent, tagFilter, sortBy, sortOrder]);
+
   useEffect(() => {
     if (!activeCreator) return;
 
@@ -42,7 +59,7 @@ export default function FansCRMPage() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [activeCreator, search, statusFilter, minSpent, tagFilter, sortBy, sortOrder]);
+  }, [activeCreator, search, statusFilter, minSpent, tagFilter, sortBy, sortOrder, page, limit]);
 
   async function loadFans() {
     if (!activeCreator) return;
@@ -63,11 +80,22 @@ export default function FansCRMPage() {
       }
       // Add sorting query params
       url += `&sortBy=${sortBy}&sortOrder=${sortOrder}`;
+      // Add pagination query params
+      url += `&page=${page}&limit=${limit}`;
 
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
-        setFans(Array.isArray(data) ? data : []);
+        if (data && typeof data === 'object' && 'fans' in data) {
+          setFans(data.fans || []);
+          setTotalPages(data.totalPages || 1);
+          setTotalCount(data.totalCount || 0);
+          if (data.summary) {
+            setSummary(data.summary);
+          }
+        } else {
+          setFans(Array.isArray(data) ? data : []);
+        }
       }
     } catch (err) {
       console.error('Error loading fans:', err);
@@ -121,11 +149,8 @@ export default function FansCRMPage() {
     }
   };
 
-  // Calculate metrics (always on un-filtered stats or filtered stats? Let's keep it on filtered stats for real-time segmented visibility)
-  const totalFans = fans.length;
-  const activeSubscribers = fans.filter((f) => f.isSubscriber).length;
-  const expiredSubscribers = totalFans - activeSubscribers;
-  const totalLTV = fans.reduce((acc, cur) => acc + Number(cur.totalSpent || 0), 0);
+  // Read metrics from summary state populated by API
+  const { totalFans, activeSubscribers, expiredSubscribers, totalLTV } = summary;
 
   if (!activeCreator) {
     return (
@@ -510,6 +535,57 @@ export default function FansCRMPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Pagination Controls Footer */}
+        {fans.length > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-zinc-800/60 bg-zinc-950/20 text-xs">
+            <div className="text-zinc-500 font-semibold">
+              Showing <span className="text-zinc-300 font-bold">{totalCount === 0 ? 0 : (page - 1) * limit + 1}</span> to{' '}
+              <span className="text-zinc-300 font-bold">{Math.min(page * limit, totalCount)}</span> of{' '}
+              <span className="text-zinc-300 font-bold">{totalCount}</span> entries
+            </div>
+
+            <div className="flex items-center gap-4">
+              {/* Entries count size selector */}
+              <div className="flex items-center gap-2">
+                <span className="text-zinc-500">Show:</span>
+                <select
+                  value={limit}
+                  onChange={(e) => {
+                    setLimit(Number(e.target.value));
+                    setPage(1);
+                  }}
+                  className="bg-zinc-950 border border-zinc-800 rounded-xl py-1 px-2.5 text-zinc-300 focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer text-xs font-semibold"
+                >
+                  <option value="10">10</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                </select>
+              </div>
+
+              {/* Navigation button toggles */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                  disabled={page === 1}
+                  className="bg-zinc-950 hover:bg-zinc-900 border border-zinc-850 hover:border-zinc-800 disabled:opacity-30 disabled:hover:bg-zinc-950 text-zinc-300 hover:text-white px-3 py-1.5 rounded-xl transition-all font-bold disabled:cursor-not-allowed"
+                >
+                  Prev
+                </button>
+                <span className="text-zinc-400 font-semibold px-2">
+                  Page {page} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+                  disabled={page === totalPages}
+                  className="bg-zinc-950 hover:bg-zinc-900 border border-zinc-850 hover:border-zinc-800 disabled:opacity-30 disabled:hover:bg-zinc-950 text-zinc-300 hover:text-white px-3 py-1.5 rounded-xl transition-all font-bold disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
