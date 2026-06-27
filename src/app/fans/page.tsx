@@ -47,6 +47,10 @@ export default function FansCRMPage() {
   const [newTag, setNewTag] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // Quick tag editing states
+  const [activeCardTagInput, setActiveCardTagInput] = useState<string | null>(null);
+  const [quickTagText, setQuickTagText] = useState('');
+
   useEffect(() => {
     if (selectedFan) {
       setNotesText(selectedFan.notes || '');
@@ -143,6 +147,56 @@ export default function FansCRMPage() {
     if (!selectedFan) return;
     const updatedTags = selectedFan.customTags.filter((t) => t !== tagToRemove);
     setSelectedFan({ ...selectedFan, customTags: updatedTags });
+  };
+
+  const handleQuickAddTag = async (fan: Fan) => {
+    if (!quickTagText.trim()) return;
+    const tag = quickTagText.trim().toLowerCase();
+    if (fan.customTags.includes(tag)) {
+      setActiveCardTagInput(null);
+      setQuickTagText('');
+      return;
+    }
+    const updatedTags = [...fan.customTags, tag];
+    setActiveCardTagInput(null);
+    setQuickTagText('');
+
+    try {
+      const res = await fetch('/api/fans', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fanId: fan.id,
+          customTags: updatedTags,
+        }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setFans((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
+      }
+    } catch (err) {
+      console.error('Error adding quick tag:', err);
+    }
+  };
+
+  const handleQuickRemoveTag = async (fan: Fan, tagToRemove: string) => {
+    const updatedTags = fan.customTags.filter((t) => t !== tagToRemove);
+    try {
+      const res = await fetch('/api/fans', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fanId: fan.id,
+          customTags: updatedTags,
+        }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setFans((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
+      }
+    } catch (err) {
+      console.error('Error removing quick tag:', err);
+    }
   };
 
   const handleSaveDetails = async () => {
@@ -530,15 +584,54 @@ export default function FansCRMPage() {
 
                     {/* Tags */}
                     <td className="p-4">
-                      <div className="flex flex-wrap gap-1 max-w-[220px]">
-                        {Array.isArray(fan.customTags) && fan.customTags.length > 0 ? (
-                          fan.customTags.map((tag) => (
-                            <span key={tag} className="bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] px-2 py-0.5 rounded-md font-bold">
-                              #{tag}
-                            </span>
-                          ))
+                      <div className="flex flex-wrap gap-1 items-center max-w-[220px]">
+                        {Array.isArray(fan.customTags) && fan.customTags.map((tag) => (
+                          <span key={tag} className="group/tag inline-flex items-center gap-1 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] pl-2 pr-1.5 py-0.5 rounded-md font-bold">
+                            #{tag}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleQuickRemoveTag(fan, tag);
+                              }}
+                              className="opacity-0 group-hover/tag:opacity-100 text-zinc-500 hover:text-white rounded-full transition-opacity"
+                            >
+                              <X className="h-2.5 w-2.5" />
+                            </button>
+                          </span>
+                        ))}
+                        {activeCardTagInput === fan.id ? (
+                          <input
+                            type="text"
+                            placeholder="tag..."
+                            autoFocus
+                            value={quickTagText}
+                            onChange={(e) => setQuickTagText(e.target.value)}
+                            onBlur={() => {
+                              setActiveCardTagInput(null);
+                              setQuickTagText('');
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                handleQuickAddTag(fan);
+                              } else if (e.key === 'Escape') {
+                                setActiveCardTagInput(null);
+                                setQuickTagText('');
+                              }
+                            }}
+                            className="bg-zinc-950 border border-zinc-800 rounded px-1.5 py-0.5 text-[9px] w-16 focus:outline-none focus:border-indigo-500 text-zinc-200"
+                          />
                         ) : (
-                          <span className="text-zinc-660 text-[10px] italic">No tags</span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveCardTagInput(fan.id);
+                              setQuickTagText('');
+                            }}
+                            className="bg-zinc-950 border border-zinc-850 hover:border-zinc-800 text-zinc-500 hover:text-zinc-300 text-[10px] px-2 py-0.5 rounded-md font-bold flex items-center gap-0.5 transition-colors"
+                          >
+                            <Plus className="h-2.5 w-2.5" />
+                            Add
+                          </button>
                         )}
                       </div>
                     </td>
@@ -611,15 +704,54 @@ export default function FansCRMPage() {
                     {/* CRM Tags badges */}
                     <div className="space-y-1">
                       <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider block">Tags</span>
-                      <div className="flex flex-wrap gap-1 min-h-[22px]">
-                        {Array.isArray(fan.customTags) && fan.customTags.length > 0 ? (
-                          fan.customTags.map((tag) => (
-                            <span key={tag} className="bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[9px] px-2 py-0.5 rounded-md font-bold">
-                              #{tag}
-                            </span>
-                          ))
+                      <div className="flex flex-wrap gap-1 min-h-[22px] items-center">
+                        {Array.isArray(fan.customTags) && fan.customTags.map((tag) => (
+                          <span key={tag} className="group/tag inline-flex items-center gap-1 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[9px] pl-2 pr-1.5 py-0.5 rounded-md font-bold">
+                            #{tag}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleQuickRemoveTag(fan, tag);
+                              }}
+                              className="opacity-0 group-hover/tag:opacity-100 text-zinc-500 hover:text-white rounded-full transition-opacity"
+                            >
+                              <X className="h-2 w-2" />
+                            </button>
+                          </span>
+                        ))}
+                        {activeCardTagInput === fan.id ? (
+                          <input
+                            type="text"
+                            placeholder="tag..."
+                            autoFocus
+                            value={quickTagText}
+                            onChange={(e) => setQuickTagText(e.target.value)}
+                            onBlur={() => {
+                              setActiveCardTagInput(null);
+                              setQuickTagText('');
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                handleQuickAddTag(fan);
+                              } else if (e.key === 'Escape') {
+                                setActiveCardTagInput(null);
+                                setQuickTagText('');
+                              }
+                            }}
+                            className="bg-zinc-950 border border-zinc-800 rounded px-1.5 py-0.5 text-[9px] w-16 focus:outline-none focus:border-indigo-500 text-zinc-200"
+                          />
                         ) : (
-                          <span className="text-zinc-650 text-[10px] italic">No tags associated</span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveCardTagInput(fan.id);
+                              setQuickTagText('');
+                            }}
+                            className="bg-zinc-950 border border-zinc-850 hover:border-zinc-800 text-zinc-500 hover:text-zinc-300 text-[9px] px-2 py-0.5 rounded-md font-bold flex items-center gap-0.5 transition-colors"
+                          >
+                            <Plus className="h-2.5 w-2.5" />
+                            Add
+                          </button>
                         )}
                       </div>
                     </div>
