@@ -19,6 +19,8 @@ export async function GET(request: Request) {
     const isSubscriber = searchParams.get('isSubscriber');
     const minSpent = searchParams.get('minSpent');
     const tagsParam = searchParams.get('tags');
+    const sortBy = searchParams.get('sortBy') || 'totalSpent';
+    const sortOrder = searchParams.get('sortOrder') || 'desc';
 
     // Build filters dynamically
     const where: any = {
@@ -45,11 +47,17 @@ export async function GET(request: Request) {
       }
     }
 
+    // Resolve sorting rules safely
+    const allowedSortFields = ['totalSpent', 'subscribedAt', 'expiresAt', 'displayName', 'username'];
+    const resolvedSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'totalSpent';
+    const resolvedSortOrder = sortOrder === 'asc' ? 'asc' : 'desc';
+
+    const orderBy: any = {};
+    orderBy[resolvedSortBy] = resolvedSortOrder;
+
     const fans = await db.fan.findMany({
       where,
-      orderBy: {
-        totalSpent: 'desc',
-      },
+      orderBy,
     });
 
     let parsedFans = fans.map((fan) => ({
