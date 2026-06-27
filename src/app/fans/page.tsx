@@ -589,9 +589,12 @@ export default function FansCRMPage() {
       {/* Directory Table/Grid View */}
       <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl overflow-hidden backdrop-blur-sm">
         {loading ? (
-          <div className="py-20 text-center text-zinc-500 text-sm flex flex-col items-center justify-center gap-3">
-            <RefreshCw className="h-6 w-6 animate-spin text-indigo-500" />
-            <span>Loading subscriber records...</span>
+          <div className="py-24 text-center text-zinc-500 text-sm flex flex-col items-center justify-center gap-4">
+            <div className="relative flex items-center justify-center">
+              <div className="h-10 w-10 rounded-full border-4 border-zinc-800 border-t-indigo-500 animate-spin" />
+              <div className="absolute h-6 w-6 rounded-full border-4 border-dashed border-indigo-500/30 animate-pulse" />
+            </div>
+            <span className="font-semibold text-zinc-400 tracking-wide animate-pulse">Filtering CRM Registry...</span>
           </div>
         ) : fans.length === 0 ? (
           <div className="py-24 text-center text-zinc-500 flex flex-col items-center justify-center space-y-4">
@@ -771,13 +774,16 @@ export default function FansCRMPage() {
               return (
                 <div 
                   key={fan.id} 
-                  className={`group relative border rounded-2xl p-5 backdrop-blur-sm transition-all duration-300 flex flex-col justify-between hover:shadow-lg hover:shadow-indigo-500/5 hover:-translate-y-0.5 ${
+                  className={`group relative border rounded-2xl p-5 backdrop-blur-sm transition-all duration-300 flex flex-col justify-between hover:shadow-xl hover:-translate-y-1 hover:shadow-indigo-500/10 ${
                     selectedFanIds.includes(fan.id)
                       ? 'bg-indigo-600/5 border-indigo-500/60 shadow-md shadow-indigo-500/5'
-                      : 'bg-zinc-900/30 border-zinc-800/85 hover:border-indigo-500/50'
+                      : 'bg-zinc-900/30 border-zinc-800/85 hover:border-indigo-500/40'
                   }`}
                 >
-                  <div className="space-y-4">
+                  {/* Subtle top-right gradient glow */}
+                  <div className="absolute top-0 right-0 h-24 w-24 bg-gradient-to-br from-indigo-500/5 to-transparent rounded-tr-2xl pointer-events-none group-hover:from-indigo-500/10 transition-colors duration-300" />
+
+                  <div className="space-y-4 relative z-10">
                     {/* Top avatar and status row */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
