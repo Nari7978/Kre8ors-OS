@@ -314,7 +314,7 @@ export default function FansCRMPage() {
         </div>
       </div>
 
-      {/* Directory Table View */}
+      {/* Directory Table/Grid View */}
       <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl overflow-hidden backdrop-blur-sm">
         {loading ? (
           <div className="py-20 text-center text-zinc-500 text-sm flex flex-col items-center justify-center gap-3">
@@ -336,7 +336,7 @@ export default function FansCRMPage() {
               Reset Filters
             </button>
           </div>
-        ) : (
+        ) : viewMode === 'table' ? (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left text-xs">
               <thead>
@@ -407,7 +407,7 @@ export default function FansCRMPage() {
                             </span>
                           ))
                         ) : (
-                          <span className="text-zinc-600 text-[10px] italic">No tags</span>
+                          <span className="text-zinc-660 text-[10px] italic">No tags</span>
                         )}
                       </div>
                     </td>
@@ -426,6 +426,90 @@ export default function FansCRMPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+            {fans.map((fan) => {
+              const joinedDate = new Date(fan.subscribedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+              return (
+                <div 
+                  key={fan.id} 
+                  className="group relative bg-zinc-900/30 border border-zinc-800/85 hover:border-indigo-500/50 rounded-2xl p-5 backdrop-blur-sm transition-all duration-300 flex flex-col justify-between hover:shadow-lg hover:shadow-indigo-500/5 hover:-translate-y-0.5"
+                >
+                  <div className="space-y-4">
+                    {/* Top avatar and status row */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="h-12 w-12 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center overflow-hidden flex-shrink-0 group-hover:border-indigo-500/30 transition-colors">
+                          {fan.avatarUrl ? (
+                            <img src={fan.avatarUrl} alt={fan.displayName} className="object-cover h-full w-full" />
+                          ) : (
+                            <Users className="h-5 w-5 text-zinc-600" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <span className="font-extrabold text-sm text-zinc-100 block truncate group-hover:text-white transition-colors">{fan.displayName}</span>
+                          <span className="text-zinc-500 font-semibold block text-[10px] mt-0.5">@{fan.username}</span>
+                        </div>
+                      </div>
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-wide ${
+                        fan.isSubscriber 
+                          ? 'bg-green-500/10 text-green-400 border border-green-500/20' 
+                          : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                      }`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${fan.isSubscriber ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`} />
+                        {fan.isSubscriber ? 'Active' : 'Expired'}
+                      </span>
+                    </div>
+
+                    {/* Spend & Join dates badges */}
+                    <div className="grid grid-cols-2 gap-2 bg-zinc-950/40 border border-zinc-850 p-3 rounded-xl">
+                      <div>
+                        <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider block">LTV Spend</span>
+                        <span className="font-black text-zinc-200 mt-1 flex items-center text-xs">
+                          <DollarSign className="h-3 w-3 text-emerald-500 mr-0.5" />
+                          {Number(fan.totalSpent).toFixed(2)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider block">Subscribed</span>
+                        <span className="font-semibold text-zinc-300 mt-1 text-[11px] block">{joinedDate}</span>
+                      </div>
+                    </div>
+
+                    {/* CRM Tags badges */}
+                    <div className="space-y-1">
+                      <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider block">Tags</span>
+                      <div className="flex flex-wrap gap-1 min-h-[22px]">
+                        {Array.isArray(fan.customTags) && fan.customTags.length > 0 ? (
+                          fan.customTags.map((tag) => (
+                            <span key={tag} className="bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[9px] px-2 py-0.5 rounded-md font-bold">
+                              #{tag}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-zinc-650 text-[10px] italic">No tags associated</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions footer row */}
+                  <div className="mt-5 pt-4 border-t border-zinc-800/60 flex items-center justify-between">
+                    <span className="text-[10px] text-zinc-500 font-medium">
+                      {fan.expiresAt ? `Expires: ${new Date(fan.expiresAt).toLocaleDateString()}` : 'No expiry'}
+                    </span>
+                    <button
+                      onClick={() => setSelectedFan(fan)}
+                      className="bg-zinc-850 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 hover:border-zinc-700 px-3 py-1.5 rounded-xl transition-all inline-flex items-center gap-1.5 font-bold text-[10px] tracking-wide"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      Manage Profile
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
