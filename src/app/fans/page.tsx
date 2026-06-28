@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useGlobalStore } from '@/lib/store/global-store';
 import { Fan } from '@/types';
-import { Users, UserCheck, UserMinus, DollarSign, Search, RefreshCw, Filter, SlidersHorizontal, Tag, Eye, X, Plus, Send } from 'lucide-react';
+import { Users, UserCheck, UserMinus, DollarSign, Search, RefreshCw, Filter, SlidersHorizontal, Tag, Eye, X, Plus, Send, Edit2, Trash2 } from 'lucide-react';
 
 export const getTagStyles = (tag: string) => {
   const hash = tag.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
@@ -82,6 +82,11 @@ export default function FansCRMPage() {
   const [bulkMessageModalOpen, setBulkMessageModalOpen] = useState(false);
   const [bulkMessageText, setBulkMessageText] = useState('');
   const [sendingBulkMessage, setSendingBulkMessage] = useState(false);
+
+  // Tag Manager State
+  const [tagManagerOpen, setTagManagerOpen] = useState(false);
+  const [renamingTag, setRenamingTag] = useState<string | null>(null);
+  const [renameText, setRenameText] = useState('');
 
   // Toggle selection for a single fan
   const handleToggleSelectFan = (fanId: string) => {
@@ -326,6 +331,26 @@ export default function FansCRMPage() {
     } finally {
       setSendingBulkMessage(false);
     }
+  };
+
+  const handleRenameTagConfirm = async (oldTag: string) => {
+    if (!renameText.trim() || !activeCreator) return;
+    const newTagVal = renameText.trim().toLowerCase();
+    if (newTagVal === oldTag) {
+      setRenamingTag(null);
+      return;
+    }
+    // Stub for Commit 7
+    alert(`Rename tag from #${oldTag} to #${newTagVal} (backend pending)`);
+    setRenamingTag(null);
+  };
+
+  const handleDeleteTagConfirm = async (tagToDelete: string) => {
+    if (!activeCreator) return;
+    const confirmDelete = window.confirm(`Are you sure you want to delete the tag #${tagToDelete} globally? This will remove it from all subscribers.`);
+    if (!confirmDelete) return;
+    // Stub for Commit 7
+    alert(`Delete tag #${tagToDelete} globally (backend pending)`);
   };
 
   const handleSaveDetails = async () => {
@@ -619,6 +644,14 @@ export default function FansCRMPage() {
                 Grid
               </button>
             </div>
+
+            <button
+              onClick={() => setTagManagerOpen(true)}
+              className="bg-zinc-950 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white px-3.5 py-1.5 rounded-xl transition-all flex items-center justify-center gap-1.5 font-bold ml-2 text-[10px] uppercase tracking-wider"
+            >
+              <Tag className="h-3.5 w-3.5 text-indigo-400" />
+              Manage Tags
+            </button>
           </div>
         </div>
       </div>
@@ -1500,6 +1533,109 @@ export default function FansCRMPage() {
                 className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs py-2 px-4 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {sendingBulkMessage ? 'Sending...' : 'Dispatch Message'}
+              </button>
+            </div>
+          </div>
+        </div>
+      {/* Global Tag Manager Modal */}
+      {tagManagerOpen && (
+        <div className="fixed inset-0 bg-zinc-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <h3 className="font-extrabold text-sm text-zinc-150 flex items-center gap-2">
+                <Tag className="h-4 w-4 text-indigo-400" />
+                CRM Tags Library
+              </h3>
+              <button
+                onClick={() => {
+                  setTagManagerOpen(false);
+                  setRenamingTag(null);
+                }}
+                className="text-zinc-500 hover:text-white p-1 rounded-lg hover:bg-zinc-800 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* List of active tags */}
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+              {availableTags.length === 0 ? (
+                <p className="text-zinc-500 text-xs italic text-center py-8">No custom tags created yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {availableTags.map((tag) => {
+                    const count = fans.filter(f => Array.isArray(f.customTags) && f.customTags.includes(tag)).length;
+                    return (
+                      <div key={tag} className="flex items-center justify-between bg-zinc-950/40 border border-zinc-800/60 p-2.5 rounded-xl text-xs">
+                        {renamingTag === tag ? (
+                          <div className="flex items-center gap-2 flex-1 mr-2">
+                            <input
+                              type="text"
+                              value={renameText}
+                              onChange={(e) => setRenameText(e.target.value)}
+                              className="flex-1 bg-zinc-950 border border-zinc-850 rounded px-2 py-1 text-xs text-zinc-200 focus:outline-none focus:border-indigo-500 font-bold"
+                            />
+                            <button
+                              onClick={() => handleRenameTagConfirm(tag)}
+                              className="text-indigo-400 hover:text-indigo-300 font-bold px-2 py-1"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={() => setRenamingTag(null)}
+                              className="text-zinc-550 hover:text-zinc-350 font-semibold px-2 py-1"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-2.5">
+                              <span className={`px-2.5 py-0.5 rounded border text-[10px] font-bold ${getTagStyles(tag).bg}`}>
+                                #{tag}
+                              </span>
+                              <span className="text-[10px] text-zinc-550 font-bold uppercase tracking-wider">
+                                {count} active in list
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  setRenamingTag(tag);
+                                  setRenameText(tag);
+                                }}
+                                className="text-zinc-500 hover:text-white p-1"
+                                title="Rename tag globally"
+                              >
+                                <Edit2 className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteTagConfirm(tag)}
+                                className="text-zinc-500 hover:text-red-400 p-1"
+                                title="Delete tag globally"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end pt-3 border-t border-zinc-800">
+              <button
+                onClick={() => {
+                  setTagManagerOpen(false);
+                  setRenamingTag(null);
+                }}
+                className="bg-zinc-850 hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs py-2 px-4 rounded-xl border border-zinc-800 font-semibold"
+              >
+                Close Library
               </button>
             </div>
           </div>
