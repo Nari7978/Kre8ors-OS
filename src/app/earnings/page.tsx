@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useGlobalStore } from '@/lib/store/global-store';
 import { 
   DollarSign, TrendingUp, Wallet, ArrowUpRight, Percent, 
-  Sliders, Plus, RefreshCw, AlertCircle, CheckCircle2, PiggyBank, Receipt, Search
+  Sliders, Plus, RefreshCw, AlertCircle, CheckCircle2, PiggyBank, Receipt, Search, X, Users
 } from 'lucide-react';
 
 export default function EarningsPage() {
@@ -36,6 +36,7 @@ export default function EarningsPage() {
   const [txSearch, setTxSearch] = useState('');
   const [txSource, setTxSource] = useState('all');
   const [txDateRange, setTxDateRange] = useState('30d');
+  const [selectedTx, setSelectedTx] = useState<any | null>(null);
 
   // Fetch earnings and payouts
   useEffect(() => {
@@ -545,6 +546,91 @@ export default function EarningsPage() {
           Initial transactions log interface designed with filters.
         </div>
       </div>
+
+      {/* Transaction Detail Modal Drawer */}
+      {selectedTx && (
+        <div className="fixed inset-0 bg-zinc-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <h3 className="font-extrabold text-sm text-zinc-155 flex items-center gap-2">
+                <Receipt className="h-4 w-4 text-indigo-400" />
+                Transaction Receipt Detail
+              </h3>
+              <button
+                onClick={() => setSelectedTx(null)}
+                className="text-zinc-500 hover:text-white p-1 rounded-lg hover:bg-zinc-800 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Fan metadata info */}
+            {selectedTx.fan ? (
+              <div className="flex items-center gap-3 p-3 bg-zinc-950/40 border border-zinc-850 rounded-xl">
+                <div className="h-10 w-10 rounded-full bg-zinc-800 overflow-hidden flex items-center justify-center border border-zinc-850">
+                  {selectedTx.fan.avatarUrl ? (
+                    <img src={selectedTx.fan.avatarUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <Users className="h-5 w-5 text-zinc-500" />
+                  )}
+                </div>
+                <div>
+                  <h4 className="font-bold text-xs text-zinc-200">{selectedTx.fan.displayName}</h4>
+                  <p className="text-[10px] text-zinc-500">@{selectedTx.fan.username} • UID: {selectedTx.fanOfId || 'N/A'}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="p-3 bg-zinc-950/40 border border-zinc-850 rounded-xl text-[10px] text-zinc-500 italic">
+                Subscriber UID: {selectedTx.fanOfId || 'Unknown Fan'} (Profile detail not synced)
+              </div>
+            )}
+
+            {/* Ledger specifics */}
+            <div className="bg-zinc-950/20 border border-zinc-850 p-4 rounded-xl space-y-2.5 text-xs">
+              <div className="flex justify-between text-zinc-400">
+                <span>Transaction ID:</span>
+                <span className="font-mono text-[10px] font-bold text-zinc-300">{selectedTx.id}</span>
+              </div>
+              <div className="flex justify-between text-zinc-400">
+                <span>Revenue Channel:</span>
+                <span className="font-bold uppercase tracking-wider text-[9px] bg-zinc-800 px-2 py-0.5 rounded text-zinc-300">
+                  {selectedTx.source}
+                </span>
+              </div>
+              <div className="flex justify-between text-zinc-400">
+                <span>Timestamp:</span>
+                <span className="font-semibold text-zinc-300">
+                  {new Date(selectedTx.loggedAt).toLocaleString()}
+                </span>
+              </div>
+              
+              <div className="border-t border-zinc-800/80 my-2 pt-2 space-y-2">
+                <div className="flex justify-between text-zinc-400">
+                  <span>Gross Amount:</span>
+                  <span className="font-bold text-zinc-200">${Number(selectedTx.amount).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-[11px] text-zinc-500">
+                  <span>OnlyFans Cut (20%):</span>
+                  <span>-${(Number(selectedTx.amount) * 0.2).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between font-bold text-indigo-400 border-t border-zinc-900 pt-2">
+                  <span>Net Payout Pool:</span>
+                  <span>${Number(selectedTx.netAmount).toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-3 border-t border-zinc-800">
+              <button
+                onClick={() => setSelectedTx(null)}
+                className="bg-zinc-850 hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs py-2 px-4 rounded-xl border border-zinc-800 font-semibold"
+              >
+                Close Receipt
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
