@@ -24,6 +24,8 @@ export async function GET(request: Request) {
     const source = searchParams.get('source');
     const sortBy = searchParams.get('sortBy') || 'loggedAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
+    const agencySplit = parseFloat(searchParams.get('agencySplit') || '50');
+    const chatterSplit = parseFloat(searchParams.get('chatterSplit') || '10');
 
     // 1. Search filter by resolving matching subscriber UIDs first
     if (search) {
@@ -83,14 +85,22 @@ export async function GET(request: Request) {
 
     const fansMap = new Map(fans.map((f) => [f.ofId, f]));
 
+    let totalGross = 0;
+    let totalNet = 0;
+
     const transactions = earnings.map((e) => {
+      const amount = Number(e.amount);
+      const netAmount = Number(e.netAmount);
+      totalGross += amount;
+      totalNet += netAmount;
+
       const fan = e.fanOfId ? fansMap.get(e.fanOfId) : null;
       return {
         id: e.id,
         creatorId: e.creatorId,
         source: e.source,
-        amount: Number(e.amount),
-        netAmount: Number(e.netAmount),
+        amount,
+        netAmount,
         fanOfId: e.fanOfId,
         loggedAt: e.loggedAt,
         fan: fan ? {
@@ -102,7 +112,22 @@ export async function GET(request: Request) {
       };
     });
 
-    return NextResponse.json(transactions);
+    const creatorShare = totalNet * ((100 - agencySplit) / 100);
+    const agencyShare = totalNet * (agencySplit / 100);
+    const chatterCommission = agencyShare * (chatterSplit / 100);
+    const agencyNetProfit = agencyShare - chatterCommission;
+
+    return NextResponse.json({
+      transactions,
+      stats: {
+        totalGross,
+        totalNet,
+        creatorShare,
+        agencyShare,
+        chatterCommission,
+        agencyNetProfit,
+      }
+    });
   } catch (error) {
     console.error('Error fetching transactions:', error);
     return NextResponse.json(
