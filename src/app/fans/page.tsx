@@ -753,26 +753,119 @@ export default function FansCRMPage() {
                           </span>
                         ))}
                         {activeCardTagInput === fan.id ? (
-                          <input
-                            type="text"
-                            placeholder="tag..."
-                            autoFocus
-                            value={quickTagText}
-                            onChange={(e) => setQuickTagText(e.target.value)}
-                            onBlur={() => {
-                              setActiveCardTagInput(null);
-                              setQuickTagText('');
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                handleQuickAddTag(fan);
-                              } else if (e.key === 'Escape') {
-                                setActiveCardTagInput(null);
-                                setQuickTagText('');
-                              }
-                            }}
-                            className="bg-zinc-950 border border-zinc-800 rounded px-1.5 py-0.5 text-[9px] w-16 focus:outline-none focus:border-indigo-500 text-zinc-200"
-                          />
+                          <div className="relative">
+                            <input
+                              type="text"
+                              placeholder="tag..."
+                              autoFocus
+                              value={quickTagText}
+                              onChange={(e) => {
+                                setQuickTagText(e.target.value);
+                                setActiveSuggestionIndex(0);
+                              }}
+                              onBlur={() => {
+                                // Small delay to allow clicking suggestions
+                                setTimeout(() => {
+                                  setActiveCardTagInput(null);
+                                  setQuickTagText('');
+                                }, 200);
+                              }}
+                              onKeyDown={(e) => {
+                                const suggestionsList = availableTags.filter(
+                                  (t) => !fan.customTags.includes(t) && t.toLowerCase().includes(quickTagText.toLowerCase())
+                                );
+                                if (e.key === 'ArrowDown') {
+                                  e.preventDefault();
+                                  setActiveSuggestionIndex((prev) => Math.min(prev + 1, suggestionsList.length - 1));
+                                } else if (e.key === 'ArrowUp') {
+                                  e.preventDefault();
+                                  setActiveSuggestionIndex((prev) => Math.max(prev - 1, 0));
+                                } else if (e.key === 'Enter' || e.key === 'Tab') {
+                                  e.preventDefault();
+                                  if (quickTagText.trim() && suggestionsList.length > 0 && activeSuggestionIndex < suggestionsList.length) {
+                                    const selected = suggestionsList[activeSuggestionIndex];
+                                    const updatedTags = [...fan.customTags, selected];
+                                    (async () => {
+                                      try {
+                                        const res = await fetch('/api/fans', {
+                                          method: 'PATCH',
+                                          headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({
+                                            fanId: fan.id,
+                                            customTags: updatedTags,
+                                          }),
+                                        });
+                                        if (res.ok) {
+                                          const updated = await res.json();
+                                          setFans((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
+                                        }
+                                      } catch (err) {
+                                        console.error('Error adding quick tag:', err);
+                                      }
+                                    })();
+                                    setActiveCardTagInput(null);
+                                    setQuickTagText('');
+                                  } else {
+                                    handleQuickAddTag(fan);
+                                  }
+                                } else if (e.key === 'Escape') {
+                                  setActiveCardTagInput(null);
+                                  setQuickTagText('');
+                                }
+                              }}
+                              className="bg-zinc-950 border border-zinc-800 rounded px-1.5 py-0.5 text-[9px] w-16 focus:outline-none focus:border-indigo-500 text-zinc-200"
+                            />
+                            
+                            {/* Suggestions List */}
+                            {quickTagText.trim() && (
+                              (() => {
+                                const suggestionsList = availableTags.filter(
+                                  (t) => !fan.customTags.includes(t) && t.toLowerCase().includes(quickTagText.toLowerCase())
+                                );
+                                if (suggestionsList.length === 0) return null;
+                                return (
+                                  <div className="absolute left-0 mt-1 bg-zinc-950 border border-zinc-800 rounded shadow-xl max-h-32 overflow-y-auto z-20 w-32 divide-y divide-zinc-900">
+                                    {suggestionsList.map((suggestion, index) => (
+                                      <button
+                                        key={suggestion}
+                                        type="button"
+                                        onClick={() => {
+                                          const updatedTags = [...fan.customTags, suggestion];
+                                          (async () => {
+                                            try {
+                                              const res = await fetch('/api/fans', {
+                                                method: 'PATCH',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({
+                                                  fanId: fan.id,
+                                                  customTags: updatedTags,
+                                                }),
+                                              });
+                                              if (res.ok) {
+                                                const updated = await res.json();
+                                                setFans((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
+                                              }
+                                            } catch (err) {
+                                              console.error('Error adding quick tag:', err);
+                                            }
+                                          })();
+                                          setActiveCardTagInput(null);
+                                          setQuickTagText('');
+                                        }}
+                                        className={`w-full text-left px-2 py-1 text-[9px] transition-colors flex items-center justify-between ${
+                                          index === activeSuggestionIndex
+                                            ? 'bg-indigo-600 text-white font-bold'
+                                            : 'text-zinc-350 hover:text-white hover:bg-zinc-900'
+                                        }`}
+                                      >
+                                        <span>#{suggestion}</span>
+                                      </button>
+                                    ))}
+                                  </div>
+                                );
+                              })()
+                            )}
+                          </div>
                         ) : (
                           <button
                             onClick={(e) => {
@@ -886,26 +979,119 @@ export default function FansCRMPage() {
                           </span>
                         ))}
                         {activeCardTagInput === fan.id ? (
-                          <input
-                            type="text"
-                            placeholder="tag..."
-                            autoFocus
-                            value={quickTagText}
-                            onChange={(e) => setQuickTagText(e.target.value)}
-                            onBlur={() => {
-                              setActiveCardTagInput(null);
-                              setQuickTagText('');
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                handleQuickAddTag(fan);
-                              } else if (e.key === 'Escape') {
-                                setActiveCardTagInput(null);
-                                setQuickTagText('');
-                              }
-                            }}
-                            className="bg-zinc-950 border border-zinc-800 rounded px-1.5 py-0.5 text-[9px] w-16 focus:outline-none focus:border-indigo-500 text-zinc-200"
-                          />
+                          <div className="relative">
+                            <input
+                              type="text"
+                              placeholder="tag..."
+                              autoFocus
+                              value={quickTagText}
+                              onChange={(e) => {
+                                setQuickTagText(e.target.value);
+                                setActiveSuggestionIndex(0);
+                              }}
+                              onBlur={() => {
+                                // Small delay to allow clicking suggestions
+                                setTimeout(() => {
+                                  setActiveCardTagInput(null);
+                                  setQuickTagText('');
+                                }, 200);
+                              }}
+                              onKeyDown={(e) => {
+                                const suggestionsList = availableTags.filter(
+                                  (t) => !fan.customTags.includes(t) && t.toLowerCase().includes(quickTagText.toLowerCase())
+                                );
+                                if (e.key === 'ArrowDown') {
+                                  e.preventDefault();
+                                  setActiveSuggestionIndex((prev) => Math.min(prev + 1, suggestionsList.length - 1));
+                                } else if (e.key === 'ArrowUp') {
+                                  e.preventDefault();
+                                  setActiveSuggestionIndex((prev) => Math.max(prev - 1, 0));
+                                } else if (e.key === 'Enter' || e.key === 'Tab') {
+                                  e.preventDefault();
+                                  if (quickTagText.trim() && suggestionsList.length > 0 && activeSuggestionIndex < suggestionsList.length) {
+                                    const selected = suggestionsList[activeSuggestionIndex];
+                                    const updatedTags = [...fan.customTags, selected];
+                                    (async () => {
+                                      try {
+                                        const res = await fetch('/api/fans', {
+                                          method: 'PATCH',
+                                          headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({
+                                            fanId: fan.id,
+                                            customTags: updatedTags,
+                                          }),
+                                        });
+                                        if (res.ok) {
+                                          const updated = await res.json();
+                                          setFans((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
+                                        }
+                                      } catch (err) {
+                                        console.error('Error adding quick tag:', err);
+                                      }
+                                    })();
+                                    setActiveCardTagInput(null);
+                                    setQuickTagText('');
+                                  } else {
+                                    handleQuickAddTag(fan);
+                                  }
+                                } else if (e.key === 'Escape') {
+                                  setActiveCardTagInput(null);
+                                  setQuickTagText('');
+                                }
+                              }}
+                              className="bg-zinc-950 border border-zinc-800 rounded px-1.5 py-0.5 text-[9px] w-16 focus:outline-none focus:border-indigo-500 text-zinc-200"
+                            />
+                            
+                            {/* Suggestions List */}
+                            {quickTagText.trim() && (
+                              (() => {
+                                const suggestionsList = availableTags.filter(
+                                  (t) => !fan.customTags.includes(t) && t.toLowerCase().includes(quickTagText.toLowerCase())
+                                );
+                                if (suggestionsList.length === 0) return null;
+                                return (
+                                  <div className="absolute left-0 mt-1 bg-zinc-950 border border-zinc-800 rounded shadow-xl max-h-32 overflow-y-auto z-20 w-32 divide-y divide-zinc-900">
+                                    {suggestionsList.map((suggestion, index) => (
+                                      <button
+                                        key={suggestion}
+                                        type="button"
+                                        onClick={() => {
+                                          const updatedTags = [...fan.customTags, suggestion];
+                                          (async () => {
+                                            try {
+                                              const res = await fetch('/api/fans', {
+                                                method: 'PATCH',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({
+                                                  fanId: fan.id,
+                                                  customTags: updatedTags,
+                                                }),
+                                              });
+                                              if (res.ok) {
+                                                const updated = await res.json();
+                                                setFans((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
+                                              }
+                                            } catch (err) {
+                                              console.error('Error adding quick tag:', err);
+                                            }
+                                          })();
+                                          setActiveCardTagInput(null);
+                                          setQuickTagText('');
+                                        }}
+                                        className={`w-full text-left px-2 py-1 text-[9px] transition-colors flex items-center justify-between ${
+                                          index === activeSuggestionIndex
+                                            ? 'bg-indigo-600 text-white font-bold'
+                                            : 'text-zinc-350 hover:text-white hover:bg-zinc-900'
+                                        }`}
+                                      >
+                                        <span>#{suggestion}</span>
+                                      </button>
+                                    ))}
+                                  </div>
+                                );
+                              })()
+                            )}
+                          </div>
                         ) : (
                           <button
                             onClick={(e) => {
