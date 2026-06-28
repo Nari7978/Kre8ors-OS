@@ -1580,6 +1580,7 @@ export default function FansCRMPage() {
             </div>
           </div>
         </div>
+      )}
       {/* Global Tag Manager Modal */}
       {tagManagerOpen && (
         <div className="fixed inset-0 bg-zinc-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
