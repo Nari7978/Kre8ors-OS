@@ -162,7 +162,7 @@ export default function EarningsPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
         {/* Gross */}
         <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-5 backdrop-blur-sm relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-3 opacity-5">
@@ -189,6 +189,20 @@ export default function EarningsPage() {
             <h3 className="text-2xl font-bold text-zinc-100 mt-2">${totalNetRevenue.toFixed(2)}</h3>
           )}
           <span className="text-[9px] text-zinc-500 block mt-1">Standard 80% onlyfans share</span>
+        </div>
+
+        {/* Live Agency Net Profit Card */}
+        <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-5 backdrop-blur-sm relative overflow-hidden group border-indigo-500/20">
+          <div className="absolute top-0 right-0 p-3 opacity-5">
+            <Percent className="h-16 w-16 text-indigo-400" />
+          </div>
+          <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider">Agency Net ({agencySplit}%)</p>
+          {loadingEarnings ? (
+            <RefreshCw className="h-5 w-5 animate-spin text-blue-500 mt-2" />
+          ) : (
+            <h3 className="text-2xl font-bold text-indigo-400 mt-2">${(totalNetRevenue * (agencySplit / 100) * ((100 - chatterSplit) / 100)).toFixed(2)}</h3>
+          )}
+          <span className="text-[9px] text-zinc-500 block mt-1">Live agency profit net of chatter split</span>
         </div>
 
         {/* Available payout */}
