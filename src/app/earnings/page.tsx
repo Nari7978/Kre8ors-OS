@@ -645,12 +645,13 @@ export default function EarningsPage() {
                 {transactions.map((tx) => {
                   const gross = Number(tx.amount);
                   const net = Number(tx.netAmount);
-                  const sourceStyles: Record<string, string> = {
-                    tip: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-                    subscription: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-                    ppv_chat: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-                    ppv_post: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+                  const sourceLabels: Record<string, { label: string, styles: string }> = {
+                    tip: { label: 'Direct Tip', styles: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+                    subscription: { label: 'Subscription', styles: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+                    ppv_chat: { label: 'PPV Chat Unlock', styles: 'bg-purple-500/10 text-purple-450 border-purple-500/20' },
+                    ppv_post: { label: 'PPV Feed Post', styles: 'bg-amber-500/10 text-amber-405 border-amber-500/20' },
                   };
+                  const sourceInfo = sourceLabels[tx.source] || { label: tx.source, styles: 'bg-zinc-800 text-zinc-400' };
                   return (
                     <tr 
                       key={tx.id} 
@@ -671,8 +672,9 @@ export default function EarningsPage() {
                         </div>
                       </td>
                       <td className="p-3.5">
-                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded border uppercase tracking-wide ${sourceStyles[tx.source] || 'bg-zinc-800 text-zinc-400'}`}>
-                          {tx.source}
+                        <span className={`inline-flex items-center gap-1.5 text-[9px] font-bold px-2.5 py-0.5 rounded-full border uppercase tracking-wide ${sourceInfo.styles}`}>
+                          <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
+                          {sourceInfo.label}
                         </span>
                       </td>
                       <td className="p-3.5 text-zinc-500">{new Date(tx.loggedAt).toLocaleDateString()}</td>
