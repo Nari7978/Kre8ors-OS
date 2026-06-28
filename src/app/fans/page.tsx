@@ -340,17 +340,60 @@ export default function FansCRMPage() {
       setRenamingTag(null);
       return;
     }
-    // Stub for Commit 7
-    alert(`Rename tag from #${oldTag} to #${newTagVal} (backend pending)`);
-    setRenamingTag(null);
+    
+    try {
+      const res = await fetch('/api/fans', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          creatorId: activeCreator.id,
+          globalAction: 'rename',
+          oldTag,
+          newTag: newTagVal,
+        }),
+      });
+
+      if (res.ok) {
+        await loadFans();
+        await loadAvailableTags();
+        setRenamingTag(null);
+        setRenameText('');
+      } else {
+        console.error('Failed to rename tag globally');
+      }
+    } catch (err) {
+      console.error('Error renaming tag globally:', err);
+    }
   };
 
   const handleDeleteTagConfirm = async (tagToDelete: string) => {
     if (!activeCreator) return;
     const confirmDelete = window.confirm(`Are you sure you want to delete the tag #${tagToDelete} globally? This will remove it from all subscribers.`);
     if (!confirmDelete) return;
-    // Stub for Commit 7
-    alert(`Delete tag #${tagToDelete} globally (backend pending)`);
+
+    try {
+      const res = await fetch('/api/fans', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          creatorId: activeCreator.id,
+          globalAction: 'delete',
+          tag: tagToDelete,
+        }),
+      });
+
+      if (res.ok) {
+        if (tagFilter === tagToDelete) {
+          setTagFilter('');
+        }
+        await loadFans();
+        await loadAvailableTags();
+      } else {
+        console.error('Failed to delete tag globally');
+      }
+    } catch (err) {
+      console.error('Error deleting tag globally:', err);
+    }
   };
 
   const handleSaveDetails = async () => {
