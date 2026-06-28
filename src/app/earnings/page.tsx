@@ -30,6 +30,13 @@ export default function EarningsPage() {
   const [agencySplit, setAgencySplit] = useState<number>(50); // % of net split
   const [chatterSplit, setChatterSplit] = useState<number>(10); // % of agency split
 
+  // Transactions Ledger State
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loadingTransactions, setLoadingTransactions] = useState(false);
+  const [txSearch, setTxSearch] = useState('');
+  const [txSource, setTxSource] = useState('all');
+  const [txDateRange, setTxDateRange] = useState('30d');
+
   // Fetch earnings and payouts
   useEffect(() => {
     if (!activeCreator) return;
@@ -453,6 +460,22 @@ export default function EarningsPage() {
               </div>
             </div>
           </div>
+      </div>
+
+      {/* Detailed Transaction Ledger */}
+      <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-zinc-800/60 pb-4">
+          <div>
+            <h3 className="text-md font-bold text-zinc-150 flex items-center gap-2">
+              <Receipt className="h-5 w-5 text-indigo-400" />
+              Subscribers Transaction Ledger
+            </h3>
+            <p className="text-xs text-zinc-500 mt-1">Detailed list of individual tips, subscriptions, and PPV unlock events</p>
+          </div>
+        </div>
+
+        <div className="py-12 text-center text-zinc-500 text-xs">
+          Initial transactions log interface designed.
         </div>
       </div>
     </div>
