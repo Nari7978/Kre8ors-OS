@@ -112,6 +112,29 @@ export default function EarningsPage() {
     } finally {
       setSubmittingPayout(false);
     }
+  const handleExportCSV = () => {
+    if (transactions.length === 0) return;
+    
+    const headers = ['Transaction ID', 'Subscriber Name', 'Subscriber Username', 'Channel', 'Date', 'Gross Amount ($)', 'Net Share ($)'];
+    const rows = transactions.map(tx => [
+      tx.id,
+      tx.fan?.displayName || 'Anonymous',
+      tx.fan?.username || 'unknown',
+      tx.source,
+      new Date(tx.loggedAt).toISOString(),
+      Number(tx.amount).toFixed(2),
+      Number(tx.netAmount).toFixed(2)
+    ]);
+    
+    const csvContent = [headers.join(','), ...rows.map(r => r.map(val => `"${val}"`).join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `financial_ledger_${activeCreator?.username || 'creator'}_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   if (!activeCreator) {
@@ -496,6 +519,14 @@ export default function EarningsPage() {
             </h3>
             <p className="text-xs text-zinc-500 mt-1">Detailed list of individual tips, subscriptions, and PPV unlock events</p>
           </div>
+          <button
+            onClick={handleExportCSV}
+            disabled={transactions.length === 0}
+            className="bg-zinc-950 border border-zinc-800 hover:border-zinc-700 disabled:opacity-50 text-zinc-300 hover:text-white px-3.5 py-1.5 rounded-xl transition-all flex items-center justify-center gap-1.5 font-bold text-[10px] uppercase tracking-wider cursor-pointer disabled:cursor-not-allowed"
+          >
+            <ArrowUpRight className="h-3.5 w-3.5 text-indigo-400" />
+            Export CSV
+          </button>
         </div>
 
         {/* Search & Filters */}
