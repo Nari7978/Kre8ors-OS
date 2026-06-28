@@ -146,6 +146,8 @@ export default function EarningsPage() {
     } finally {
       setSubmittingPayout(false);
     }
+  };
+
   const handleExportCSV = () => {
     if (transactions.length === 0) return;
     
@@ -541,6 +543,7 @@ export default function EarningsPage() {
               </div>
             </div>
           </div>
+        </div>
       </div>
 
       {/* Detailed Transaction Ledger */}
