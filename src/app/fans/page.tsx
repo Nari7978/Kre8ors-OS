@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useGlobalStore } from '@/lib/store/global-store';
 import { Fan } from '@/types';
-import { Users, UserCheck, UserMinus, DollarSign, Search, RefreshCw, Filter, SlidersHorizontal, Tag, Eye, X, Plus, Send, Edit2, Trash2 } from 'lucide-react';
+import { Users, UserCheck, UserMinus, DollarSign, Search, RefreshCw, Filter, SlidersHorizontal, Tag, Eye, X, Plus, Send, Edit2, Trash2, CheckCircle2 } from 'lucide-react';
 
 export const getTagStyles = (tag: string) => {
   const hash = tag.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
@@ -60,6 +60,7 @@ export default function FansCRMPage() {
   const [notesText, setNotesText] = useState('');
   const [newTag, setNewTag] = useState('');
   const [saving, setSaving] = useState(false);
+  const [savingSuccess, setSavingSuccess] = useState(false);
 
   // Autocomplete tags state
   const [availableTags, setAvailableTags] = useState<string[]>([]);
@@ -414,8 +415,9 @@ export default function FansCRMPage() {
         const updated = await res.json();
         // Update fan in list state
         setFans((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
-        // Close modal
-        setSelectedFan(null);
+        setSelectedFan(updated);
+        setSavingSuccess(true);
+        setTimeout(() => setSavingSuccess(false), 2000);
       } else {
         console.error('Failed to save fan details');
       }
@@ -1436,7 +1438,13 @@ export default function FansCRMPage() {
             </div>
 
             {/* Save notes button */}
-            <div className="pt-4 border-t border-zinc-800 mt-6 flex justify-end gap-3">
+            <div className="pt-4 border-t border-zinc-800 mt-6 flex justify-end gap-3 items-center">
+              {savingSuccess && (
+                <span className="text-xs text-green-400 font-bold flex items-center gap-1 mr-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-500 animate-bounce" />
+                  Saved!
+                </span>
+              )}
               <button
                 onClick={() => setSelectedFan(null)}
                 className="bg-zinc-850 hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs py-2 px-4 rounded-xl border border-zinc-800 font-semibold"
