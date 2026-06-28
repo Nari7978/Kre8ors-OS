@@ -64,6 +64,7 @@ export default function FansCRMPage() {
   // Autocomplete tags state
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [isTagInputFocused, setIsTagInputFocused] = useState(false);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
 
   // Quick tag editing states
   const [activeCardTagInput, setActiveCardTagInput] = useState<string | null>(null);
@@ -1078,16 +1079,37 @@ export default function FansCRMPage() {
                       type="text"
                       placeholder="New tag..."
                       value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
+                      onChange={(e) => {
+                        setNewTag(e.target.value);
+                        setActiveSuggestionIndex(0);
+                      }}
                       onFocus={() => setIsTagInputFocused(true)}
                       onBlur={() => {
                         // Small delay to allow clicking options
                         setTimeout(() => setIsTagInputFocused(false), 200);
                       }}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
+                        const suggestionsList = availableTags.filter(
+                          (t) => !selectedFan.customTags.includes(t) && t.toLowerCase().includes(newTag.toLowerCase())
+                        );
+                        if (e.key === 'ArrowDown') {
                           e.preventDefault();
-                          handleAddTag();
+                          setActiveSuggestionIndex((prev) => Math.min(prev + 1, suggestionsList.length - 1));
+                        } else if (e.key === 'ArrowUp') {
+                          e.preventDefault();
+                          setActiveSuggestionIndex((prev) => Math.max(prev - 1, 0));
+                        } else if (e.key === 'Enter' || e.key === 'Tab') {
+                          e.preventDefault();
+                          if (newTag.trim() && suggestionsList.length > 0 && activeSuggestionIndex < suggestionsList.length) {
+                            const selected = suggestionsList[activeSuggestionIndex];
+                            const updatedTags = [...selectedFan.customTags, selected];
+                            setSelectedFan({ ...selectedFan, customTags: updatedTags });
+                            setNewTag('');
+                          } else {
+                            handleAddTag();
+                          }
+                        } else if (e.key === 'Escape') {
+                          setIsTagInputFocused(false);
                         }
                       }}
                       className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-indigo-500 text-zinc-200"
@@ -1101,26 +1123,40 @@ export default function FansCRMPage() {
                   </div>
 
                   {/* Autocomplete Suggestions Box */}
-                  {isTagInputFocused && newTag.trim() && availableTags.filter(t => !selectedFan.customTags.includes(t) && t.toLowerCase().includes(newTag.toLowerCase())).length > 0 && (
-                    <div className="absolute left-0 right-0 mt-1 bg-zinc-950 border border-zinc-850 rounded-xl shadow-xl max-h-40 overflow-y-auto z-20 divide-y divide-zinc-900">
-                      {availableTags
-                        .filter(t => !selectedFan.customTags.includes(t) && t.toLowerCase().includes(newTag.toLowerCase()))
-                        .map((suggestion) => (
-                          <button
-                            key={suggestion}
-                            onClick={() => {
-                              const updatedTags = [...selectedFan.customTags, suggestion];
-                              setSelectedFan({ ...selectedFan, customTags: updatedTags });
-                              setNewTag('');
-                            }}
-                            className="w-full text-left px-3 py-2 text-xs text-zinc-350 hover:text-white hover:bg-zinc-900 transition-colors flex items-center justify-between"
-                          >
-                            <span>#{suggestion}</span>
-                            <span className="text-[9px] text-zinc-650 font-bold uppercase tracking-wider">existing</span>
-                          </button>
-                        ))
-                      }
-                    </div>
+                  {isTagInputFocused && newTag.trim() && (
+                    (() => {
+                      const suggestionsList = availableTags.filter(
+                        (t) => !selectedFan.customTags.includes(t) && t.toLowerCase().includes(newTag.toLowerCase())
+                      );
+                      if (suggestionsList.length === 0) return null;
+                      return (
+                        <div className="absolute left-0 right-0 mt-1 bg-zinc-950 border border-zinc-800 rounded-xl shadow-xl max-h-40 overflow-y-auto z-20 divide-y divide-zinc-900">
+                          {suggestionsList.map((suggestion, index) => (
+                            <button
+                              key={suggestion}
+                              type="button"
+                              onClick={() => {
+                                const updatedTags = [...selectedFan.customTags, suggestion];
+                                setSelectedFan({ ...selectedFan, customTags: updatedTags });
+                                setNewTag('');
+                              }}
+                              className={`w-full text-left px-3 py-2 text-xs transition-colors flex items-center justify-between ${
+                                index === activeSuggestionIndex
+                                  ? 'bg-indigo-600 text-white font-bold'
+                                  : 'text-zinc-350 hover:text-white hover:bg-zinc-900'
+                              }`}
+                            >
+                              <span>#{suggestion}</span>
+                              <span className={`text-[9px] font-bold uppercase tracking-wider ${
+                                index === activeSuggestionIndex ? 'text-indigo-200' : 'text-zinc-600'
+                              }`}>
+                                existing
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      );
+                    })()
                   )}
                 </div>
               </div>
