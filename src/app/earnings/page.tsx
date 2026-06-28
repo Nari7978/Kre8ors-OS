@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useGlobalStore } from '@/lib/store/global-store';
 import { 
   DollarSign, TrendingUp, Wallet, ArrowUpRight, Percent, 
-  Sliders, Plus, RefreshCw, AlertCircle, CheckCircle2, PiggyBank, Receipt
+  Sliders, Plus, RefreshCw, AlertCircle, CheckCircle2, PiggyBank, Receipt, Search
 } from 'lucide-react';
 
 export default function EarningsPage() {
@@ -474,8 +474,52 @@ export default function EarningsPage() {
           </div>
         </div>
 
+        {/* Search & Filters */}
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between text-xs bg-zinc-950/20 p-4 rounded-xl border border-zinc-800/50">
+          <div className="relative w-full md:w-80">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
+            <input
+              type="text"
+              placeholder="Search by fan name or @username..."
+              value={txSearch}
+              onChange={(e) => setTxSearch(e.target.value)}
+              className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 pl-9 pr-4 text-xs text-zinc-300 focus:outline-none focus:border-indigo-500 transition-colors"
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <div className="flex items-center gap-2">
+              <span className="text-zinc-500 font-bold uppercase tracking-wider text-[9px]">Source:</span>
+              <select
+                value={txSource}
+                onChange={(e) => setTxSource(e.target.value)}
+                className="bg-zinc-950 border border-zinc-800 rounded-xl py-1.5 px-3 text-zinc-300 focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer text-xs"
+              >
+                <option value="all">All Channels</option>
+                <option value="subscription">Subscription</option>
+                <option value="tip">Tips</option>
+                <option value="ppv_chat">PPV Chat</option>
+                <option value="ppv_post">PPV Feed Post</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-zinc-500 font-bold uppercase tracking-wider text-[9px]">Range:</span>
+              <select
+                value={txDateRange}
+                onChange={(e) => setTxDateRange(e.target.value)}
+                className="bg-zinc-950 border border-zinc-800 rounded-xl py-1.5 px-3 text-zinc-300 focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer text-xs"
+              >
+                <option value="7d">Last 7 Days</option>
+                <option value="30d">Last 30 Days</option>
+                <option value="90d">Last 90 Days</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <div className="py-12 text-center text-zinc-500 text-xs">
-          Initial transactions log interface designed.
+          Initial transactions log interface designed with filters.
         </div>
       </div>
     </div>
