@@ -70,6 +70,36 @@ export default function EarningsPage() {
     loadData();
   }, [activeCreator]);
 
+  // Load transactions ledger from endpoint
+  useEffect(() => {
+    if (!activeCreator) return;
+    
+    const delayDebounce = setTimeout(async () => {
+      setLoadingTransactions(true);
+      try {
+        const query = new URLSearchParams({
+          creatorId: activeCreator.id,
+          search: txSearch,
+          source: txSource,
+          range: txDateRange,
+          agencySplit: agencySplit.toString(),
+          chatterSplit: chatterSplit.toString(),
+        });
+        const res = await fetch(`/api/earnings/transactions?${query.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          setTransactions(data.transactions || []);
+        }
+      } catch (err) {
+        console.error('Error fetching transactions:', err);
+      } finally {
+        setLoadingTransactions(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounce);
+  }, [activeCreator, txSearch, txSource, txDateRange, agencySplit, chatterSplit]);
+
   // Request payout
   const handleRequestPayout = async (e: React.FormEvent) => {
     e.preventDefault();
