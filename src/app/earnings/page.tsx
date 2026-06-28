@@ -413,7 +413,7 @@ export default function EarningsPage() {
             <div className="pt-4 border-t border-zinc-800/80 space-y-3">
               <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider block">Financial Distribution Splits</span>
               
-              <div className="space-y-2 bg-zinc-950/40 border border-zinc-800/60 p-4 rounded-xl text-xs space-y-2.5">
+              <div className="space-y-3 bg-zinc-950/40 border border-zinc-800/60 p-4 rounded-xl text-xs">
                 {/* Gross */}
                 <div className="flex items-center justify-between">
                   <span className="text-zinc-400">Gross Simulation:</span>
@@ -421,7 +421,7 @@ export default function EarningsPage() {
                 </div>
 
                 {/* OnlyFans cut */}
-                <div className="flex items-center justify-between text-zinc-500">
+                <div className="flex items-center justify-between text-zinc-500 pb-2 border-b border-zinc-800/60">
                   <span className="flex items-center gap-1 text-[11px]">
                     <Percent className="h-3 w-3" /> OnlyFans Cut (20%):
                   </span>
@@ -429,27 +429,36 @@ export default function EarningsPage() {
                 </div>
 
                 {/* Net Pool */}
-                <div className="flex items-center justify-between font-bold border-b border-zinc-800/80 pb-2 text-zinc-200">
+                <div className="flex items-center justify-between font-bold text-zinc-200">
                   <span>Net Payout Pool:</span>
                   <span>${netEarnings.toFixed(2)}</span>
                 </div>
 
-                {/* Creator share */}
-                <div className="flex items-center justify-between font-medium">
-                  <span className="text-zinc-400">Creator Share ({100 - agencySplit}%):</span>
-                  <span className="text-indigo-400 font-semibold">${creatorShareVal.toFixed(2)}</span>
-                </div>
+                {/* Dynamic visual splits summary cards */}
+                <div className="grid grid-cols-2 gap-2 pt-2">
+                  <div className="bg-zinc-950/60 border border-zinc-850 p-2.5 rounded-xl">
+                    <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider block">Creator Share</span>
+                    <span className="text-xs font-black text-indigo-400 block mt-1">${creatorShareVal.toFixed(2)}</span>
+                    <span className="text-[8px] text-zinc-500">{(100 - agencySplit)}% of net pool</span>
+                  </div>
 
-                {/* Agency share */}
-                <div className="flex items-center justify-between font-medium">
-                  <span className="text-zinc-400">Agency Share ({agencySplit}%):</span>
-                  <span className="text-zinc-200 font-semibold">${agencyShareVal.toFixed(2)}</span>
-                </div>
+                  <div className="bg-zinc-950/60 border border-zinc-850 p-2.5 rounded-xl">
+                    <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider block">Agency Gross</span>
+                    <span className="text-xs font-black text-zinc-200 block mt-1">${agencyShareVal.toFixed(2)}</span>
+                    <span className="text-[8px] text-zinc-500">{agencySplit}% of net pool</span>
+                  </div>
 
-                {/* Chatter share */}
-                <div className="flex items-center justify-between text-[11px] text-zinc-500">
-                  <span>↳ Chatter Commission ({chatterSplit}%):</span>
-                  <span>-${chatterCommVal.toFixed(2)}</span>
+                  <div className="bg-zinc-950/60 border border-zinc-850 p-2.5 rounded-xl">
+                    <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider block">Chatter Cut</span>
+                    <span className="text-xs font-black text-amber-500 block mt-1">${chatterCommVal.toFixed(2)}</span>
+                    <span className="text-[8px] text-zinc-500">{chatterSplit}% of agency share</span>
+                  </div>
+
+                  <div className="bg-zinc-950/60 border border-zinc-850 p-2.5 rounded-xl border-emerald-500/20">
+                    <span className="text-[9px] text-emerald-450 font-bold uppercase tracking-wider block">Agency Net</span>
+                    <span className="text-xs font-black text-emerald-400 block mt-1">${agencyRetentionVal.toFixed(2)}</span>
+                    <span className="text-[8px] text-zinc-500">Net retained profit</span>
+                  </div>
                 </div>
 
                 {/* Agency Net */}
