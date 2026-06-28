@@ -17,6 +17,20 @@ interface MediaItem {
   folderName: string;
 }
 
+export const getTagStyles = (tag: string) => {
+  const hash = tag.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const colors = [
+    { bg: 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400', label: 'Indigo' },
+    { bg: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400', label: 'Emerald' },
+    { bg: 'bg-amber-500/10 border-amber-500/20 text-amber-400', label: 'Amber' },
+    { bg: 'bg-rose-500/10 border-rose-500/20 text-rose-400', label: 'Rose' },
+    { bg: 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400', label: 'Cyan' },
+    { bg: 'bg-purple-500/10 border-purple-500/20 text-purple-400', label: 'Purple' },
+    { bg: 'bg-orange-500/10 border-orange-500/20 text-orange-400', label: 'Orange' },
+  ];
+  return colors[hash % colors.length];
+};
+
 export default function MessagesPage() {
   const { activeCreator } = useGlobalStore();
   const [creators, setCreators] = useState<Creator[]>([]);
@@ -739,7 +753,7 @@ const toggleAttachMedia = (url: string) => {
                 {selectedFan.customTags.map((tag) => (
                   <span
                     key={tag}
-                    className="text-xs bg-blue-500/10 border border-blue-500/20 text-blue-400 pl-2.5 pr-1.5 py-1 rounded-full flex items-center gap-1 font-semibold"
+                    className={`text-xs border pl-2.5 pr-1.5 py-1 rounded-full flex items-center gap-1 font-semibold ${getTagStyles(tag).bg}`}
                   >
                     #{tag}
                     <button

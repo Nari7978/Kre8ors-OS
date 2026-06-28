@@ -5,6 +5,20 @@ import { useGlobalStore } from '@/lib/store/global-store';
 import { Fan } from '@/types';
 import { Users, UserCheck, UserMinus, DollarSign, Search, RefreshCw, Filter, SlidersHorizontal, Tag, Eye, X, Plus, Send } from 'lucide-react';
 
+export const getTagStyles = (tag: string) => {
+  const hash = tag.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const colors = [
+    { bg: 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400', label: 'Indigo' },
+    { bg: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400', label: 'Emerald' },
+    { bg: 'bg-amber-500/10 border-amber-500/20 text-amber-400', label: 'Amber' },
+    { bg: 'bg-rose-500/10 border-rose-500/20 text-rose-400', label: 'Rose' },
+    { bg: 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400', label: 'Cyan' },
+    { bg: 'bg-purple-500/10 border-purple-500/20 text-purple-400', label: 'Purple' },
+    { bg: 'bg-orange-500/10 border-orange-500/20 text-orange-400', label: 'Orange' },
+  ];
+  return colors[hash % colors.length];
+};
+
 export default function FansCRMPage() {
   const { activeCreator } = useGlobalStore();
   const [fans, setFans] = useState<Fan[]>([]);
@@ -702,7 +716,7 @@ export default function FansCRMPage() {
                     <td className="p-4">
                       <div className="flex flex-wrap gap-1 items-center max-w-[220px]">
                         {Array.isArray(fan.customTags) && fan.customTags.map((tag) => (
-                          <span key={tag} className="group/tag inline-flex items-center gap-1 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] pl-2 pr-1.5 py-0.5 rounded-md font-bold">
+                          <span key={tag} className={`group/tag inline-flex items-center gap-1 border text-[10px] pl-2 pr-1.5 py-0.5 rounded-md font-bold ${getTagStyles(tag).bg}`}>
                             #{tag}
                             <button
                               onClick={(e) => {
@@ -835,7 +849,7 @@ export default function FansCRMPage() {
                       <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider block">Tags</span>
                       <div className="flex flex-wrap gap-1 min-h-[22px] items-center">
                         {Array.isArray(fan.customTags) && fan.customTags.map((tag) => (
-                          <span key={tag} className="group/tag inline-flex items-center gap-1 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[9px] pl-2 pr-1.5 py-0.5 rounded-md font-bold">
+                          <span key={tag} className={`group/tag inline-flex items-center gap-1 border text-[9px] pl-2 pr-1.5 py-0.5 rounded-md font-bold ${getTagStyles(tag).bg}`}>
                             #{tag}
                             <button
                               onClick={(e) => {
@@ -1025,7 +1039,7 @@ export default function FansCRMPage() {
                 <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Custom CRM Badging Tags</span>
                 <div className="flex flex-wrap gap-1.5">
                   {selectedFan.customTags.map((tag) => (
-                    <span key={tag} className="text-xs bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 pl-2.5 pr-1.5 py-1 rounded-full flex items-center gap-1 font-semibold">
+                    <span key={tag} className={`text-xs border pl-2.5 pr-1.5 py-1 rounded-full flex items-center gap-1 font-semibold ${getTagStyles(tag).bg}`}>
                       #{tag}
                       <button
                         onClick={() => handleRemoveTag(tag)}
