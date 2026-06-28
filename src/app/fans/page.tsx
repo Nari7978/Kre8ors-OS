@@ -61,6 +61,10 @@ export default function FansCRMPage() {
   const [newTag, setNewTag] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // Autocomplete tags state
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [isTagInputFocused, setIsTagInputFocused] = useState(false);
+
   // Quick tag editing states
   const [activeCardTagInput, setActiveCardTagInput] = useState<string | null>(null);
   const [quickTagText, setQuickTagText] = useState('');
@@ -98,6 +102,24 @@ export default function FansCRMPage() {
   useEffect(() => {
     setSelectedFanIds([]);
   }, [activeCreator, search, statusFilter, minSpent, maxSpent, tagFilter, joinedAfter, joinedBefore, expiresAfter, expiresBefore, sortBy, sortOrder]);
+
+  // Load all unique active creator tags for autocomplete options
+  const loadAvailableTags = async () => {
+    if (!activeCreator) return;
+    try {
+      const res = await fetch(`/api/fans?creatorId=${activeCreator.id}&tagsOnly=true`);
+      if (res.ok) {
+        const list = await res.json();
+        setAvailableTags(list || []);
+      }
+    } catch (err) {
+      console.error('Error loading available tags:', err);
+    }
+  };
+
+  useEffect(() => {
+    loadAvailableTags();
+  }, [activeCreator]);
 
   useEffect(() => {
     if (selectedFan) {
@@ -1050,26 +1072,56 @@ export default function FansCRMPage() {
                     </span>
                   ))}
                 </div>
-                <div className="flex items-center gap-2 mt-2">
-                  <input
-                    type="text"
-                    placeholder="New tag..."
-                    value={newTag}
-                    onChange={(e) => setNewTag(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddTag();
+                <div className="relative">
+                  <div className="flex items-center gap-2 mt-2">
+                    <input
+                      type="text"
+                      placeholder="New tag..."
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      onFocus={() => setIsTagInputFocused(true)}
+                      onBlur={() => {
+                        // Small delay to allow clicking options
+                        setTimeout(() => setIsTagInputFocused(false), 200);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddTag();
+                        }
+                      }}
+                      className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-indigo-500 text-zinc-200"
+                    />
+                    <button
+                      onClick={handleAddTag}
+                      className="bg-zinc-850 hover:bg-zinc-800 text-zinc-300 p-2 rounded-xl border border-zinc-800 text-xs font-semibold"
+                    >
+                      Add
+                    </button>
+                  </div>
+
+                  {/* Autocomplete Suggestions Box */}
+                  {isTagInputFocused && newTag.trim() && availableTags.filter(t => !selectedFan.customTags.includes(t) && t.toLowerCase().includes(newTag.toLowerCase())).length > 0 && (
+                    <div className="absolute left-0 right-0 mt-1 bg-zinc-950 border border-zinc-850 rounded-xl shadow-xl max-h-40 overflow-y-auto z-20 divide-y divide-zinc-900">
+                      {availableTags
+                        .filter(t => !selectedFan.customTags.includes(t) && t.toLowerCase().includes(newTag.toLowerCase()))
+                        .map((suggestion) => (
+                          <button
+                            key={suggestion}
+                            onClick={() => {
+                              const updatedTags = [...selectedFan.customTags, suggestion];
+                              setSelectedFan({ ...selectedFan, customTags: updatedTags });
+                              setNewTag('');
+                            }}
+                            className="w-full text-left px-3 py-2 text-xs text-zinc-350 hover:text-white hover:bg-zinc-900 transition-colors flex items-center justify-between"
+                          >
+                            <span>#{suggestion}</span>
+                            <span className="text-[9px] text-zinc-650 font-bold uppercase tracking-wider">existing</span>
+                          </button>
+                        ))
                       }
-                    }}
-                    className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-indigo-500"
-                  />
-                  <button
-                    onClick={handleAddTag}
-                    className="bg-zinc-850 hover:bg-zinc-800 text-zinc-300 p-2 rounded-xl border border-zinc-800 text-xs font-semibold"
-                  >
-                    Add
-                  </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
