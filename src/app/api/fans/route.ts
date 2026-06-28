@@ -1,5 +1,15 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { z } from 'zod';
+
+const updateFanProfileSchema = z.object({
+  fanId: z.string().uuid(),
+  displayName: z.string().min(1).max(50).optional(),
+  notes: z.string().max(1000).optional(),
+  customTags: z.array(z.string().min(1).max(24).regex(/^[a-zA-Z0-9-_#]+$/)).optional(),
+  isSubscriber: z.boolean().optional(),
+  expiresAt: z.string().nullable().optional(),
+});
 
 export const dynamic = 'force-dynamic';
 
@@ -166,6 +176,17 @@ export async function PATCH(request: Request) {
   try {
     const body = await request.json();
     const { fanId, fanIds, creatorId, globalAction, oldTag, newTag, notes, customTags, bulkAction, tag, displayName, isSubscriber, expiresAt } = body;
+
+    // Validate single fan profile updates
+    if (!globalAction && !fanIds && fanId) {
+      const validation = updateFanProfileSchema.safeParse(body);
+      if (!validation.success) {
+        return NextResponse.json(
+          { error: 'Invalid profile payload parameters', details: validation.error.flatten() },
+          { status: 400 }
+        );
+      }
+    }
 
     // Handle global tag operations
     if (globalAction) {
