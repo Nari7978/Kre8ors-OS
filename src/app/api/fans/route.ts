@@ -15,6 +15,22 @@ export async function GET(request: Request) {
       );
     }
 
+    const tagsOnly = searchParams.get('tagsOnly') === 'true';
+    if (tagsOnly) {
+      const fansForCreator = await db.fan.findMany({
+        where: { creatorId },
+        select: { customTags: true },
+      });
+      const uniqueTags = new Set<string>();
+      fansForCreator.forEach((f) => {
+        try {
+          const tags = JSON.parse(f.customTags || '[]') as string[];
+          tags.forEach((t) => uniqueTags.add(t.trim().toLowerCase()));
+        } catch {}
+      });
+      return NextResponse.json(Array.from(uniqueTags));
+    }
+
     const search = searchParams.get('search');
     const isSubscriber = searchParams.get('isSubscriber');
     const minSpent = searchParams.get('minSpent');
