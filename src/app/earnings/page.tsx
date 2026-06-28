@@ -542,9 +542,84 @@ export default function EarningsPage() {
           </div>
         </div>
 
-        <div className="py-12 text-center text-zinc-500 text-xs">
-          Initial transactions log interface designed with filters.
-        </div>
+        {loadingTransactions ? (
+          <div className="space-y-3 py-4 animate-pulse">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center justify-between p-3.5 bg-zinc-950/20 border border-zinc-850 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-full bg-zinc-800" />
+                  <div className="space-y-1.5">
+                    <div className="h-3 w-28 bg-zinc-800 rounded" />
+                    <div className="h-2 w-16 bg-zinc-850 rounded" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-5">
+                  <div className="h-3 w-14 bg-zinc-800 rounded" />
+                  <div className="h-3 w-10 bg-zinc-800 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : transactions.length === 0 ? (
+          <div className="py-12 text-center text-zinc-500 text-xs bg-zinc-950/10 border border-zinc-850/60 rounded-xl">
+            No subscriber transactions match your search filter criteria.
+          </div>
+        ) : (
+          <div className="overflow-x-auto border border-zinc-850 rounded-xl bg-zinc-950/20">
+            <table className="w-full text-xs text-left border-collapse">
+              <thead>
+                <tr className="border-b border-zinc-800/60 text-zinc-500 font-bold uppercase text-[9px] tracking-wider bg-zinc-950/30">
+                  <th className="p-3.5">Subscriber</th>
+                  <th className="p-3.5">Source Channel</th>
+                  <th className="p-3.5">Transaction Date</th>
+                  <th className="p-3.5 text-right">Gross Amount</th>
+                  <th className="p-3.5 text-right">Net Share</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-900/60">
+                {transactions.map((tx) => {
+                  const gross = Number(tx.amount);
+                  const net = Number(tx.netAmount);
+                  const sourceStyles: Record<string, string> = {
+                    tip: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+                    subscription: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+                    ppv_chat: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+                    ppv_post: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+                  };
+                  return (
+                    <tr 
+                      key={tx.id} 
+                      onClick={() => setSelectedTx(tx)}
+                      className="hover:bg-zinc-900/30 cursor-pointer transition-colors"
+                    >
+                      <td className="p-3.5 flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-zinc-850 flex items-center justify-center overflow-hidden border border-zinc-800">
+                          {tx.fan?.avatarUrl ? (
+                            <img src={tx.fan.avatarUrl} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            <Users className="h-4 w-4 text-zinc-500" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-bold text-zinc-200">{tx.fan?.displayName || 'Anonymous'}</div>
+                          <div className="text-[10px] text-zinc-500">@{tx.fan?.username || 'unknown'}</div>
+                        </div>
+                      </td>
+                      <td className="p-3.5">
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded border uppercase tracking-wide ${sourceStyles[tx.source] || 'bg-zinc-800 text-zinc-400'}`}>
+                          {tx.source}
+                        </span>
+                      </td>
+                      <td className="p-3.5 text-zinc-500">{new Date(tx.loggedAt).toLocaleDateString()}</td>
+                      <td className="p-3.5 text-right font-semibold text-zinc-355">${gross.toFixed(2)}</td>
+                      <td className="p-3.5 text-right font-black text-emerald-400">${net.toFixed(2)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Transaction Detail Modal Drawer */}
