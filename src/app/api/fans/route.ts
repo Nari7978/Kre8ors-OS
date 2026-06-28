@@ -165,7 +165,7 @@ export async function GET(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const body = await request.json();
-    const { fanId, fanIds, creatorId, globalAction, oldTag, newTag, notes, customTags, bulkAction, tag } = body;
+    const { fanId, fanIds, creatorId, globalAction, oldTag, newTag, notes, customTags, bulkAction, tag, displayName, isSubscriber, expiresAt } = body;
 
     // Handle global tag operations
     if (globalAction) {
@@ -306,6 +306,15 @@ export async function PATCH(request: Request) {
     }
     if (customTags !== undefined) {
       data.customTags = JSON.stringify(customTags);
+    }
+    if (displayName !== undefined) {
+      data.displayName = displayName;
+    }
+    if (isSubscriber !== undefined) {
+      data.isSubscriber = isSubscriber;
+    }
+    if (expiresAt !== undefined) {
+      data.expiresAt = expiresAt ? new Date(expiresAt) : null;
     }
 
     const updatedFan = await db.fan.update({
