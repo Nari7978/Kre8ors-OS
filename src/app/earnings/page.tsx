@@ -42,6 +42,10 @@ export default function EarningsPage() {
   useEffect(() => {
     if (!activeCreator) return;
     
+    setTxSearch('');
+    setTxSource('all');
+    setTxDateRange('30d');
+    
     async function loadData() {
       setLoadingEarnings(true);
       setLoadingPayouts(true);
