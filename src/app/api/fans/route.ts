@@ -165,7 +165,93 @@ export async function GET(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const body = await request.json();
-    const { fanId, fanIds, notes, customTags, bulkAction, tag } = body;
+    const { fanId, fanIds, creatorId, globalAction, oldTag, newTag, notes, customTags, bulkAction, tag } = body;
+
+    // Handle global tag operations
+    if (globalAction) {
+      if (!creatorId) {
+        return NextResponse.json(
+          { error: 'creatorId is required for global tag updates' },
+          { status: 400 }
+        );
+      }
+
+      if (globalAction === 'rename') {
+        if (!oldTag || !newTag) {
+          return NextResponse.json(
+            { error: 'oldTag and newTag are required for global rename' },
+            { status: 400 }
+          );
+        }
+        
+        const oldTagNorm = oldTag.trim().toLowerCase();
+        const newTagNorm = newTag.trim().toLowerCase();
+
+        // Fetch all fans for this creator
+        const fans = await db.fan.findMany({
+          where: { creatorId },
+        });
+
+        // Update fans that have oldTagNorm
+        const updatedCount = await db.$transaction(
+          fans
+            .filter((fan) => {
+              const tags = JSON.parse(fan.customTags || '[]') as string[];
+              return tags.includes(oldTagNorm);
+            })
+            .map((fan) => {
+              let tags = JSON.parse(fan.customTags || '[]') as string[];
+              tags = tags.map((t) => (t === oldTagNorm ? newTagNorm : t));
+              const uniqueTags = Array.from(new Set(tags));
+              return db.fan.update({
+                where: { id: fan.id },
+                data: {
+                  customTags: JSON.stringify(uniqueTags),
+                },
+              });
+            })
+        );
+
+        return NextResponse.json({ success: true, updatedCount: updatedCount.length });
+      }
+
+      if (globalAction === 'delete') {
+        if (!tag) {
+          return NextResponse.json(
+            { error: 'tag is required for global delete' },
+            { status: 400 }
+          );
+        }
+
+        const tagNorm = tag.trim().toLowerCase();
+
+        // Fetch all fans for this creator
+        const fans = await db.fan.findMany({
+          where: { creatorId },
+        });
+
+        // Update fans that have tagNorm
+        const updatedCount = await db.$transaction(
+          fans
+            .filter((fan) => {
+              const tags = JSON.parse(fan.customTags || '[]') as string[];
+              return tags.includes(tagNorm);
+            })
+            .map((fan) => {
+              let tags = JSON.parse(fan.customTags || '[]') as string[];
+              tags = tags.filter((t) => t !== tagNorm);
+              return db.fan.update({
+                where: { id: fan.id },
+                data: {
+                  customTags: JSON.stringify(tags),
+                },
+              });
+            })
+        );
+
+        return NextResponse.json({ success: true, updatedCount: updatedCount.length });
+      }
+    }
 
     // Handle bulk updates
     if (fanIds && Array.isArray(fanIds)) {
