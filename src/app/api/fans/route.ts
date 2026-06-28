@@ -60,8 +60,9 @@ export async function GET(request: Request) {
 
     if (search) {
       where.OR = [
-        { username: { contains: search } },
-        { displayName: { contains: search } },
+        { username: { contains: search, mode: 'insensitive' } },
+        { displayName: { contains: search, mode: 'insensitive' } },
+        { notes: { contains: search, mode: 'insensitive' } },
       ];
     }
 
