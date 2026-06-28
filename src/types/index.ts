@@ -42,6 +42,15 @@ export interface Fan {
   expiresAt: Date | string | null;
 }
 
+export interface FanProfileUpdatePayload {
+  fanId: string;
+  displayName?: string;
+  notes?: string;
+  customTags?: string[];
+  isSubscriber?: boolean;
+  expiresAt?: string | null;
+}
+
 export interface Message {
   id: string;
   ofMessageId: string;
