@@ -768,6 +768,12 @@ const toggleAttachMedia = (url: string) => {
                 </div>
               ) : (
                 <div className="space-y-4">
+                  {loadingMore && (
+                    <div className="flex items-center justify-center py-3 text-xs text-zinc-500 gap-2 bg-zinc-900/20 border border-zinc-800/40 rounded-xl max-w-sm mx-auto shadow-sm transition-all duration-200">
+                      <RefreshCw className="h-3.5 w-3.5 animate-spin text-indigo-500" />
+                      <span>Loading older messages...</span>
+                    </div>
+                  )}
                   {messages.map((msg, index) => {
                     const isOut = msg.direction === 'out';
                     const isLocked = !msg.isPurchased && Number(msg.tipAmount) > 0;
