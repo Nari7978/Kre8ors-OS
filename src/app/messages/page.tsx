@@ -31,6 +31,132 @@ export const getTagStyles = (tag: string) => {
   return colors[hash % colors.length];
 };
 
+interface SearchHeaderProps {
+  selectedCreatorId: string;
+  setSelectedCreatorId: (id: string) => void;
+  creators: Creator[];
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
+}
+
+const SidebarSearchHeader: React.FC<SearchHeaderProps> = ({
+  selectedCreatorId,
+  setSelectedCreatorId,
+  creators,
+  searchQuery,
+  setSearchQuery
+}) => {
+  return (
+    <div className="p-4 border-b border-zinc-800 flex flex-col gap-3 bg-zinc-950/20">
+      <h2 className="text-xl font-bold tracking-tight bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent">
+        Agency Chat Workspace
+      </h2>
+      <div>
+        <select
+          value={selectedCreatorId}
+          onChange={(e) => setSelectedCreatorId(e.target.value)}
+          className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-sm text-zinc-300 focus:outline-none focus:border-blue-500"
+        >
+          <option value="">Select Creator...</option>
+          {creators.map((c) => (
+            <option key={c.id} value={c.id}>
+              @{c.username} ({c.displayName})
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="relative">
+        <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
+        <input
+          type="text"
+          placeholder="Search subscribers..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 pl-9 pr-4 text-sm text-zinc-300 focus:outline-none focus:border-blue-500 placeholder-zinc-650"
+        />
+      </div>
+    </div>
+  );
+};
+
+interface FanListProps {
+  fans: Fan[];
+  selectedFan: Fan | null;
+  setSelectedFan: (fan: Fan) => void;
+  loadingFans: boolean;
+}
+
+const SidebarFanList: React.FC<FanListProps> = ({
+  fans,
+  selectedFan,
+  setSelectedFan,
+  loadingFans
+}) => {
+  return (
+    <div className="flex-1 overflow-y-auto divide-y divide-zinc-900">
+      {loadingFans ? (
+        <div className="p-4 text-center text-sm text-zinc-500 flex items-center justify-center gap-2">
+          <RefreshCw className="h-4 w-4 animate-spin text-blue-500" />
+          Loading fans...
+        </div>
+      ) : fans.length === 0 ? (
+        <div className="p-4 text-center text-sm text-zinc-500">
+          No fans found for this creator
+        </div>
+      ) : (
+        fans.map((fan) => (
+          <button
+            key={fan.id}
+            onClick={() => setSelectedFan(fan)}
+            className={`w-full p-4 text-left flex items-start gap-3 transition-all duration-200 border-b border-zinc-900/50 ${
+              selectedFan?.id === fan.id 
+                ? 'bg-gradient-to-r from-blue-500/10 to-indigo-500/5 border-l-4 border-blue-500 shadow-[inset_1px_0_0_0_rgba(59,130,246,0.2)] bg-zinc-900/80 text-white' 
+                : 'hover:bg-zinc-900/30 text-zinc-300 border-l-4 border-transparent'
+            }`}
+          >
+            {/* Fan Avatar */}
+            <div className="h-10 w-10 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+              {fan.avatarUrl ? (
+                <img src={fan.avatarUrl} alt={fan.displayName} className="object-cover h-full w-full" />
+              ) : (
+                <User className="h-5 w-5 text-zinc-500" />
+              )}
+            </div>
+
+            {/* Chat details */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-sm truncate text-zinc-200">
+                  {fan.displayName}
+                </span>
+                <span className="text-xs font-bold text-zinc-400 bg-zinc-800/80 px-2 py-0.5 rounded-full flex items-center gap-0.5 border border-zinc-700/30">
+                  <DollarSign className="h-3 w-3 text-emerald-500" />
+                  {Number(fan.totalSpent).toFixed(2)}
+                </span>
+              </div>
+              <p className="text-xs text-zinc-500 truncate mt-1">
+                @{fan.username}
+              </p>
+              
+              {/* Subscriber Tag */}
+              <div className="flex items-center gap-1.5 mt-2">
+                <span className={`inline-block h-2 w-2 rounded-full ${
+                  fan.isSubscriber 
+                    ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)] animate-pulse' 
+                    : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]'
+                }`} />
+                <span className="text-[10px] uppercase font-bold text-zinc-400">
+                  {fan.isSubscriber ? 'Subscribed' : 'Expired'}
+                </span>
+              </div>
+            </div>
+          </button>
+        ))
+      )}
+    </div>
+  );
+};
+
 export default function MessagesPage() {
   const { activeCreator } = useGlobalStore();
   const [creators, setCreators] = useState<Creator[]>([]);
@@ -338,96 +464,19 @@ const toggleAttachMedia = (url: string) => {
       <div className={`border-r border-zinc-800 flex flex-col h-full bg-zinc-900/40 transition-all duration-300 ease-in-out ${
         leftSidebarCollapsed ? 'w-0 overflow-hidden opacity-0 pointer-events-none' : 'w-80'
       }`}>
-        <div className="p-4 border-b border-zinc-800 flex flex-col gap-3">
-          <h2 className="text-xl font-bold tracking-tight bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent">
-            Agency Chat Workspace
-          </h2>
-          <div>
-            <select
-              value={selectedCreatorId}
-              onChange={(e) => setSelectedCreatorId(e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-sm text-zinc-300 focus:outline-none focus:border-blue-500"
-            >
-              <option value="">Select Creator...</option>
-              {creators.map((c) => (
-                <option key={c.id} value={c.id}>
-                  @{c.username} ({c.displayName})
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
-            <input
-              type="text"
-              placeholder="Search subscribers..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 pl-9 pr-4 text-sm text-zinc-300 focus:outline-none focus:border-blue-500"
-            />
-          </div>
-        </div>
-        <div className="flex-1 overflow-y-auto divide-y divide-zinc-900">
-          {loadingFans ? (
-            <div className="p-4 text-center text-sm text-zinc-500 flex items-center justify-center gap-2">
-              <RefreshCw className="h-4 w-4 animate-spin text-blue-500" />
-              Loading fans...
-            </div>
-          ) : fans.length === 0 ? (
-            <div className="p-4 text-center text-sm text-zinc-500">
-              No fans found for this creator
-            </div>
-          ) : (
-            fans.map((fan) => (
-              <button
-                key={fan.id}
-                onClick={() => setSelectedFan(fan)}
-                className={`w-full p-4 text-left flex items-start gap-3 transition-all duration-200 border-b border-zinc-900/50 ${
-                  selectedFan?.id === fan.id 
-                    ? 'bg-gradient-to-r from-blue-500/10 to-indigo-500/5 border-l-4 border-blue-500 shadow-[inset_1px_0_0_0_rgba(59,130,246,0.2)] bg-zinc-900/80 text-white' 
-                    : 'hover:bg-zinc-900/30 text-zinc-300 border-l-4 border-transparent'
-                }`}
-              >
-                {/* Fan Avatar */}
-                <div className="h-10 w-10 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center overflow-hidden flex-shrink-0">
-                  {fan.avatarUrl ? (
-                    <img src={fan.avatarUrl} alt={fan.displayName} className="object-cover h-full w-full" />
-                  ) : (
-                    <User className="h-5 w-5 text-zinc-500" />
-                  )}
-                </div>
-
-                {/* Chat details */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-sm truncate text-zinc-200">
-                      {fan.displayName}
-                    </span>
-                    <span className="text-xs font-bold text-zinc-400 bg-zinc-800/80 px-2 py-0.5 rounded-full flex items-center gap-0.5 border border-zinc-700/30">
-                      <DollarSign className="h-3 w-3 text-emerald-500" />
-                      {Number(fan.totalSpent).toFixed(2)}
-                    </span>
-                  </div>
-                  <p className="text-xs text-zinc-500 truncate mt-1">
-                    @{fan.username}
-                  </p>
-                  
-                  {/* Subscriber Tag */}
-                  <div className="flex items-center gap-1.5 mt-2">
-                    <span className={`inline-block h-2 w-2 rounded-full ${
-                      fan.isSubscriber 
-                        ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)] animate-pulse' 
-                        : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]'
-                    }`} />
-                    <span className="text-[10px] uppercase font-bold text-zinc-400">
-                      {fan.isSubscriber ? 'Subscribed' : 'Expired'}
-                    </span>
-                  </div>
-                </div>
-              </button>
-            ))
-          )}
-        </div>
+        <SidebarSearchHeader
+          selectedCreatorId={selectedCreatorId}
+          setSelectedCreatorId={setSelectedCreatorId}
+          creators={creators}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+        />
+        <SidebarFanList
+          fans={fans}
+          selectedFan={selectedFan}
+          setSelectedFan={setSelectedFan}
+          loadingFans={loadingFans}
+        />
       </div>
 
       {/* Center Panel */}
