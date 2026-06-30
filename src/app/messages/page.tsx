@@ -382,8 +382,10 @@ const toggleAttachMedia = (url: string) => {
               <button
                 key={fan.id}
                 onClick={() => setSelectedFan(fan)}
-                className={`w-full p-4 text-left flex items-start gap-3 transition-colors ${
-                  selectedFan?.id === fan.id ? 'bg-zinc-800/80 border-l-2 border-blue-500' : 'hover:bg-zinc-900/50'
+                className={`w-full p-4 text-left flex items-start gap-3 transition-all duration-200 border-b border-zinc-900/50 ${
+                  selectedFan?.id === fan.id 
+                    ? 'bg-gradient-to-r from-blue-500/10 to-indigo-500/5 border-l-4 border-blue-500 shadow-[inset_1px_0_0_0_rgba(59,130,246,0.2)] bg-zinc-900/80 text-white' 
+                    : 'hover:bg-zinc-900/30 text-zinc-300 border-l-4 border-transparent'
                 }`}
               >
                 {/* Fan Avatar */}
@@ -401,7 +403,7 @@ const toggleAttachMedia = (url: string) => {
                     <span className="font-semibold text-sm truncate text-zinc-200">
                       {fan.displayName}
                     </span>
-                    <span className="text-xs font-bold text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded-full flex items-center gap-0.5">
+                    <span className="text-xs font-bold text-zinc-400 bg-zinc-800/80 px-2 py-0.5 rounded-full flex items-center gap-0.5 border border-zinc-700/30">
                       <DollarSign className="h-3 w-3 text-emerald-500" />
                       {Number(fan.totalSpent).toFixed(2)}
                     </span>
@@ -412,7 +414,11 @@ const toggleAttachMedia = (url: string) => {
                   
                   {/* Subscriber Tag */}
                   <div className="flex items-center gap-1.5 mt-2">
-                    <span className={`inline-block h-2 w-2 rounded-full ${fan.isSubscriber ? 'bg-green-500' : 'bg-red-500'}`} />
+                    <span className={`inline-block h-2 w-2 rounded-full ${
+                      fan.isSubscriber 
+                        ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)] animate-pulse' 
+                        : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]'
+                    }`} />
                     <span className="text-[10px] uppercase font-bold text-zinc-400">
                       {fan.isSubscriber ? 'Subscribed' : 'Expired'}
                     </span>
