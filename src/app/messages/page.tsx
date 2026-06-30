@@ -172,6 +172,130 @@ const SidebarFanList: React.FC<FanListProps> = ({
   );
 };
 
+interface RightProfilePanelProps {
+  selectedFan: Fan | null;
+  newTag: string;
+  setNewTag: (s: string) => void;
+  handleAddTag: () => void;
+  handleRemoveTag: (tag: string) => void;
+  notesText: string;
+  setNotesText: (s: string) => void;
+  handleSaveNotes: () => void;
+  saving: boolean;
+}
+
+const RightProfilePanel: React.FC<RightProfilePanelProps> = ({
+  selectedFan,
+  newTag,
+  setNewTag,
+  handleAddTag,
+  handleRemoveTag,
+  notesText,
+  setNotesText,
+  handleSaveNotes,
+  saving
+}) => {
+  if (!selectedFan) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-sm gap-2">
+        <User className="h-8 w-8 text-zinc-700" />
+        <span>Select a subscriber to view details</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full space-y-5">
+      {/* Fan Bio Card */}
+      <div className="text-center pb-4 border-b border-zinc-800">
+        <div className="h-16 w-16 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center overflow-hidden mx-auto mb-3 shadow-lg">
+          {selectedFan.avatarUrl ? (
+            <img src={selectedFan.avatarUrl} alt={selectedFan.displayName} className="object-cover h-full w-full" />
+          ) : (
+            <User className="h-8 w-8 text-zinc-500" />
+          )}
+        </div>
+        <h3 className="font-bold text-zinc-200">{selectedFan.displayName}</h3>
+        <p className="text-xs text-zinc-500">@{selectedFan.username}</p>
+        <div className="mt-2 flex items-center justify-center gap-2">
+          <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
+            selectedFan.isSubscriber 
+              ? 'bg-green-500/10 text-green-400 border border-green-500/20' 
+              : 'bg-red-500/10 text-red-400 border border-red-500/20'
+          }`}>
+            {selectedFan.isSubscriber ? 'Subscriber' : 'Expired'}
+          </span>
+          <span className="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded border border-zinc-700">
+            UID: {selectedFan.ofId}
+          </span>
+        </div>
+      </div>
+
+      {/* CRM Custom Tagging */}
+      <div className="space-y-2">
+        <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Subscriber Custom Tags</span>
+        
+        {/* Tags grid */}
+        <div className="flex flex-wrap gap-1">
+          {selectedFan.customTags.map((tag) => (
+            <span
+              key={tag}
+              className={`text-xs border pl-2.5 pr-1.5 py-1 rounded-full flex items-center gap-1 font-semibold ${getTagStyles(tag).bg}`}
+            >
+              #{tag}
+              <button
+                type="button"
+                onClick={() => handleRemoveTag(tag)}
+                className="text-zinc-500 hover:text-white rounded-full p-0.5 hover:bg-zinc-800"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+
+        {/* Tag Add Composer */}
+        <div className="flex items-center gap-1.5 mt-2">
+          <input
+            type="text"
+            placeholder="new-tag..."
+            value={newTag}
+            onChange={(e) => setNewTag(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
+            className="flex-1 bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-300 focus:outline-none focus:border-blue-500"
+          />
+          <button
+            type="button"
+            onClick={handleAddTag}
+            className="bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 p-1.5 rounded transition-colors text-xs flex items-center justify-center font-bold"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* CRM Notes */}
+      <div className="space-y-2 flex-1 flex flex-col">
+        <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Operator Chat Notes</span>
+        <textarea
+          placeholder="Write specific fan characteristics, content preferences, rules or transaction history records..."
+          value={notesText}
+          onChange={(e) => setNotesText(e.target.value)}
+          className="w-full flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-300 focus:outline-none focus:border-blue-500 resize-none font-sans min-h-[140px]"
+        />
+        <button
+          type="button"
+          onClick={handleSaveNotes}
+          disabled={saving}
+          className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed font-bold py-2 rounded-lg text-xs transition-colors text-white"
+        >
+          {saving ? 'Saving...' : 'Save Notes & Tags'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export default function MessagesPage() {
   const { activeCreator } = useGlobalStore();
   const [creators, setCreators] = useState<Creator[]>([]);
@@ -811,97 +935,17 @@ const toggleAttachMedia = (url: string) => {
       <div className={`border-l border-zinc-800 flex flex-col h-full bg-zinc-900/40 overflow-y-auto p-4 transition-all duration-300 ease-in-out ${
         rightSidebarCollapsed ? 'w-0 overflow-hidden opacity-0 pointer-events-none p-0 border-l-0' : 'w-80'
       }`}>
-        {selectedFan ? (
-          <div className="flex flex-col h-full space-y-5">
-            {/* Fan Bio Card */}
-            <div className="text-center pb-4 border-b border-zinc-800">
-              <div className="h-16 w-16 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center overflow-hidden mx-auto mb-3 shadow-lg">
-                {selectedFan.avatarUrl ? (
-                  <img src={selectedFan.avatarUrl} alt={selectedFan.displayName} className="object-cover h-full w-full" />
-                ) : (
-                  <User className="h-8 w-8 text-zinc-500" />
-                )}
-              </div>
-              <h3 className="font-bold text-zinc-200">{selectedFan.displayName}</h3>
-              <p className="text-xs text-zinc-500">@{selectedFan.username}</p>
-              <div className="mt-2 flex items-center justify-center gap-2">
-                <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${selectedFan.isSubscriber ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
-                  {selectedFan.isSubscriber ? 'Subscriber' : 'Expired'}
-                </span>
-                <span className="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded border border-zinc-700">
-                  UID: {selectedFan.ofId}
-                </span>
-              </div>
-            </div>
-
-            {/* CRM Custom Tagging */}
-            <div className="space-y-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Subscriber Custom Tags</span>
-              
-              {/* Tags grid */}
-              <div className="flex flex-wrap gap-1">
-                {selectedFan.customTags.map((tag) => (
-                  <span
-                    key={tag}
-                    className={`text-xs border pl-2.5 pr-1.5 py-1 rounded-full flex items-center gap-1 font-semibold ${getTagStyles(tag).bg}`}
-                  >
-                    #{tag}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveTag(tag)}
-                      className="text-zinc-500 hover:text-white rounded-full p-0.5 hover:bg-zinc-800"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-
-              {/* Tag Add Composer */}
-              <div className="flex items-center gap-1.5 mt-2">
-                <input
-                  type="text"
-                  placeholder="new-tag..."
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
-                  className="flex-1 bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-300 focus:outline-none focus:border-blue-500"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddTag}
-                  className="bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 p-1.5 rounded transition-colors text-xs flex items-center justify-center font-bold"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* CRM Notes */}
-            <div className="space-y-2 flex-1 flex flex-col">
-              <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Operator Chat Notes</span>
-              <textarea
-                placeholder="Write specific fan characteristics, content preferences, rules or transaction history records..."
-                value={notesText}
-                onChange={(e) => setNotesText(e.target.value)}
-                className="w-full flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-300 focus:outline-none focus:border-blue-500 resize-none font-sans min-h-[140px]"
-              />
-              <button
-                type="button"
-                onClick={handleSaveNotes}
-                disabled={saving}
-                className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed font-bold py-2 rounded-lg text-xs transition-colors text-white"
-              >
-                {saving ? 'Saving...' : 'Save Notes & Tags'}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-sm gap-2">
-            <User className="h-8 w-8 text-zinc-700" />
-            <span>Select a subscriber to view details</span>
-          </div>
-        )}
+        <RightProfilePanel
+          selectedFan={selectedFan}
+          newTag={newTag}
+          setNewTag={setNewTag}
+          handleAddTag={handleAddTag}
+          handleRemoveTag={handleRemoveTag}
+          notesText={notesText}
+          setNotesText={setNotesText}
+          handleSaveNotes={handleSaveNotes}
+          saving={saving}
+        />
       </div>
     </div>
   );
