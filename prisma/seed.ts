@@ -260,57 +260,82 @@ async function main() {
 
   // 7. Create Messages
   const johnny = seededSophiaFans[0];
+  const mockMessagesList = [];
+  
+  // Generate 60 historical messages to support scroll-top pagination testing
+  for (let i = 60; i >= 1; i--) {
+    const isOut = i % 2 === 0;
+    const sentTime = new Date(now.getTime() - i * 15 * 60 * 1000 - 4 * 60 * 60 * 1000); // spaced 15 mins apart, before the main conversation
+    mockMessagesList.push({
+      ofMessageId: `msg_of_paginated_${60 - i + 1}`,
+      creatorId: creator1.id,
+      fanId: johnny.id,
+      direction: isOut ? 'out' : 'in',
+      text: isOut 
+        ? `Message ${60 - i + 1} from Sophia Sweet: hope you like this historical update! #${60 - i + 1}`
+        : `Reply ${60 - i + 1} from Johnny: thanks for keeping in touch! #${60 - i + 1}`,
+      mediaUrls: JSON.stringify([]),
+      isTip: false,
+      tipAmount: 0.00,
+      isPurchased: false,
+      sentAt: sentTime,
+    });
+  }
+
+  // Add the specific test messages at the end
+  mockMessagesList.push(
+    {
+      ofMessageId: 'msg_of_001',
+      creatorId: creator1.id,
+      fanId: johnny.id,
+      direction: 'in',
+      text: 'Hey Sophia! Hope you had a great day! Can we chat?',
+      mediaUrls: JSON.stringify([]),
+      isTip: false,
+      tipAmount: 0.00,
+      isPurchased: false,
+      sentAt: new Date(now.getTime() - 3 * 60 * 60 * 1000),
+    },
+    {
+      ofMessageId: 'msg_of_002',
+      creatorId: creator1.id,
+      fanId: johnny.id,
+      direction: 'out',
+      text: 'Hey Johnny! Yes, of course! ❤️ I just uploaded some new media to my vault. Check out this private message!',
+      mediaUrls: JSON.stringify([]),
+      isTip: false,
+      tipAmount: 0.00,
+      isPurchased: false,
+      sentAt: new Date(now.getTime() - 2.8 * 60 * 60 * 1000),
+    },
+    {
+      ofMessageId: 'msg_of_003',
+      creatorId: creator1.id,
+      fanId: johnny.id,
+      direction: 'out',
+      text: 'Exclusive lock set: Good morning outfit reveal! 😉',
+      mediaUrls: JSON.stringify(['https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=400']),
+      isTip: false,
+      tipAmount: 20.00,
+      isPurchased: false, 
+      sentAt: new Date(now.getTime() - 2.5 * 60 * 60 * 1000),
+    },
+    {
+      ofMessageId: 'msg_of_004',
+      creatorId: creator1.id,
+      fanId: johnny.id,
+      direction: 'in',
+      text: 'Wow, unlocked it immediately! Love the colors! Here is an extra tip.',
+      mediaUrls: JSON.stringify([]),
+      isTip: true,
+      tipAmount: 50.00,
+      isPurchased: true, 
+      sentAt: new Date(now.getTime() - 2 * 60 * 60 * 1000),
+    }
+  );
+
   await prisma.message.createMany({
-    data: [
-      {
-        ofMessageId: 'msg_of_001',
-        creatorId: creator1.id,
-        fanId: johnny.id,
-        direction: 'in',
-        text: 'Hey Sophia! Hope you had a great day! Can we chat?',
-        mediaUrls: JSON.stringify([]),
-        isTip: false,
-        tipAmount: 0.00,
-        isPurchased: false,
-        sentAt: new Date(now.getTime() - 3 * 60 * 60 * 1000),
-      },
-      {
-        ofMessageId: 'msg_of_002',
-        creatorId: creator1.id,
-        fanId: johnny.id,
-        direction: 'out',
-        text: 'Hey Johnny! Yes, of course! ❤️ I just uploaded some new media to my vault. Check out this private message!',
-        mediaUrls: JSON.stringify([]),
-        isTip: false,
-        tipAmount: 0.00,
-        isPurchased: false,
-        sentAt: new Date(now.getTime() - 2.8 * 60 * 60 * 1000),
-      },
-      {
-        ofMessageId: 'msg_of_003',
-        creatorId: creator1.id,
-        fanId: johnny.id,
-        direction: 'out',
-        text: 'Exclusive lock set: Good morning outfit reveal! 😉',
-        mediaUrls: JSON.stringify(['https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=400']),
-        isTip: false,
-        tipAmount: 20.00,
-        isPurchased: false, 
-        sentAt: new Date(now.getTime() - 2.5 * 60 * 60 * 1000),
-      },
-      {
-        ofMessageId: 'msg_of_004',
-        creatorId: creator1.id,
-        fanId: johnny.id,
-        direction: 'in',
-        text: 'Wow, unlocked it immediately! Love the colors! Here is an extra tip.',
-        mediaUrls: JSON.stringify([]),
-        isTip: true,
-        tipAmount: 50.00,
-        isPurchased: true, 
-        sentAt: new Date(now.getTime() - 2 * 60 * 60 * 1000),
-      },
-    ],
+    data: mockMessagesList,
   });
   console.log('Created Chat Messages');
 
