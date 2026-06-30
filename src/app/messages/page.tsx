@@ -461,6 +461,44 @@ const toggleAttachMedia = (url: string) => {
     fetchMessages();
   }, [selectedCreatorId, selectedFan]);
 
+  // Infinite scroll: fetch older messages on scroll top
+  const loadMoreMessages = async () => {
+    if (loadingMore || !hasMore || !nextCursor || !selectedCreatorId || !selectedFan) return;
+
+    setLoadingMore(true);
+    try {
+      const res = await fetch(
+        `/api/messages?creatorId=${selectedCreatorId}&fanId=${selectedFan.id}&cursor=${nextCursor}&limit=20`
+      );
+      const data = await res.json();
+      if (data && Array.isArray(data.messages)) {
+        setMessages((prev) => [...data.messages, ...prev]);
+        setHasMore(data.hasMore);
+        setNextCursor(data.nextCursor);
+      }
+    } catch (err) {
+      console.error('Error loading more messages:', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      if (container.scrollTop < 15) {
+        loadMoreMessages();
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+    };
+  }, [nextCursor, hasMore, loadingMore, selectedCreatorId, selectedFan]);
+
   // Fetch AI response suggestions when fan changes
   useEffect(() => {
     if (!selectedCreatorId || !selectedFan) {
