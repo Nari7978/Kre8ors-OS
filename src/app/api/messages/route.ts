@@ -3,12 +3,14 @@ import { db } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
-// GET: Fetch message history between creator and fan
+// GET: Fetch message history between creator and fan (supports scroll-top pagination)
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const creatorId = searchParams.get('creatorId');
     const fanId = searchParams.get('fanId');
+    const cursor = searchParams.get('cursor'); // message sentAt ISO string
+    const limit = parseInt(searchParams.get('limit') || '20');
 
     if (!creatorId || !fanId) {
       return NextResponse.json(
@@ -17,22 +19,52 @@ export async function GET(request: Request) {
       );
     }
 
+    const where: any = {
+      creatorId,
+      fanId,
+    };
+
+    if (cursor) {
+      where.sentAt = {
+        lt: new Date(cursor),
+      };
+    }
+
+    // Retrieve limit + 1 records to check hasMore
     const messages = await db.message.findMany({
-      where: {
-        creatorId,
-        fanId,
-      },
+      where,
       orderBy: {
-        sentAt: 'asc',
+        sentAt: 'desc',
       },
+      take: limit + 1,
     });
 
-    const parsedMessages = messages.map((m) => ({
+    let hasMore = false;
+    let messagesToReturn = [...messages];
+
+    if (messagesToReturn.length > limit) {
+      hasMore = true;
+      messagesToReturn.pop(); // remove the extra record
+    }
+
+    // Reverse back to chronological order (asc) for UI timeline representation
+    messagesToReturn.reverse();
+
+    let nextCursor: string | null = null;
+    if (messagesToReturn.length > 0) {
+      nextCursor = messagesToReturn[0].sentAt.toISOString();
+    }
+
+    const parsedMessages = messagesToReturn.map((m) => ({
       ...m,
       mediaUrls: JSON.parse(m.mediaUrls || '[]') as string[],
     }));
 
-    return NextResponse.json(parsedMessages);
+    return NextResponse.json({
+      messages: parsedMessages,
+      hasMore,
+      nextCursor,
+    });
   } catch (error) {
     console.error('Error fetching chat messages:', error);
     return NextResponse.json(
