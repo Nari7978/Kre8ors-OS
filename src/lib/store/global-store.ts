@@ -16,6 +16,11 @@ interface GlobalState {
   activeShiftId: string | null;
   startShift: (shiftId: string) => void;
   endShift: () => void;
+
+  // Paginated chat viewport cache (For Day 17 message caching)
+  chatCache: Record<string, { messages: any[]; hasMore: boolean; nextCursor: string | null }>;
+  setChatCache: (key: string, cache: { messages: any[]; hasMore: boolean; nextCursor: string | null }) => void;
+  clearChatCache: (key: string) => void;
 }
 
 export const useGlobalStore = create<GlobalState>((set) => ({
@@ -30,4 +35,17 @@ export const useGlobalStore = create<GlobalState>((set) => ({
   activeShiftId: null,
   startShift: (shiftId) => set({ isShiftActive: true, activeShiftId: shiftId }),
   endShift: () => set({ isShiftActive: false, activeShiftId: null }),
+
+  chatCache: {},
+  setChatCache: (key, cache) => set((state) => ({
+    chatCache: {
+      ...state.chatCache,
+      [key]: cache
+    }
+  })),
+  clearChatCache: (key) => set((state) => {
+    const updated = { ...state.chatCache };
+    delete updated[key];
+    return { chatCache: updated };
+  }),
 }));

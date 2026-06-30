@@ -313,7 +313,7 @@ const RightProfilePanel: React.FC<RightProfilePanelProps> = ({
 };
 
 export default function MessagesPage() {
-  const { activeCreator } = useGlobalStore();
+  const { activeCreator, chatCache, setChatCache } = useGlobalStore();
   const [creators, setCreators] = useState<Creator[]>([]);
   const [fans, setFans] = useState<Fan[]>([]);
   const [selectedFan, setSelectedFan] = useState<Fan | null>(null);
@@ -434,8 +434,19 @@ const toggleAttachMedia = (url: string) => {
 
     const fanId = selectedFan.id;
     const fanNotes = selectedFan.notes;
+    const cacheKey = `${selectedCreatorId}-${fanId}`;
 
     async function fetchMessages() {
+      // Check if cache exists
+      const cached = chatCache[cacheKey];
+      if (cached) {
+        setMessages(cached.messages);
+        setHasMore(cached.hasMore);
+        setNextCursor(cached.nextCursor);
+        setNotesText(fanNotes || '');
+        return;
+      }
+
       setLoadingMessages(true);
       setHasMore(true);
       setNextCursor(null);
@@ -446,6 +457,11 @@ const toggleAttachMedia = (url: string) => {
           setMessages(data.messages);
           setHasMore(data.hasMore);
           setNextCursor(data.nextCursor);
+          setChatCache(cacheKey, {
+            messages: data.messages,
+            hasMore: data.hasMore,
+            nextCursor: data.nextCursor,
+          });
         } else {
           setMessages([]);
           setHasMore(false);
@@ -459,7 +475,7 @@ const toggleAttachMedia = (url: string) => {
       }
     }
     fetchMessages();
-  }, [selectedCreatorId, selectedFan]);
+  }, [selectedCreatorId, selectedFan?.id]);
 
   // Infinite scroll: fetch older messages on scroll top
   const loadMoreMessages = async () => {
@@ -476,7 +492,16 @@ const toggleAttachMedia = (url: string) => {
       );
       const data = await res.json();
       if (data && Array.isArray(data.messages)) {
-        setMessages((prev) => [...data.messages, ...prev]);
+        setMessages((prev) => {
+          const nextMessages = [...data.messages, ...prev];
+          const cacheKey = `${selectedCreatorId}-${selectedFan.id}`;
+          setChatCache(cacheKey, {
+            messages: nextMessages,
+            hasMore: data.hasMore,
+            nextCursor: data.nextCursor
+          });
+          return nextMessages;
+        });
         setHasMore(data.hasMore);
         setNextCursor(data.nextCursor);
 
@@ -597,7 +622,16 @@ const toggleAttachMedia = (url: string) => {
 
       if (res.ok) {
         const newMessage = await res.json();
-        setMessages((prev) => [...prev, newMessage]);
+        setMessages((prev) => {
+          const nextMessages = [...prev, newMessage];
+          const cacheKey = `${selectedCreatorId}-${selectedFan.id}`;
+          setChatCache(cacheKey, {
+            messages: nextMessages,
+            hasMore,
+            nextCursor
+          });
+          return nextMessages;
+        });
         setMessageText('');
         setAttachedMedia([]);
         setLockPrice('');
@@ -622,12 +656,21 @@ const toggleAttachMedia = (url: string) => {
 
       if (res.ok) {
         const result = await res.json();
-        // Update message local state
-        setMessages((prev) =>
-          prev.map((msg) =>
+        // Update message local state & cache
+        setMessages((prev) => {
+          const nextMessages = prev.map((msg) =>
             msg.id === messageId ? { ...msg, isPurchased: true } : msg
-          )
-        );
+          );
+          if (selectedFan) {
+            const cacheKey = `${selectedCreatorId}-${selectedFan.id}`;
+            setChatCache(cacheKey, {
+              messages: nextMessages,
+              hasMore,
+              nextCursor,
+            });
+          }
+          return nextMessages;
+        });
         // Sync the fan state and list record totalSpent
         const updatedTotal = Number(result.data.fanSpent);
         setSelectedFan((prev) => (prev ? { ...prev, totalSpent: updatedTotal } : null));
