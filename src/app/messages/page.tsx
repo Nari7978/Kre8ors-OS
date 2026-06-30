@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, User, DollarSign, Image, Video, Paperclip, 
-  Send, X, Plus, Edit2, Check, RefreshCw, Lock, Unlock, ShieldAlert, Folder
+  Send, X, Plus, Edit2, Check, RefreshCw, Lock, Unlock, ShieldAlert, Folder,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { useGlobalStore } from '@/lib/store/global-store';
 import { Creator, Fan, Message } from '@/types';
@@ -624,15 +625,35 @@ const toggleAttachMedia = (url: string) => {
           <>
             {/* Thread Header */}
             <div className="p-4 border-b border-zinc-800 bg-zinc-900/10 flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-lg text-zinc-100">{selectedFan.displayName}</h3>
-                <p className="text-xs text-zinc-500">@{selectedFan.username}</p>
+              <div className="flex items-center gap-3">
+                {/* Left sidebar toggle */}
+                <button
+                  type="button"
+                  onClick={() => setLeftSidebarCollapsed(!leftSidebarCollapsed)}
+                  className="p-1.5 rounded-lg border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800 hover:text-white text-zinc-400 transition-all cursor-pointer"
+                  title={leftSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                >
+                  {leftSidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+                </button>
+                <div>
+                  <h3 className="font-bold text-lg text-zinc-100">{selectedFan.displayName}</h3>
+                  <p className="text-xs text-zinc-500">@{selectedFan.username}</p>
+                </div>
               </div>
               <div className="flex items-center gap-4">
                 <span className="text-sm font-bold text-zinc-400 bg-zinc-900 border border-zinc-800 px-3 py-1 rounded-full flex items-center gap-1">
                   <DollarSign className="h-4 w-4 text-emerald-500" />
                   Spent: <strong className="text-zinc-200">${Number(selectedFan.totalSpent).toFixed(2)}</strong>
                 </span>
+                {/* Right sidebar toggle */}
+                <button
+                  type="button"
+                  onClick={() => setRightSidebarCollapsed(!rightSidebarCollapsed)}
+                  className="p-1.5 rounded-lg border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800 hover:text-white text-zinc-400 transition-all cursor-pointer"
+                  title={rightSidebarCollapsed ? "Expand Profile Info" : "Collapse Profile Info"}
+                >
+                  {rightSidebarCollapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                </button>
               </div>
             </div>
 
@@ -924,7 +945,17 @@ const toggleAttachMedia = (url: string) => {
             </div>
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-sm gap-3">
+          <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-sm gap-3 relative">
+            {leftSidebarCollapsed && (
+              <button
+                type="button"
+                onClick={() => setLeftSidebarCollapsed(false)}
+                className="absolute top-4 left-4 p-2 rounded-lg border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800 hover:text-white text-zinc-400 transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+              >
+                <ChevronRight className="h-4 w-4" />
+                Show Sidebar
+              </button>
+            )}
             <span className="text-4xl">💬</span>
             Select a subscriber from the sidebar to start live chatting
           </div>
