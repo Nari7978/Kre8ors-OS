@@ -465,6 +465,10 @@ const toggleAttachMedia = (url: string) => {
   const loadMoreMessages = async () => {
     if (loadingMore || !hasMore || !nextCursor || !selectedCreatorId || !selectedFan) return;
 
+    const container = messagesContainerRef.current;
+    const prevScrollHeight = container ? container.scrollHeight : 0;
+    const prevScrollTop = container ? container.scrollTop : 0;
+
     setLoadingMore(true);
     try {
       const res = await fetch(
@@ -475,6 +479,14 @@ const toggleAttachMedia = (url: string) => {
         setMessages((prev) => [...data.messages, ...prev]);
         setHasMore(data.hasMore);
         setNextCursor(data.nextCursor);
+
+        // Preserve scroll position (scroll-anchor layout preservation)
+        requestAnimationFrame(() => {
+          if (container) {
+            const newScrollHeight = container.scrollHeight;
+            container.scrollTop = prevScrollTop + (newScrollHeight - prevScrollHeight);
+          }
+        });
       }
     } catch (err) {
       console.error('Error loading more messages:', err);
