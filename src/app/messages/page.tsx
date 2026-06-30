@@ -341,6 +341,9 @@ export default function MessagesPage() {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const [vaultItemsList, setVaultItemsList] = useState<MediaItem[]>([]);
   const [loadingVault, setLoadingVault] = useState(false);
@@ -691,7 +694,7 @@ const toggleAttachMedia = (url: string) => {
             </div>
 
             {/* Messages Viewport */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
               {loadingMessages ? (
                 <div className="h-full flex items-center justify-center text-zinc-500 text-sm gap-2">
                   <RefreshCw className="h-4 w-4 animate-spin text-blue-500" />
