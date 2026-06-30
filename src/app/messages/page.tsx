@@ -774,6 +774,14 @@ const toggleAttachMedia = (url: string) => {
                       <span>Loading older messages...</span>
                     </div>
                   )}
+                  {!hasMore && messages.length > 0 && (
+                    <div className="flex justify-center my-6">
+                      <span className="text-zinc-650 text-[10px] uppercase font-bold tracking-widest bg-zinc-900/5 px-3 py-1 rounded border border-zinc-900/10 flex items-center gap-1.5">
+                        <ShieldAlert className="h-3.5 w-3.5 text-zinc-600" />
+                        No older messages
+                      </span>
+                    </div>
+                  )}
                   {messages.map((msg, index) => {
                     const isOut = msg.direction === 'out';
                     const isLocked = !msg.isPurchased && Number(msg.tipAmount) > 0;
