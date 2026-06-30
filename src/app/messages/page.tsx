@@ -344,6 +344,7 @@ export default function MessagesPage() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
 
   const [vaultItemsList, setVaultItemsList] = useState<MediaItem[]>([]);
   const [loadingVault, setLoadingVault] = useState(false);
@@ -436,10 +437,20 @@ const toggleAttachMedia = (url: string) => {
 
     async function fetchMessages() {
       setLoadingMessages(true);
+      setHasMore(true);
+      setNextCursor(null);
       try {
-        const res = await fetch(`/api/messages?creatorId=${selectedCreatorId}&fanId=${fanId}`);
+        const res = await fetch(`/api/messages?creatorId=${selectedCreatorId}&fanId=${fanId}&limit=20`);
         const data = await res.json();
-        setMessages(Array.isArray(data) ? data : []);
+        if (data && Array.isArray(data.messages)) {
+          setMessages(data.messages);
+          setHasMore(data.hasMore);
+          setNextCursor(data.nextCursor);
+        } else {
+          setMessages([]);
+          setHasMore(false);
+          setNextCursor(null);
+        }
         setNotesText(fanNotes || '');
       } catch (err) {
         console.error('Error fetching messages:', err);
