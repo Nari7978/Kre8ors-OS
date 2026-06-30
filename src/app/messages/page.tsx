@@ -31,6 +31,21 @@ export const getTagStyles = (tag: string) => {
   return colors[hash % colors.length];
 };
 
+const formatDateHeader = (dateStr: string | Date) => {
+  const d = new Date(dateStr);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+
+  if (d.toDateString() === today.toDateString()) {
+    return 'Today';
+  } else if (d.toDateString() === yesterday.toDateString()) {
+    return 'Yesterday';
+  } else {
+    return d.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+  }
+};
+
 interface SearchHeaderProps {
   selectedCreatorId: string;
   setSelectedCreatorId: (id: string) => void;
@@ -511,100 +526,114 @@ const toggleAttachMedia = (url: string) => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {messages.map((msg) => {
+                  {messages.map((msg, index) => {
                     const isOut = msg.direction === 'out';
                     const isLocked = !msg.isPurchased && Number(msg.tipAmount) > 0;
                     const price = Number(msg.tipAmount);
+                    
+                    const currentMsgDate = new Date(msg.sentAt).toDateString();
+                    const prevMsgDate = index > 0 ? new Date(messages[index - 1].sentAt).toDateString() : null;
+                    const showDateHeader = currentMsgDate !== prevMsgDate;
+
                     return (
-                      <div key={msg.id} className="space-y-1">
-                        {/* Tip Indicator */}
-                        {msg.isTip && (
-                          <div className="flex justify-start">
-                            <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 my-1">
-                              <DollarSign className="h-3.5 w-3.5" />
-                              Tip received: ${Number(msg.tipAmount).toFixed(2)}
-                            </div>
+                      <React.Fragment key={msg.id}>
+                        {showDateHeader && (
+                          <div className="sticky top-0 z-10 flex justify-center my-4 pointer-events-none">
+                            <span className="bg-zinc-900/95 border border-zinc-800/80 text-zinc-400 text-[10px] px-3 py-1 rounded-full shadow-md backdrop-blur-sm uppercase font-bold tracking-wider">
+                              {formatDateHeader(msg.sentAt)}
+                            </span>
                           </div>
                         )}
-
-                        {/* Bubble row */}
-                        <div className={`flex ${isOut ? 'justify-end' : 'justify-start'}`}>
-                          <div
-                            className={`max-w-[70%] rounded-2xl px-4 py-2.5 text-sm ${
-                              isOut 
-                                ? 'bg-blue-600 text-white rounded-br-none' 
-                                : 'bg-zinc-800 text-zinc-100 rounded-bl-none'
-                            }`}
-                          >
-                            {/* Media Vault Attachments */}
-                            {msg.mediaUrls && msg.mediaUrls.length > 0 && (
-                              <div className="mb-2 rounded-lg overflow-hidden relative border border-zinc-950/20">
-                                {msg.mediaUrls.map((url, index) => {
-                                  const isVideo = url.endsWith('.mp4');
-                                  return (
-                                    <div key={index} className="relative">
-                                      {isLocked ? (
-                                        <div className="relative h-48 w-full bg-zinc-950/80 flex flex-col items-center justify-center text-center p-4">
-                                          {isVideo ? (
-                                            <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=100" alt="locked video" className="absolute inset-0 h-full w-full object-cover blur-xl opacity-30" />
-                                          ) : (
-                                            <img src={url} alt="locked content" className="absolute inset-0 h-full w-full object-cover blur-xl opacity-30" />
-                                          )}
-                                          <Lock className="h-8 w-8 text-amber-500 mb-2" />
-                                          <span className="text-xs font-bold text-amber-400">Locked Pay-to-Unlock Content</span>
-                                          <span className="text-[10px] text-zinc-400 mt-1">Unlock for ${price.toFixed(2)}</span>
-                                        </div>
-                                      ) : isVideo ? (
-                                        <video controls className="w-full max-h-64 object-cover">
-                                          <source src={url} type="video/mp4" />
-                                        </video>
-                                      ) : (
-                                        <img src={url} alt="attachment" className="w-full max-h-64 object-cover" />
-                                      )}
-                                    </div>
-                                  );
-                                })}
+                        <div className="space-y-1">
+                          {/* Tip Indicator */}
+                          {msg.isTip && (
+                            <div className="flex justify-start">
+                              <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 my-1">
+                                <DollarSign className="h-3.5 w-3.5" />
+                                Tip received: ${Number(msg.tipAmount).toFixed(2)}
                               </div>
-                            )}
-
-                            {/* Text */}
-                            {msg.text && <p className="leading-relaxed">{msg.text}</p>}
-                            
-                            {/* Time stamp */}
-                            <div className="flex justify-end items-center gap-1 mt-1 text-[10px] text-zinc-300 opacity-60">
-                              <span>
-                                {new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </span>
                             </div>
+                          )}
 
-                            {/* Locked PPV Purchase Simulator Trigger (Task 13) */}
-                            {isLocked && (
-                              <div className="mt-3 pt-3 border-t border-white/10 flex flex-col gap-2">
-                                <div className="flex items-center justify-between text-xs text-amber-200">
-                                  <span className="flex items-center gap-1 font-semibold">
-                                    <Lock className="h-3.5 w-3.5" />
-                                    Locked: ${price.toFixed(2)}
-                                  </span>
-                                  <span className="text-[10px] bg-amber-500/20 px-2 py-0.5 rounded text-amber-300 uppercase font-bold">PPV</span>
+                          {/* Bubble row */}
+                          <div className={`flex ${isOut ? 'justify-end' : 'justify-start'}`}>
+                            <div
+                              className={`max-w-[70%] rounded-2xl px-4 py-2.5 text-sm ${
+                                isOut 
+                                  ? 'bg-blue-600 text-white rounded-br-none' 
+                                  : 'bg-zinc-800 text-zinc-100 rounded-bl-none'
+                              }`}
+                            >
+                              {/* Media Vault Attachments */}
+                              {msg.mediaUrls && msg.mediaUrls.length > 0 && (
+                                <div className="mb-2 rounded-lg overflow-hidden relative border border-zinc-950/20">
+                                  {msg.mediaUrls.map((url, index) => {
+                                    const isVideo = url.endsWith('.mp4');
+                                    return (
+                                      <div key={index} className="relative">
+                                        {isLocked ? (
+                                          <div className="relative h-48 w-full bg-zinc-950/80 flex flex-col items-center justify-center text-center p-4">
+                                            {isVideo ? (
+                                              <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=100" alt="locked video" className="absolute inset-0 h-full w-full object-cover blur-xl opacity-30" />
+                                            ) : (
+                                              <img src={url} alt="locked content" className="absolute inset-0 h-full w-full object-cover blur-xl opacity-30" />
+                                            )}
+                                            <Lock className="h-8 w-8 text-amber-500 mb-2" />
+                                            <span className="text-xs font-bold text-amber-400">Locked Pay-to-Unlock Content</span>
+                                            <span className="text-[10px] text-zinc-400 mt-1">Unlock for ${price.toFixed(2)}</span>
+                                          </div>
+                                        ) : isVideo ? (
+                                          <video controls className="w-full max-h-64 object-cover">
+                                            <source src={url} type="video/mp4" />
+                                          </video>
+                                        ) : (
+                                          <img src={url} alt="attachment" className="w-full max-h-64 object-cover" />
+                                        )}
+                                      </div>
+                                    );
+                                  })}
                                 </div>
-                                <button
-                                  type="button"
-                                  onClick={() => handleUnlockMessage(msg.id)}
-                                  disabled={unlockingMessageId === msg.id}
-                                  className="w-full bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold py-1.5 px-3 rounded-lg text-xs flex items-center justify-center gap-1 transition-all disabled:opacity-50"
-                                >
-                                  {unlockingMessageId === msg.id ? (
-                                    <RefreshCw className="h-3 w-3 animate-spin" />
-                                  ) : (
-                                    <Unlock className="h-3.5 w-3.5" />
-                                  )}
-                                  Simulate Unlock (Buy)
-                                </button>
+                              )}
+
+                              {/* Text */}
+                              {msg.text && <p className="leading-relaxed">{msg.text}</p>}
+                              
+                              {/* Time stamp */}
+                              <div className="flex justify-end items-center gap-1 mt-1 text-[10px] text-zinc-300 opacity-60">
+                                <span>
+                                  {new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
                               </div>
-                            )}
+
+                              {/* Locked PPV Purchase Simulator Trigger (Task 13) */}
+                              {isLocked && (
+                                <div className="mt-3 pt-3 border-t border-white/10 flex flex-col gap-2">
+                                  <div className="flex items-center justify-between text-xs text-amber-200">
+                                    <span className="flex items-center gap-1 font-semibold">
+                                      <Lock className="h-3.5 w-3.5" />
+                                      Locked: ${price.toFixed(2)}
+                                    </span>
+                                    <span className="text-[10px] bg-amber-500/20 px-2 py-0.5 rounded text-amber-300 uppercase font-bold">PPV</span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUnlockMessage(msg.id)}
+                                    disabled={unlockingMessageId === msg.id}
+                                    className="w-full bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold py-1.5 px-3 rounded-lg text-xs flex items-center justify-center gap-1 transition-all disabled:opacity-50"
+                                  >
+                                    {unlockingMessageId === msg.id ? (
+                                      <RefreshCw className="h-3 w-3 animate-spin" />
+                                    ) : (
+                                      <Unlock className="h-3.5 w-3.5" />
+                                    )}
+                                    Simulate Unlock (Buy)
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      </React.Fragment>
                     );
                   })}
                   
