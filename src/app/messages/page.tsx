@@ -72,7 +72,7 @@ const SidebarSearchHeader: React.FC<SearchHeaderProps> = ({
         <select
           value={selectedCreatorId}
           onChange={(e) => setSelectedCreatorId(e.target.value)}
-          className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-sm text-zinc-300 focus:outline-none focus:border-blue-500"
+          className="w-full bg-zinc-950 border border-zinc-800/80 rounded-lg p-2 text-sm text-zinc-300 focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/30 transition-all duration-200"
         >
           <option value="">Select Creator...</option>
           {creators.map((c) => (
@@ -89,7 +89,7 @@ const SidebarSearchHeader: React.FC<SearchHeaderProps> = ({
           placeholder="Search subscribers..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 pl-9 pr-4 text-sm text-zinc-300 focus:outline-none focus:border-blue-500 placeholder-zinc-650"
+          className="w-full bg-zinc-950 border border-zinc-800/80 rounded-lg py-2 pl-9 pr-4 text-sm text-zinc-300 focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/30 transition-all duration-200 placeholder-zinc-600"
         />
       </div>
     </div>
@@ -653,7 +653,7 @@ const toggleAttachMedia = (url: string) => {
       </div>
 
       {/* Center Panel */}
-      <div className="flex-1 flex flex-col h-full bg-zinc-950">
+      <div className="flex-1 flex flex-col h-full bg-zinc-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(99,102,241,0.06),rgba(255,255,255,0))]">
         {selectedFan ? (
           <>
             {/* Thread Header */}
