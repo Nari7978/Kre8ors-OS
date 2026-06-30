@@ -43,6 +43,8 @@ export default function MessagesPage() {
   const [selectedCreatorId, setSelectedCreatorId] = useState<string>('');
 
   // Interactive UI State Variables
+  const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(false);
+  const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false);
   const [vaultOpen, setVaultOpen] = useState(false);
   const [lockPrice, setLockPrice] = useState<string>('');
   const [messageText, setMessageText] = useState('');
@@ -333,7 +335,9 @@ const toggleAttachMedia = (url: string) => {
   return (
     <div className="flex h-screen w-full bg-zinc-950 text-white overflow-hidden font-sans">
       {/* Left Panel */}
-      <div className="w-80 border-r border-zinc-800 flex flex-col h-full bg-zinc-900/40">
+      <div className={`border-r border-zinc-800 flex flex-col h-full bg-zinc-900/40 transition-all duration-300 ease-in-out ${
+        leftSidebarCollapsed ? 'w-0 overflow-hidden opacity-0 pointer-events-none' : 'w-80'
+      }`}>
         <div className="p-4 border-b border-zinc-800 flex flex-col gap-3">
           <h2 className="text-xl font-bold tracking-tight bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent">
             Agency Chat Workspace
@@ -720,7 +724,9 @@ const toggleAttachMedia = (url: string) => {
       </div>
 
       {/* Right Panel */}
-      <div className="w-80 border-l border-zinc-800 flex flex-col h-full bg-zinc-900/40 overflow-y-auto p-4">
+      <div className={`border-l border-zinc-800 flex flex-col h-full bg-zinc-900/40 overflow-y-auto p-4 transition-all duration-300 ease-in-out ${
+        rightSidebarCollapsed ? 'w-0 overflow-hidden opacity-0 pointer-events-none p-0 border-l-0' : 'w-80'
+      }`}>
         {selectedFan ? (
           <div className="flex flex-col h-full space-y-5">
             {/* Fan Bio Card */}
