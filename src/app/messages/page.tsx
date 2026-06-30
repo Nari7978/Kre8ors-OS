@@ -339,6 +339,22 @@ const toggleAttachMedia = (url: string) => {
   }
 };
 
+  // Handle window resizing to collapse sidebars on smaller screens
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setLeftSidebarCollapsed(true);
+        setRightSidebarCollapsed(true);
+      } else {
+        setLeftSidebarCollapsed(false);
+        setRightSidebarCollapsed(false);
+      }
+    };
+    handleResize(); // Initial check
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Fetch all creators on mount
   useEffect(() => {
     async function fetchCreators() {
@@ -602,7 +618,9 @@ const toggleAttachMedia = (url: string) => {
     <div className="flex h-screen w-full bg-zinc-950 text-white overflow-hidden font-sans">
       {/* Left Panel */}
       <div className={`border-r border-zinc-800 flex flex-col h-full bg-zinc-900/40 transition-all duration-300 ease-in-out ${
-        leftSidebarCollapsed ? 'w-0 overflow-hidden opacity-0 pointer-events-none' : 'w-80'
+        leftSidebarCollapsed 
+          ? 'w-0 overflow-hidden opacity-0 pointer-events-none' 
+          : 'w-80 absolute lg:relative z-30 lg:z-auto bg-zinc-950 lg:bg-zinc-900/40 h-full shadow-2xl lg:shadow-none'
       }`}>
         <SidebarSearchHeader
           selectedCreatorId={selectedCreatorId}
@@ -962,9 +980,26 @@ const toggleAttachMedia = (url: string) => {
         )}
       </div>
 
+      {/* Mobile backdrop for Left Sidebar */}
+      {!leftSidebarCollapsed && (
+        <div 
+          onClick={() => setLeftSidebarCollapsed(true)} 
+          className="lg:hidden fixed inset-0 bg-black/60 z-20 transition-opacity duration-300 backdrop-blur-xs cursor-pointer"
+        />
+      )}
+      {/* Mobile backdrop for Right Sidebar */}
+      {!rightSidebarCollapsed && (
+        <div 
+          onClick={() => setRightSidebarCollapsed(true)} 
+          className="lg:hidden fixed inset-0 bg-black/60 z-20 transition-opacity duration-300 backdrop-blur-xs cursor-pointer"
+        />
+      )}
+
       {/* Right Panel */}
       <div className={`border-l border-zinc-800 flex flex-col h-full bg-zinc-900/40 overflow-y-auto p-4 transition-all duration-300 ease-in-out ${
-        rightSidebarCollapsed ? 'w-0 overflow-hidden opacity-0 pointer-events-none p-0 border-l-0' : 'w-80'
+        rightSidebarCollapsed 
+          ? 'w-0 overflow-hidden opacity-0 pointer-events-none p-0 border-l-0' 
+          : 'w-80 absolute right-0 lg:relative z-30 lg:z-auto bg-zinc-950 lg:bg-zinc-900/40 h-full shadow-2xl lg:shadow-none'
       }`}>
         <RightProfilePanel
           selectedFan={selectedFan}
