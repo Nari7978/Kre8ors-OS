@@ -49,10 +49,10 @@ export async function GET(request: Request) {
         id: creator.id,
         username: creator.username,
         displayName: creator.displayName,
-        authId: creator.authId,
-        sessCookie: creator.sessCookie,
+        authId: creator.authId ? '••••••••••••' : '',
+        sessCookie: creator.sessCookie ? '••••••••••••' : '',
         userAgent: creator.userAgent,
-        xBcHeader: creator.xBcHeader,
+        xBcHeader: creator.xBcHeader ? '••••••••••••' : '',
       },
       config: extraConfig,
     });
@@ -82,14 +82,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'creatorId is required' }, { status: 400 });
     }
 
+    // Get existing creator credentials for password masking check
+    const existing = await db.creator.findUnique({
+      where: { id: creatorId },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Creator not found' }, { status: 404 });
+    }
+
+    const { encrypt } = require('@/lib/crypto');
+
+    // Keep database value if masked, otherwise encrypt new value
+    const finalAuthId = authId === '••••••••••••' ? existing.authId : (authId ? encrypt(authId) : '');
+    const finalSessCookie = sessCookie === '••••••••••••' ? existing.sessCookie : (sessCookie ? encrypt(sessCookie) : '');
+    const finalXBcHeader = xBcHeader === '••••••••••••' ? existing.xBcHeader : (xBcHeader ? encrypt(xBcHeader) : null);
+
     // Update main credentials in DB
     const updatedCreator = await db.creator.update({
       where: { id: creatorId },
       data: {
-        authId: authId || '',
-        sessCookie: sessCookie || '',
+        authId: finalAuthId,
+        sessCookie: finalSessCookie,
         userAgent: userAgent || '',
-        xBcHeader: xBcHeader || null,
+        xBcHeader: finalXBcHeader,
       },
     });
 

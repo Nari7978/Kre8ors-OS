@@ -33,8 +33,8 @@ export async function GET(request: Request) {
         where: {
           creatorId,
           OR: [
-            { username: { contains: search, mode: 'insensitive' } },
-            { displayName: { contains: search, mode: 'insensitive' } },
+            { username: { contains: search } },
+            { displayName: { contains: search } },
           ],
         },
         select: { ofId: true },

@@ -1,12 +1,24 @@
 import { PrismaClient, Role, CreatorStatus, PostStatus } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import 'dotenv/config';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+const isPostgres = process.env.DATABASE_URL?.startsWith('postgresql');
+let prisma: PrismaClient;
+
+if (isPostgres) {
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+  });
+  const adapter = new PrismaPg(pool);
+  prisma = new PrismaClient({ adapter });
+} else {
+  const adapter = new PrismaBetterSqlite3({
+    url: process.env.DATABASE_URL || 'file:./dev.db',
+  });
+  prisma = new PrismaClient({ adapter });
+}
 
 async function main() {
   console.log('Cleaning up existing database records...');

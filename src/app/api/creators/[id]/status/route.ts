@@ -20,9 +20,23 @@ export async function GET(
       );
     }
 
-    // Simulate OnlyFans authentication credential verification
-    const cookieIsValid = creator.sessCookie && creator.sessCookie.length > 10;
-    const systemStatus = cookieIsValid ? 'ACTIVE' : 'DISCONNECTED';
+    // Decrypt credentials
+    const { decrypt } = require('@/lib/crypto');
+    const { verifySession } = require('@/lib/onlyfans-api');
+
+    const decryptedSess = decrypt(creator.sessCookie);
+    const decryptedAuth = decrypt(creator.authId);
+    const decryptedXBc = creator.xBcHeader ? decrypt(creator.xBcHeader) : undefined;
+
+    // Verify session credentials using OnlyFans wrapper client
+    const handshake = await verifySession({
+      authId: decryptedAuth,
+      sessCookie: decryptedSess,
+      userAgent: creator.userAgent || '',
+      xBcHeader: decryptedXBc,
+    });
+
+    const systemStatus = handshake.valid ? 'ACTIVE' : 'DISCONNECTED';
 
     // Sync database state if mismatch
     if (creator.status !== systemStatus && creator.status !== 'PENDING') {
@@ -44,6 +58,11 @@ export async function GET(
         authIdVerified: !!creator.authId,
       },
       lastChecked: new Date().toISOString(),
+      handshakeInfo: {
+        valid: handshake.valid,
+        name: handshake.name,
+        error: handshake.error || null,
+      },
     });
   } catch (error) {
     console.error('Error checking creator status:', error);
