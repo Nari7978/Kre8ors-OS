@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useGlobalStore } from '@/lib/store/global-store';
 import { Creator } from '@/types';
-import { LayoutDashboard, MessageSquare, User, RefreshCw, LogOut, Play, Folder, Calendar, Tv, DollarSign, Users, Settings, Cpu, UserCheck, TrendingUp, Sparkles } from 'lucide-react';
+import { LayoutDashboard, MessageSquare, User, RefreshCw, LogOut, Play, Folder, Calendar, Tv, DollarSign, Users, Settings, Cpu, UserCheck, TrendingUp, Sparkles, Bell } from 'lucide-react';
+import NotificationBell from '@/components/NotificationBell';
 
 export default function GlobalHeader() {
   const pathname = usePathname();
@@ -178,6 +179,17 @@ export default function GlobalHeader() {
             Analytics
           </Link>
           <Link
+            href="/activity"
+            className={`px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center gap-1.5 ${
+              pathname.startsWith('/activity')
+                ? 'bg-zinc-800 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+            }`}
+          >
+            <Bell className="h-3.5 w-3.5 text-blue-400" />
+            Activity
+          </Link>
+          <Link
             href="/settings"
             className={`px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center gap-1.5 ${
               pathname.startsWith('/settings')
@@ -200,6 +212,9 @@ export default function GlobalHeader() {
             Shift Active
           </div>
         )}
+
+        {/* Notification Bell */}
+        <NotificationBell />
 
         {/* Creator Context Selector */}
         <div className="flex items-center gap-2 bg-zinc-900/50 border border-zinc-800 rounded-xl px-3 py-1.5 min-w-[220px]">
