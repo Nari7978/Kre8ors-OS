@@ -52,7 +52,7 @@ async function main() {
   const owner = await prisma.user.create({
     data: {
       email: 'owner@kre8ors.com',
-      name: 'Jatin Baberwal',
+      name: 'Agency Owner',
       passwordHash,
       role: Role.AGENCY_OWNER,
       agencyId: agency.id,
