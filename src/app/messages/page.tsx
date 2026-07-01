@@ -4,8 +4,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, User, DollarSign, Image, Video, Paperclip, 
   Send, X, Plus, Edit2, Check, RefreshCw, Lock, Unlock, ShieldAlert, Folder,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, Sparkles
 } from 'lucide-react';
+import AISuggestionsPanel from '@/components/AISuggestionsPanel';
 import { useGlobalStore } from '@/lib/store/global-store';
 import { Creator, Fan, Message } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -339,6 +340,7 @@ export default function MessagesPage() {
   // AI suggestions states
   const [aiSuggestions, setAiSuggestions] = useState<{ id: string; label: string; text: string }[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [showAIPanel, setShowAIPanel] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -962,12 +964,38 @@ const toggleAttachMedia = (url: string) => {
                 </div>
               )}
 
+              {/* AI Enhanced Panel Overlay */}
+              {showAIPanel && selectedFan && selectedCreatorId && (
+                <div className="absolute bottom-20 left-4 right-4 z-50 max-w-md">
+                  <AISuggestionsPanel
+                    creatorId={selectedCreatorId}
+                    fanId={selectedFan.id}
+                    onInsertSuggestion={(text) => {
+                      setMessageText(text);
+                      setShowAIPanel(false);
+                    }}
+                  />
+                </div>
+              )}
+
               {/* AI response suggestions bar */}
               {selectedFan && (
                 <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                  <button
+                    type="button"
+                    onClick={() => setShowAIPanel(!showAIPanel)}
+                    className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap flex-shrink-0 ${
+                      showAIPanel
+                        ? 'bg-purple-600/20 border border-purple-500/30 text-purple-400'
+                        : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-purple-400 hover:border-purple-500/20'
+                    }`}
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    AI Panel
+                  </button>
                   <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider whitespace-nowrap flex items-center gap-1">
                     <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
-                    AI Suggestions:
+                    Quick:
                   </span>
                   {loadingSuggestions ? (
                     <span className="text-[10px] text-zinc-500 italic">Generating replies...</span>
