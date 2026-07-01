@@ -80,6 +80,7 @@ model Creator {
   earnings     EarningRecord[]
   rules        AutomationRule[]
   stories      Story[]
+  notifications Notification[]
 }
 
 model ChatterAssignment {
@@ -206,4 +207,17 @@ model Story {
   updatedAt    DateTime @updatedAt
 
   creator      Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  creatorId   String
+  type        String   // "NEW_SUBSCRIBER", "TIP", "PPV_UNLOCK", "CHAT_MESSAGE", "SYSTEM_ALERT"
+  title       String
+  message     String
+  isRead      Boolean  @default(false)
+  metadata    Json?    // Optional extra info like fanId, amount, messageId
+  createdAt   DateTime @default(now())
+
+  creator     Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 }
