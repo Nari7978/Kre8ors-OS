@@ -76,7 +76,7 @@ export async function POST(request: Request) {
       template = MOCK_NOTIFICATION_TEMPLATES[Math.floor(Math.random() * MOCK_NOTIFICATION_TEMPLATES.length)];
     }
 
-    const metadata = template.metadataGenerator(randomFan);
+    const metadata = template.metadataGenerator(randomFan) as any;
     const displayName = randomFan ? randomFan.displayName : (metadata.displayName || 'Someone');
     const title = template.title;
     const message = type === 'SYSTEM_ALERT' 
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
         title,
         message,
         isRead: false,
-        metadata: metadata ? JSON.stringify(metadata) : null,
+        metadata: metadata || undefined,
       },
     });
 
@@ -127,7 +127,7 @@ export async function GET(request: Request) {
     for (let i = 0; i < 5; i++) {
       const template = MOCK_NOTIFICATION_TEMPLATES[i % MOCK_NOTIFICATION_TEMPLATES.length];
       const fan = fans[i % Math.max(fans.length, 1)] || null;
-      const metadata = template.metadataGenerator(fan);
+      const metadata = template.metadataGenerator(fan) as any;
       const displayName = fan ? fan.displayName : (metadata.displayName || 'Someone');
       const message = template.type === 'SYSTEM_ALERT' 
         ? template.messageTemplate 
@@ -140,7 +140,7 @@ export async function GET(request: Request) {
           title: template.title,
           message,
           isRead: i > 2, // Mark older ones as read
-          metadata: metadata ? JSON.stringify(metadata) : null,
+          metadata: metadata || undefined,
           createdAt: new Date(Date.now() - i * 3600000), // 1 hour intervals
         },
       });
