@@ -46,6 +46,36 @@ export default function SettingsPage() {
   const [testingProxy, setTestingProxy] = useState(false);
   const [proxyTestResult, setProxyTestResult] = useState<'success' | 'failed' | null>(null);
 
+  // Notification Channel preferences
+  const [prefChannels, setPrefChannels] = useState<any>({
+    NEW_SUBSCRIBER: { inApp: true, email: false, webhook: true },
+    TIP: { inApp: true, email: true, webhook: true },
+    PPV_UNLOCK: { inApp: true, email: false, webhook: true },
+    CHAT_MESSAGE: { inApp: true, email: false, webhook: false },
+    SYSTEM_ALERT: { inApp: true, email: true, webhook: true },
+  });
+  const [loadingPrefs, setLoadingPrefs] = useState(false);
+
+  const handleTogglePref = async (eventType: string, channel: 'inApp' | 'email' | 'webhook') => {
+    const updated = {
+      ...prefChannels,
+      [eventType]: {
+        ...prefChannels[eventType],
+        [channel]: !prefChannels[eventType][channel]
+      }
+    };
+    setPrefChannels(updated);
+    try {
+      await fetch('/api/notifications/preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
+      });
+    } catch (err) {
+      console.error('Error saving preferences:', err);
+    }
+  };
+
   // Load creator settings when active creator context shifts
   useEffect(() => {
     if (!activeCreator) return;
@@ -80,7 +110,23 @@ export default function SettingsPage() {
       }
     }
     
+    async function loadPreferences() {
+      setLoadingPrefs(true);
+      try {
+        const res = await fetch('/api/notifications/preferences');
+        if (res.ok) {
+          const data = await res.json();
+          setPrefChannels(data);
+        }
+      } catch (err) {
+        console.error('Error loading preferences:', err);
+      } finally {
+        setLoadingPrefs(false);
+      }
+    }
+    
     loadSettings();
+    loadPreferences();
   }, [activeCreator]);
 
   // Handle Save
@@ -418,6 +464,37 @@ export default function SettingsPage() {
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 px-3 text-xs text-zinc-300 focus:outline-none focus:border-blue-500 font-semibold"
                 />
                 <span className="text-[9px] text-zinc-550 block font-medium">Sends payload on incoming chat tips or sub events</span>
+              </div>
+            </div>
+
+            {/* Notification Channel Preferences */}
+            <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-4">
+              <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
+                <Bell className="h-4 w-4 text-purple-500" />
+                Alert Channel Settings
+              </h3>
+              
+              <div className="space-y-3 text-xs">
+                {Object.entries(prefChannels).map(([evType, channels]: any) => (
+                  <div key={evType} className="space-y-1.5 border-b border-zinc-900/45 pb-2.5 last:border-0 last:pb-0">
+                    <span className="font-bold text-zinc-400 uppercase text-[9px] tracking-wider block">
+                      {evType.replace('_', ' ')}
+                    </span>
+                    <div className="flex gap-4">
+                      {['inApp', 'email', 'webhook'].map((ch) => (
+                        <label key={ch} className="flex items-center gap-1.5 cursor-pointer text-zinc-400 hover:text-zinc-200 select-none">
+                          <input
+                            type="checkbox"
+                            checked={channels[ch]}
+                            onChange={() => handleTogglePref(evType, ch as any)}
+                            className="rounded bg-zinc-950 border-zinc-800 text-purple-650 focus:ring-purple-500/20"
+                          />
+                          <span className="text-[10px] capitalize font-medium">{ch === 'inApp' ? 'In-App' : ch}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
