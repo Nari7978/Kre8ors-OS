@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useGlobalStore } from '@/lib/store/global-store';
 import { Creator } from '@/types';
-import { LayoutDashboard, MessageSquare, User, RefreshCw, LogOut, Play, Folder, Calendar, Tv, DollarSign, Users, Settings, Cpu, UserCheck, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, MessageSquare, User, RefreshCw, LogOut, Play, Folder, Calendar, Tv, DollarSign, Users, Settings, Cpu, UserCheck, TrendingUp, Sparkles } from 'lucide-react';
 
 export default function GlobalHeader() {
   const pathname = usePathname();
@@ -121,6 +121,17 @@ export default function GlobalHeader() {
           >
             <Cpu className="h-3.5 w-3.5" />
             Automations
+          </Link>
+          <Link
+            href="/ai"
+            className={`px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center gap-1.5 ${
+              pathname.startsWith('/ai')
+                ? 'bg-zinc-800 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+            }`}
+          >
+            <Sparkles className="h-3.5 w-3.5 text-purple-400" />
+            AI Assistant
           </Link>
           <Link
             href="/earnings"
