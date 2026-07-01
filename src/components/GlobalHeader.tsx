@@ -69,6 +69,17 @@ export default function GlobalHeader() {
             Dashboard
           </Link>
           <Link
+            href="/creators"
+            className={`px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center gap-1.5 ${
+              pathname.startsWith('/creators')
+                ? 'bg-zinc-800 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+            }`}
+          >
+            <Users className="h-3.5 w-3.5 text-blue-400" />
+            Creators
+          </Link>
+          <Link
             href="/messages"
             className={`px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center gap-1.5 ${
               pathname.startsWith('/messages')
