@@ -1,7 +1,6 @@
 import { PrismaClient, Role, CreatorStatus, PostStatus } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
-
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import 'dotenv/config';
 
@@ -53,7 +52,7 @@ async function main() {
   const owner = await prisma.user.create({
     data: {
       email: 'owner@kre8ors.com',
-      name: 'Jatin Baberwal',
+      name: 'Agency Owner',
       passwordHash,
       role: Role.AGENCY_OWNER,
       agencyId: agency.id,
