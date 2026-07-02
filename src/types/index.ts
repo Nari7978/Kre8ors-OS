@@ -131,3 +131,28 @@ export interface Story {
   createdAt: Date | string;
   updatedAt: Date | string;
 }
+
+export interface PpvPricingRule {
+  id?: string;
+  ruleType: 'spend_tier' | 'tag_discount';
+  minSpend?: number;
+  priceOverride?: number;
+  tag?: string;
+  discountPercent?: number;
+}
+
+export interface PpvTemplate {
+  id: string;
+  creatorId: string;
+  name: string;
+  description: string | null;
+  price: number; // base price
+  pricingRules: PpvPricingRule[];
+  messageText: string;
+  mediaUrls: string[];
+  lockType: 'single' | 'bundle' | 'preview';
+  previewSeconds: number;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
