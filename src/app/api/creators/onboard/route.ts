@@ -50,14 +50,15 @@ export async function POST(request: Request) {
     }
 
     // Create the creator in database
+    const { encrypt } = require('@/lib/crypto');
     const newCreator = await db.creator.create({
       data: {
         displayName,
         username,
-        authId,
-        sessCookie,
+        authId: encrypt(authId),
+        sessCookie: encrypt(sessCookie),
         userAgent,
-        xBcHeader: xBcHeader || null,
+        xBcHeader: xBcHeader ? encrypt(xBcHeader) : null,
         agencyId: agency.id,
         status: 'ACTIVE',
         avatarUrl: `https://api.dicebear.com/7.x/adventurer/svg?seed=${username}`,
