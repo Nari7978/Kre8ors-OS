@@ -20,8 +20,14 @@ export async function GET(
       );
     }
 
+    // Decrypt credentials
+    const { decrypt } = require('@/lib/crypto');
+    const decryptedSess = decrypt(creator.sessCookie);
+    const decryptedAuth = decrypt(creator.authId);
+    const decryptedXBc = creator.xBcHeader ? decrypt(creator.xBcHeader) : undefined;
+
     // Simulate OnlyFans authentication credential verification
-    const cookieIsValid = creator.sessCookie && creator.sessCookie.length > 10;
+    const cookieIsValid = decryptedSess && decryptedSess.length > 10;
     const systemStatus = cookieIsValid ? 'ACTIVE' : 'DISCONNECTED';
 
     // Sync database state if mismatch
