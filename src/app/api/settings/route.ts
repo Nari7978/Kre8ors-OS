@@ -49,10 +49,10 @@ export async function GET(request: Request) {
         id: creator.id,
         username: creator.username,
         displayName: creator.displayName,
-        authId: creator.authId,
-        sessCookie: creator.sessCookie,
+        authId: creator.authId ? '••••••••••••' : '',
+        sessCookie: creator.sessCookie ? '••••••••••••' : '',
         userAgent: creator.userAgent,
-        xBcHeader: creator.xBcHeader,
+        xBcHeader: creator.xBcHeader ? '••••••••••••' : '',
       },
       config: extraConfig,
     });
