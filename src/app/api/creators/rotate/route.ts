@@ -27,11 +27,12 @@ export async function POST(request: Request) {
     }
 
     // Update session credentials
+    const { encrypt } = require('@/lib/crypto');
     const updatedCreator = await db.creator.update({
       where: { id: creatorId },
       data: {
-        sessCookie,
-        xBcHeader: xBcHeader || creator.xBcHeader,
+        sessCookie: encrypt(sessCookie),
+        xBcHeader: xBcHeader ? encrypt(xBcHeader) : creator.xBcHeader,
         status: 'ACTIVE', // Reset status back to active upon credential update
       },
     });
