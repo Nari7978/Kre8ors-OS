@@ -81,6 +81,7 @@ model Creator {
   rules        AutomationRule[]
   stories      Story[]
   notifications Notification[]
+  ppvTemplates  PpvTemplate[]
 }
 
 model ChatterAssignment {
@@ -220,4 +221,21 @@ model Notification {
   createdAt   DateTime @default(now())
 
   creator     Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+}
+
+model PpvTemplate {
+  id             String   @id @default(uuid())
+  creatorId      String
+  name           String
+  description    String?
+  price          Decimal  @default(0.00)
+  pricingRules   Json     // JSON array of pricing rules (conditional tags/spend)
+  messageText    String
+  mediaUrls      Json     // JSON array of attached media urls
+  lockType       String   @default("single") // "single", "bundle", "preview"
+  previewSeconds Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  creator        Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 }
