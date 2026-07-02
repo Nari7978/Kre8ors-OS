@@ -33,6 +33,7 @@ async function main() {
   await prisma.shiftLog.deleteMany();
   await prisma.chatterAssignment.deleteMany();
   await prisma.user.deleteMany();
+  await prisma.ppvTemplate.deleteMany();
   await prisma.creator.deleteMany();
   await prisma.agency.deleteMany();
 
@@ -483,6 +484,52 @@ async function main() {
   });
   
   console.log('Created Automation Rules');
+  
+  // 12. Create PPV Templates
+  await prisma.ppvTemplate.createMany({
+    data: [
+      {
+        creatorId: creator1.id,
+        name: 'VIP Shower Reveal',
+        description: 'Premium shower clip lock for VIP subscribers',
+        price: 25.00,
+        pricingRules: JSON.stringify([
+          { ruleType: 'spend_tier', minSpend: 200, priceOverride: 15.00 },
+          { ruleType: 'tag_discount', tag: 'vip', discountPercent: 20 }
+        ]),
+        messageText: 'Hey baby! I created this special shower video just for you... 💋 Lock it in and let me know how much you love it! ❤️',
+        mediaUrls: JSON.stringify(['https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=400']),
+        lockType: 'single',
+        previewSeconds: 5,
+      },
+      {
+        creatorId: creator1.id,
+        name: 'Good Morning Tease',
+        description: 'Morning bedroom selfie set',
+        price: 15.00,
+        pricingRules: JSON.stringify([]),
+        messageText: 'Woke up thinking of you... here is a little teaser to start your day off right. 😉 Send a reply when unlocked!',
+        mediaUrls: JSON.stringify(['https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=400']),
+        lockType: 'single',
+        previewSeconds: 0,
+      },
+      {
+        creatorId: creator2.id,
+        name: 'Backstage VIP Set',
+        description: 'Exclusive behind the scenes photo set',
+        price: 35.00,
+        pricingRules: JSON.stringify([
+          { ruleType: 'spend_tier', minSpend: 500, priceOverride: 20.00 }
+        ]),
+        messageText: 'Hey sweetie! Just finished my backstage photoshoot... 📸 Want to see the unseen fits? Unlock below!',
+        mediaUrls: JSON.stringify(['https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400']),
+        lockType: 'bundle',
+        previewSeconds: 0,
+      }
+    ]
+  });
+  console.log('Created PPV Templates');
+
   console.log('Seeding process completed successfully!');
 }
 
