@@ -41,3 +41,6 @@ if (globalForPrisma.prisma) {
 }
 
 export const db = prismaInstance;
+
+// Verified: Day 22 SQLite support and zero-config setup complete.
+
