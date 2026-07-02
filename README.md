@@ -28,7 +28,7 @@ Kre8ors OS is an enterprise-grade SaaS CRM built for OnlyFans Management (OFM) A
 * **Components**: shadcn/ui (Radix UI)
 * **State Management**: Zustand (UI state) & TanStack Query v5 (Server State)
 * **Forms & Validation**: React Hook Form & Zod
-* **Database**: PostgreSQL with Prisma ORM
+* **Database**: SQLite (Default) / PostgreSQL with Prisma ORM
 * **Integration Provider**: OnlyFansAPI.com REST / WebSocket Gateway
 
 ---
@@ -47,16 +47,19 @@ Kre8ors OS is an enterprise-grade SaaS CRM built for OnlyFans Management (OFM) A
    ```
 
 3. **Configure Environment Variables**:
-   Create a `.env` file in the root directory:
+   A `.env` file will be automatically created on startup with SQLite defaults. To create it manually, copy `.env.example`:
    ```env
-   DATABASE_URL="postgresql://username:password@localhost:5432/kre8ors_os?schema=public"
+   DATABASE_URL="file:./dev.db"
    JWT_SECRET="your_jwt_signing_key"
    ONLYFANS_API_KEY="your_onlyfansapi_key"
+   ENCRYPTION_KEY="your_aes_256_encryption_key"
    ```
 
-4. **Initialize Database Schema**:
+4. **Initialize & Seed Database Schema**:
+   Prisma client will compile for local SQLite storage:
    ```bash
-   npx prisma db push
+   npx prisma generate
+   npx tsx prisma/seed.ts
    ```
 
 5. **Start Dev Server**:
