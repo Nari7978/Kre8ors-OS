@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { 
   Search, User, DollarSign, Image, Video, Paperclip, 
   Send, X, Plus, Edit2, Check, RefreshCw, Lock, Unlock, ShieldAlert, Folder,
@@ -8,7 +9,7 @@ import {
 } from 'lucide-react';
 import AISuggestionsPanel from '@/components/AISuggestionsPanel';
 import { useGlobalStore } from '@/lib/store/global-store';
-import { Creator, Fan, Message } from '@/types';
+import { Creator, Fan, Message, PpvTemplate } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface MediaItem {
@@ -331,6 +332,8 @@ export default function MessagesPage() {
   const [lockPrice, setLockPrice] = useState<string>('');
   const [messageText, setMessageText] = useState('');
   const [attachedMedia, setAttachedMedia] = useState<string[]>([]);
+  const [ppvTemplates, setPpvTemplates] = useState<PpvTemplate[]>([]);
+  const [showPpvPresets, setShowPpvPresets] = useState(false);
   const [newTag, setNewTag] = useState('');
   const [notesText, setNotesText] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
@@ -401,6 +404,24 @@ const toggleAttachMedia = (url: string) => {
       });
     }
   }, [activeCreator]);
+
+  // Fetch PPV templates when selected creator changes
+  useEffect(() => {
+    if (!selectedCreatorId) return;
+
+    async function fetchPpvTemplates() {
+      try {
+        const res = await fetch(`/api/messages/ppv-templates?creatorId=${selectedCreatorId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setPpvTemplates(data || []);
+        }
+      } catch (err) {
+        console.error('Error fetching PPV templates:', err);
+      }
+    }
+    fetchPpvTemplates();
+  }, [selectedCreatorId]);
 
   // Fetch fans when selected creator changes or search query triggers
   useEffect(() => {
@@ -600,6 +621,66 @@ const toggleAttachMedia = (url: string) => {
       active = false;
     };
   }, [selectedCreatorId]);
+
+  // Apply a selected PPV Template to the composer state
+  const applyPpvTemplate = (tpl: PpvTemplate) => {
+    let finalPrice = Number(tpl.price) || 0;
+
+    if (selectedFan) {
+      const fanSpend = Number(selectedFan.totalSpent) || 0;
+      const tags = Array.isArray(selectedFan.customTags)
+        ? selectedFan.customTags
+        : typeof selectedFan.customTags === 'string'
+        ? JSON.parse(selectedFan.customTags)
+        : [];
+      const lowerTags = tags.map((t: string) => t.toLowerCase());
+
+      try {
+        const rules = typeof tpl.pricingRules === 'string' ? JSON.parse(tpl.pricingRules) : tpl.pricingRules;
+        if (Array.isArray(rules)) {
+          rules.forEach((rule: any) => {
+            if (rule.ruleType === 'spend_tier' && rule.minSpend !== undefined && rule.priceOverride !== undefined) {
+              if (fanSpend >= rule.minSpend) {
+                finalPrice = Math.min(finalPrice, rule.priceOverride);
+              }
+            }
+            if (rule.ruleType === 'tag_discount' && rule.tag && rule.discountPercent !== undefined) {
+              if (lowerTags.includes(rule.tag.toLowerCase())) {
+                finalPrice = finalPrice * (1 - rule.discountPercent / 100);
+              }
+            }
+          });
+        }
+      } catch (e) {
+        console.error('Error applying pricing rules:', e);
+      }
+    }
+
+    let processedText = tpl.messageText || '';
+    if (selectedFan) {
+      processedText = processedText
+        .replace(/\{\{fanName\}\}/g, selectedFan.displayName || selectedFan.username)
+        .replace(/\{\{creatorName\}\}/g, activeCreator?.displayName || 'Creator')
+        .replace(/\{\{price\}\}/g, `$${finalPrice.toFixed(2)}`);
+    }
+
+    setMessageText(processedText);
+    setLockPrice(finalPrice.toFixed(2));
+
+    try {
+      const media = typeof tpl.mediaUrls === 'string' ? JSON.parse(tpl.mediaUrls) : tpl.mediaUrls;
+      if (Array.isArray(media)) {
+        setAttachedMedia(media);
+        if (media.length > 0) {
+          setVaultOpen(true);
+        }
+      }
+    } catch (e) {
+      console.error('Error parsing template media urls:', e);
+    }
+
+    setShowPpvPresets(false);
+  };
 
   // Handle Send Message & Compose PPV
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -993,6 +1074,18 @@ const toggleAttachMedia = (url: string) => {
                     <Sparkles className="h-3 w-3" />
                     AI Panel
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowPpvPresets(!showPpvPresets)}
+                    className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap flex-shrink-0 ${
+                      showPpvPresets
+                        ? 'bg-amber-600/20 border border-amber-500/30 text-amber-400'
+                        : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-amber-400 hover:border-amber-500/20'
+                    }`}
+                  >
+                    <Lock className="h-3 w-3" />
+                    PPV Presets
+                  </button>
                   <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider whitespace-nowrap flex items-center gap-1">
                     <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
                     Quick:
@@ -1018,6 +1111,47 @@ const toggleAttachMedia = (url: string) => {
                     </div>
                   )}
                 </div>
+              )}
+
+              {/* PPV Presets horizontal card lists */}
+              {showPpvPresets && selectedFan && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-zinc-900/60 border border-zinc-800 p-3 rounded-xl space-y-2 mt-2"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                      <Lock className="h-3 w-3 text-amber-500" /> Select Locked Message Campaign Preset
+                    </span>
+                    <Link
+                      href="/messages/ppv-builder"
+                      className="text-[9px] font-bold text-indigo-400 hover:text-indigo-300 hover:underline flex items-center gap-0.5 animate-pulse"
+                    >
+                      Open Form Builder <ChevronRight className="h-3 w-3" />
+                    </Link>
+                  </div>
+                  {ppvTemplates.length === 0 ? (
+                    <p className="text-[10px] text-zinc-550 italic">No presets saved. Go to the Form Builder to configure your first locked preset.</p>
+                  ) : (
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                      {ppvTemplates.map((tpl) => (
+                        <button
+                          type="button"
+                          key={tpl.id}
+                          onClick={() => applyPpvTemplate(tpl)}
+                          className="bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 hover:border-zinc-700 p-2.5 rounded-xl text-left min-w-[150px] max-w-[200px] transition-all flex flex-col gap-1 cursor-pointer"
+                        >
+                          <span className="text-[10px] font-bold text-zinc-200 truncate">{tpl.name}</span>
+                          <span className="text-[9px] text-amber-400 font-mono font-bold">${Number(tpl.price).toFixed(2)} Base</span>
+                          {tpl.description && (
+                            <span className="text-[8px] text-zinc-550 truncate">{tpl.description}</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
               )}
 
               {/* Composer Input Row */}
