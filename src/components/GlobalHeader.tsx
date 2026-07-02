@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useGlobalStore } from '@/lib/store/global-store';
 import { Creator } from '@/types';
-import { LayoutDashboard, MessageSquare, User, RefreshCw, LogOut, Play, Folder, Calendar, Tv, DollarSign, Users, Settings, Cpu, UserCheck, TrendingUp, Sparkles, Bell } from 'lucide-react';
+import { LayoutDashboard, MessageSquare, User, RefreshCw, LogOut, Play, Folder, Calendar, Tv, DollarSign, Users, Settings, Cpu, UserCheck, TrendingUp, Sparkles, Bell, Lock } from 'lucide-react';
 import NotificationBell from '@/components/NotificationBell';
 
 export default function GlobalHeader() {
@@ -82,13 +82,24 @@ export default function GlobalHeader() {
           <Link
             href="/messages"
             className={`px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center gap-1.5 ${
-              pathname.startsWith('/messages')
+              pathname === '/messages'
                 ? 'bg-zinc-800 text-white shadow-sm'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
             }`}
           >
             <MessageSquare className="h-3.5 w-3.5" />
             Messages
+          </Link>
+          <Link
+            href="/messages/ppv-builder"
+            className={`px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center gap-1.5 ${
+              pathname.startsWith('/messages/ppv-builder')
+                ? 'bg-zinc-800 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+            }`}
+          >
+            <Lock className="h-3.5 w-3.5 text-amber-500" />
+            PPV Builder
           </Link>
           <Link
             href="/vault"
