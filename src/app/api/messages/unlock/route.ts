@@ -72,6 +72,20 @@ export async function POST(request: Request) {
           loggedAt: new Date(),
         },
       }),
+      // 4. Create alert Notification
+      db.notification.create({
+        data: {
+          creatorId: message.creatorId,
+          type: 'PPV_UNLOCK',
+          title: 'PPV Message Unlocked! 🔓',
+          message: `@${message.fan.username} unlocked your premium photo vault set!`,
+          metadata: JSON.stringify({
+            fanId: message.fanId,
+            amount: price,
+            messageId: message.id,
+          }),
+        },
+      }),
     ];
 
     if (activeShift) {
