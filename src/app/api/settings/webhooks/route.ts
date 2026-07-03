@@ -45,6 +45,17 @@ export async function POST(request: Request) {
     if (eventType === 'new_subscriber') {
       logs.push(`Simulating event: new_subscriber @${fan.username}`);
       
+      // Log notification
+      await db.notification.create({
+        data: {
+          creatorId,
+          type: 'NEW_SUBSCRIBER',
+          title: 'New Subscriber Registered! 👤',
+          message: `@${fan.username} just subscribed to your feed.`,
+          metadata: JSON.stringify({ fanId: fan.id }),
+        },
+      });
+
       // Look for automation rules matching 'new_subscriber'
       const rules = await db.automationRule.findMany({
         where: { creatorId, triggerType: 'new_subscriber', isActive: true },
@@ -151,7 +162,33 @@ export async function POST(request: Request) {
         },
       });
       logs.push(`Logged $${tipVal.toFixed(2)} earnings record (Net: $${(tipVal * 0.8).toFixed(2)})`);
-    }
+
+      // Log notification
+      await db.notification.create({
+        data: {
+          creatorId,
+          type: 'TIP',
+          title: 'Tip Received! 💸',
+          message: `@${fan.username} tipped you $${tipVal.toFixed(2)}.`,
+          metadata: JSON.stringify({ fanId: fan.id, amount: tipVal }),
+        },
+      });
+
+      // Update active shift log revenue
+      const activeShift = await db.shiftLog.findFirst({
+        where: { endTime: null },
+      });
+      if (activeShift) {
+        await db.shiftLog.update({
+          where: { id: activeShift.id },
+          data: {
+            revenue: {
+              increment: tipVal,
+            },
+          },
+        });
+        logs.push(`Credited $${tipVal.toFixed(2)} to active shift log for user ${activeShift.userId}`);
+      }
 
     return NextResponse.json({ success: true, logs });
   } catch (error) {
