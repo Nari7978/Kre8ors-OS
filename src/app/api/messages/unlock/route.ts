@@ -39,6 +39,13 @@ export async function POST(request: Request) {
       });
     }
 
+    if (message.direction !== 'out' || Number(message.tipAmount) <= 0) {
+      return NextResponse.json(
+        { error: 'Message is not a pay-to-unlock locked message' },
+        { status: 400 }
+      );
+    }
+
     const price = Number(message.tipAmount);
 
     // Find active shift for the chatter
