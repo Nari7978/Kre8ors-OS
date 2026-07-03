@@ -39,8 +39,14 @@ export async function POST(request: Request) {
 
     const price = Number(message.tipAmount);
 
-    // Perform updates inside an atomic database transaction
-    const [updatedMessage, updatedFan, earningRecord] = await db.$transaction([
+    // Find active shift for the chatter
+    const activeShift = await db.shiftLog.findFirst({
+      where: {
+        endTime: null,
+      },
+    });
+
+    const updateOps: any[] = [
       // 1. Mark message as purchased
       db.message.update({
         where: { id: messageId },
@@ -66,7 +72,26 @@ export async function POST(request: Request) {
           loggedAt: new Date(),
         },
       }),
-    ]);
+    ];
+
+    if (activeShift) {
+      updateOps.push(
+        db.shiftLog.update({
+          where: { id: activeShift.id },
+          data: {
+            revenue: {
+              increment: price,
+            },
+          },
+        })
+      );
+    }
+
+    // Perform updates inside an atomic database transaction
+    const transactionResults = await db.$transaction(updateOps);
+    const updatedMessage = transactionResults[0];
+    const updatedFan = transactionResults[1];
+    const earningRecord = transactionResults[2];
 
     return NextResponse.json({
       success: true,
