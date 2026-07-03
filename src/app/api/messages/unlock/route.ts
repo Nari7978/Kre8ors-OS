@@ -17,11 +17,22 @@ export async function POST(request: Request) {
       );
     }
 
-    // Find the message and include fan relations
+    // Find the message and select only required fields to optimize query execution
     const message = await db.message.findUnique({
       where: { id: messageId },
-      include: {
-        fan: true,
+      select: {
+        id: true,
+        creatorId: true,
+        fanId: true,
+        direction: true,
+        isPurchased: true,
+        tipAmount: true,
+        fan: {
+          select: {
+            ofId: true,
+            username: true,
+          },
+        },
       },
     });
 
