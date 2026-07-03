@@ -134,6 +134,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Earning simulated successfully', shift: updatedShift });
     }
 
+    if (action === 'record_unlock') {
+      const activeShift = await db.shiftLog.findFirst({
+        where: {
+          userId: user.id,
+          endTime: null,
+        },
+      });
+
+      if (!activeShift) {
+        return NextResponse.json({ error: 'No active shift to credit unlock to' }, { status: 400 });
+      }
+
+      const updatedShift = await db.shiftLog.update({
+        where: { id: activeShift.id },
+        data: {
+          revenue: {
+            increment: amount,
+          },
+        },
+      });
+
+      return NextResponse.json({ message: 'Unlock action recorded successfully', shift: updatedShift });
+    }
+
     return NextResponse.json({ error: 'Invalid shift action' }, { status: 400 });
   } catch (error) {
     console.error('Error handling shift action:', error);
