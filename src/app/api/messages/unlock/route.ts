@@ -127,6 +127,11 @@ export async function POST(request: Request) {
     const updatedFan = transactionResults[1];
     const earningRecord = transactionResults[2];
 
+    // Verify unlock status and server transactions update integrity before returning
+    if (!updatedMessage.isPurchased) {
+      throw new Error("Unlock status verification failed: message is still marked as locked.");
+    }
+
     // Dispatch webhook callback event if configured
     const configPath = path.join(process.cwd(), 'prisma', 'creator_configs.json');
     if (fs.existsSync(configPath)) {
