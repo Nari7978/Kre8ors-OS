@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import fs from 'fs';
+import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
@@ -106,6 +108,31 @@ export async function POST(request: Request) {
     const updatedMessage = transactionResults[0];
     const updatedFan = transactionResults[1];
     const earningRecord = transactionResults[2];
+
+    // Dispatch webhook callback event if configured
+    const configPath = path.join(process.cwd(), 'prisma', 'creator_configs.json');
+    if (fs.existsSync(configPath)) {
+      try {
+        const fileContent = fs.readFileSync(configPath, 'utf-8');
+        const configs = JSON.parse(fileContent);
+        const webhookUrl = configs[message.creatorId]?.webhookUrl;
+        if (webhookUrl) {
+          fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              eventType: 'ppv_unlock',
+              creatorId: message.creatorId,
+              fanUsername: message.fan.username,
+              amount: price,
+              messageId: message.id,
+            }),
+          }).catch((err) => console.error('PPV Unlock webhook callback failed:', err));
+        }
+      } catch (e) {
+        console.error('Error reading configuration for webhook callback:', e);
+      }
+    }
 
     return NextResponse.json({
       success: true,
