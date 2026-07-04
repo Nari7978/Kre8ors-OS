@@ -14,6 +14,8 @@ export default function ContentQueuePage() {
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'scheduled' | 'published' | 'draft'>('all');
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
 
   // Form Composer states
   const [postText, setPostText] = useState('');
