@@ -190,6 +190,21 @@ export default function ContentQueuePage() {
     );
   }
 
+  // Group scheduled posts by local date string (YYYY-MM-DD)
+  const postsByDate = React.useMemo(() => {
+    const groups: Record<string, Post[]> = {};
+    posts.forEach((post) => {
+      if (post.scheduledFor) {
+        const dateKey = formatDateKey(new Date(post.scheduledFor));
+        if (!groups[dateKey]) {
+          groups[dateKey] = [];
+        }
+        groups[dateKey].push(post);
+      }
+    });
+    return groups;
+  }, [posts]);
+
   // Filter posts list
   const filteredPosts = posts.filter((p) => {
     if (activeTab === 'all') return true;
