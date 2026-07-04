@@ -706,6 +706,41 @@ export default function ContentQueuePage() {
                           )}
                         </div>
                       )}
+
+                      {/* Hover Tooltip Popup */}
+                      {hasPosts && (
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-52 bg-zinc-950 border border-zinc-800 rounded-xl p-3 shadow-2xl opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 flex flex-col gap-2">
+                          <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">
+                            Scheduled on this day
+                          </span>
+                          <div className="space-y-2 max-h-[140px] overflow-y-auto pr-1">
+                            {dayPosts.map((p, i) => (
+                              <div key={i} className="flex gap-2 items-start border-t border-zinc-900 pt-2 first:border-0 first:pt-0">
+                                {p.mediaUrls && p.mediaUrls[0] && (
+                                  <img src={p.mediaUrls[0]} className="h-7 w-7 object-cover rounded bg-zinc-900 flex-shrink-0" alt="" />
+                                )}
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-[9px] text-zinc-200 font-bold truncate leading-tight">
+                                    {p.text || 'Media post'}
+                                  </p>
+                                  <div className="flex items-center gap-1.5 mt-0.5">
+                                    <span className={`text-[7px] font-extrabold px-1 rounded uppercase ${
+                                      p.status === 'PUBLISHED' ? 'bg-green-500/10 text-green-400' : 'bg-amber-500/10 text-amber-400'
+                                    }`}>
+                                      {p.status}
+                                    </span>
+                                    {p.price > 0 && (
+                                      <span className="text-[7px] text-amber-500 font-bold">
+                                        ${p.price.toFixed(2)}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
