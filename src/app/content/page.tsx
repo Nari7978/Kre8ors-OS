@@ -5,7 +5,7 @@ import { useGlobalStore } from '@/lib/store/global-store';
 import { Post, MediaItem } from '@/types';
 import { 
   Calendar, Clock, Plus, Folder, Trash2, Globe, Lock, 
-  AlertCircle, RefreshCw, X, CheckCircle2
+  AlertCircle, RefreshCw, X, CheckCircle2, ChevronLeft, ChevronRight
 } from 'lucide-react';
 
 export default function ContentQueuePage() {
@@ -16,6 +16,31 @@ export default function ContentQueuePage() {
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+
+  const monthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
+  const handlePrevMonth = () => {
+    setCurrentMonth((prev) => {
+      if (prev === 0) {
+        setCurrentYear((y) => y - 1);
+        return 11;
+      }
+      return prev - 1;
+    });
+  };
+
+  const handleNextMonth = () => {
+    setCurrentMonth((prev) => {
+      if (prev === 11) {
+        setCurrentYear((y) => y + 1);
+        return 0;
+      }
+      return prev + 1;
+    });
+  };
 
   // Form Composer states
   const [postText, setPostText] = useState('');
@@ -581,10 +606,36 @@ export default function ContentQueuePage() {
             <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-6">
               {/* Calendar Title Bar */}
               <div className="flex items-center justify-between border-b border-zinc-800/60 pb-4">
-                <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+                <h3 className="text-sm font-extrabold text-zinc-200 tracking-wide flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-blue-500" />
-                  Monthly Post Queue Calendar
+                  {monthNames[currentMonth]} {currentYear}
                 </h3>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handlePrevMonth}
+                    className="p-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-all cursor-pointer"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCurrentYear(new Date().getFullYear());
+                      setCurrentMonth(new Date().getMonth());
+                    }}
+                    className="px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white text-[10px] font-bold transition-all cursor-pointer"
+                  >
+                    Today
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNextMonth}
+                    className="p-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-all cursor-pointer"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
 
               {/* Day Names Grid */}
