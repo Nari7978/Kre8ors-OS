@@ -290,6 +290,7 @@ export default function ContentQueuePage() {
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-zinc-400">Post Caption / Text</label>
                 <textarea
+                  id="post-caption-textarea"
                   placeholder="What's on your mind today? Write post caption here..."
                   value={postText}
                   onChange={(e) => setPostText(e.target.value)}
@@ -656,6 +657,14 @@ export default function ContentQueuePage() {
                   return (
                     <div
                       key={idx}
+                      onClick={() => {
+                        setScheduleDate(day.dateString);
+                        setComposerStatus('SCHEDULED');
+                        const composerElement = document.getElementById('post-caption-textarea');
+                        if (composerElement) {
+                          composerElement.focus();
+                        }
+                      }}
                       className={`min-h-[76px] border p-2 rounded-xl flex flex-col justify-between transition-all duration-150 relative cursor-pointer select-none group ${
                         day.isCurrentMonth
                           ? day.isToday
