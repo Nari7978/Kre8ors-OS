@@ -13,6 +13,7 @@ export default function ContentQueuePage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'scheduled' | 'published' | 'draft'>('all');
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
   // Form Composer states
   const [postText, setPostText] = useState('');
@@ -204,6 +205,30 @@ export default function ContentQueuePage() {
           <p className="text-zinc-500 text-sm mt-1">
             Plan, queue, and schedule content publishing for <strong className="text-zinc-300">@{activeCreator.username}</strong>
           </p>
+        </div>
+        <div className="flex items-center bg-zinc-900 border border-zinc-800 p-1 rounded-xl">
+          <button
+            type="button"
+            onClick={() => setViewMode('list')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              viewMode === 'list'
+                ? 'bg-blue-650 text-white shadow-md'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            List View
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('calendar')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              viewMode === 'calendar'
+                ? 'bg-blue-650 text-white shadow-md'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            Calendar View
+          </button>
         </div>
       </div>
 
