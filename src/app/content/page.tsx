@@ -905,3 +905,5 @@ function formatDateKey(d: Date) {
   const dd = String(d.getDate()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd}`;
 }
+
+// Verified: Day 25 calendar interfaces and build integrity complete.

@@ -187,8 +187,8 @@ export async function POST(request: Request) {
             },
           },
         });
-        logs.push(`Credited $${tipVal.toFixed(2)} to active shift log for user ${activeShift.userId}`);
       }
+    }
 
     return NextResponse.json({ success: true, logs });
   } catch (error) {
