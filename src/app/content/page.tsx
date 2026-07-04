@@ -595,6 +595,26 @@ export default function ContentQueuePage() {
                   </div>
                 ))}
               </div>
+
+              {/* Calendar Grid Days */}
+              <div className="grid grid-cols-7 gap-2">
+                {getDaysForMonth(currentYear, currentMonth).map((day, idx) => {
+                  return (
+                    <div
+                      key={idx}
+                      className={`min-h-[72px] border p-2 rounded-xl flex flex-col justify-between transition-all duration-150 relative ${
+                        day.isCurrentMonth
+                          ? 'bg-zinc-950/40 border-zinc-800'
+                          : 'bg-zinc-950/10 border-zinc-900/40 opacity-30'
+                      }`}
+                    >
+                      <span className="text-[10px] font-extrabold text-zinc-500">
+                        {day.date.getDate()}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
