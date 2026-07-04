@@ -599,18 +599,62 @@ export default function ContentQueuePage() {
               {/* Calendar Grid Days */}
               <div className="grid grid-cols-7 gap-2">
                 {getDaysForMonth(currentYear, currentMonth).map((day, idx) => {
+                  const dayPosts = postsByDate[day.dateString] || [];
+                  const hasPosts = dayPosts.length > 0;
+
                   return (
                     <div
                       key={idx}
-                      className={`min-h-[72px] border p-2 rounded-xl flex flex-col justify-between transition-all duration-150 relative ${
+                      className={`min-h-[76px] border p-2 rounded-xl flex flex-col justify-between transition-all duration-150 relative cursor-pointer select-none group ${
                         day.isCurrentMonth
-                          ? 'bg-zinc-950/40 border-zinc-800'
-                          : 'bg-zinc-950/10 border-zinc-900/40 opacity-30'
+                          ? day.isToday
+                            ? 'bg-blue-600/5 border-blue-500 shadow-blue-500/5'
+                            : 'bg-zinc-950/40 border-zinc-800 hover:border-zinc-700/80'
+                          : 'bg-zinc-950/10 border-zinc-900/40 opacity-30 hover:opacity-50'
                       }`}
                     >
-                      <span className="text-[10px] font-extrabold text-zinc-500">
-                        {day.date.getDate()}
-                      </span>
+                      <div className="flex items-center justify-between w-full">
+                        <span className={`text-[10px] font-extrabold ${day.isToday ? 'text-blue-400 font-black' : 'text-zinc-500 group-hover:text-zinc-400'}`}>
+                          {day.date.getDate()}
+                        </span>
+                        {day.isToday && (
+                          <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                        )}
+                      </div>
+
+                      {/* Post Previews list */}
+                      {hasPosts && (
+                        <div className="flex flex-col gap-1 w-full overflow-hidden mt-1.5">
+                          {dayPosts.slice(0, 1).map((post) => {
+                            const isSch = post.status === 'SCHEDULED';
+                            const isPub = post.status === 'PUBLISHED';
+                            return (
+                              <div
+                                key={post.id}
+                                className={`text-[8px] border rounded px-1.5 py-0.5 truncate text-zinc-300 w-full flex items-center justify-between ${
+                                  isPub
+                                    ? 'bg-green-500/10 border-green-500/20 text-green-300'
+                                    : isSch
+                                    ? 'bg-amber-500/10 border-amber-500/20 text-amber-300'
+                                    : 'bg-zinc-900 border-zinc-800 text-zinc-400'
+                                }`}
+                              >
+                                <span className="truncate">{post.text || 'Media upload'}</span>
+                                {post.mediaUrls && post.mediaUrls.length > 0 && (
+                                  <span className="text-[7px] font-bold ml-1 flex-shrink-0">
+                                    {post.mediaUrls.length}M
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
+                          {dayPosts.length > 1 && (
+                            <span className="text-[7px] text-zinc-500 font-extrabold self-end">
+                              +{dayPosts.length - 1} more
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
