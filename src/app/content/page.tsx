@@ -638,3 +638,68 @@ export default function ContentQueuePage() {
     </div>
   );
 }
+
+interface CalendarDay {
+  date: Date;
+  isCurrentMonth: boolean;
+  isToday: boolean;
+  dateString: string;
+}
+
+function getDaysForMonth(year: number, month: number): CalendarDay[] {
+  const days: CalendarDay[] = [];
+  const firstDay = new Date(year, month, 1);
+  const startDayOfWeek = firstDay.getDay();
+
+  // Prev month padding
+  const prevMonthLastDay = new Date(year, month, 0).getDate();
+  for (let i = startDayOfWeek - 1; i >= 0; i--) {
+    const d = new Date(year, month - 1, prevMonthLastDay - i);
+    days.push({
+      date: d,
+      isCurrentMonth: false,
+      isToday: isSameDay(d, new Date()),
+      dateString: formatDateKey(d),
+    });
+  }
+
+  // Current month days
+  const totalDays = new Date(year, month + 1, 0).getDate();
+  for (let i = 1; i <= totalDays; i++) {
+    const d = new Date(year, month, i);
+    days.push({
+      date: d,
+      isCurrentMonth: true,
+      isToday: isSameDay(d, new Date()),
+      dateString: formatDateKey(d),
+    });
+  }
+
+  // Next month padding
+  const totalCells = days.length > 35 ? 42 : 35;
+  const remainingCells = totalCells - days.length;
+  for (let i = 1; i <= remainingCells; i++) {
+    const d = new Date(year, month + 1, i);
+    days.push({
+      date: d,
+      isCurrentMonth: false,
+      isToday: isSameDay(d, new Date()),
+      dateString: formatDateKey(d),
+    });
+  }
+
+  return days;
+}
+
+function isSameDay(d1: Date, d2: Date) {
+  return d1.getFullYear() === d2.getFullYear() &&
+         d1.getMonth() === d2.getMonth() &&
+         d1.getDate() === d2.getDate();
+}
+
+function formatDateKey(d: Date) {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
