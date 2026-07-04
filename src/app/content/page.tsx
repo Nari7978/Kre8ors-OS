@@ -22,7 +22,7 @@ export default function ContentQueuePage() {
     "July", "August", "September", "October", "November", "December"
   ];
 
-  const handlePrevMonth = () => {
+  const handlePrevMonth = useCallback(() => {
     setCurrentMonth((prev) => {
       if (prev === 0) {
         setCurrentYear((y) => y - 1);
@@ -30,9 +30,9 @@ export default function ContentQueuePage() {
       }
       return prev - 1;
     });
-  };
+  }, []);
 
-  const handleNextMonth = () => {
+  const handleNextMonth = useCallback(() => {
     setCurrentMonth((prev) => {
       if (prev === 11) {
         setCurrentYear((y) => y + 1);
@@ -40,7 +40,7 @@ export default function ContentQueuePage() {
       }
       return prev + 1;
     });
-  };
+  }, []);
 
   // Form Composer states
   const [postText, setPostText] = useState('');
