@@ -651,6 +651,7 @@ export default function ContentQueuePage() {
               {/* Calendar Grid Days */}
               <div className="grid grid-cols-7 gap-2">
                 {getDaysForMonth(currentYear, currentMonth).map((day, idx) => {
+                  const isSelectedCell = scheduleDate === day.dateString;
                   const dayPosts = postsByDate[day.dateString] || [];
                   const hasPosts = dayPosts.length > 0;
 
@@ -666,11 +667,13 @@ export default function ContentQueuePage() {
                         }
                       }}
                       className={`min-h-[76px] border p-2 rounded-xl flex flex-col justify-between transition-all duration-150 relative cursor-pointer select-none group ${
-                        day.isCurrentMonth
-                          ? day.isToday
-                            ? 'bg-blue-600/5 border-blue-500 shadow-blue-500/5'
-                            : 'bg-zinc-950/40 border-zinc-800 hover:border-zinc-700/80'
-                          : 'bg-zinc-950/10 border-zinc-900/40 opacity-30 hover:opacity-50'
+                        isSelectedCell
+                          ? 'bg-blue-600/10 border-blue-500 shadow-lg shadow-blue-500/10 scale-[1.02] z-10'
+                          : day.isCurrentMonth
+                            ? day.isToday
+                              ? 'bg-blue-600/5 border-blue-500/50 shadow-blue-500/5 hover:border-blue-500'
+                              : 'bg-zinc-950/40 border-zinc-800 hover:border-zinc-700/80'
+                            : 'bg-zinc-950/10 border-zinc-900/40 opacity-30 hover:opacity-50'
                       }`}
                     >
                       <div className="flex items-center justify-between w-full">
