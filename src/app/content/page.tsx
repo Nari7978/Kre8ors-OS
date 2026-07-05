@@ -486,6 +486,19 @@ export default function ContentQueuePage() {
               {/* Media Grid Preview */}
               {selectedMedia.length > 0 && (
                 <div className="relative border-b border-zinc-900 bg-zinc-950">
+                  {parseFloat(postPrice) > 0 && (
+                    <div className="absolute inset-0 bg-zinc-950/90 flex flex-col items-center justify-center text-center p-4 space-y-2 z-10">
+                      <Lock className="h-7 w-7 text-amber-500 animate-pulse" />
+                      <span className="text-[11px] font-extrabold text-amber-400 uppercase tracking-wide">Locked Premium Content</span>
+                      <span className="text-[9px] text-zinc-500 font-medium">Purchase this post to unlock attached media</span>
+                      <button
+                        type="button"
+                        className="bg-amber-400 hover:bg-amber-300 text-black text-[9px] font-black uppercase tracking-wider px-4 py-1.5 rounded-full shadow-lg transition-colors cursor-pointer"
+                      >
+                        Unlock for ${(parseFloat(postPrice) || 0).toFixed(2)}
+                      </button>
+                    </div>
+                  )}
                   <div className={`grid gap-1 ${
                     selectedMedia.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
                   }`}>
