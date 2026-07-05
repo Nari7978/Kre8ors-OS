@@ -477,6 +477,11 @@ export default function ContentQueuePage() {
                   </div>
                 </div>
               </div>
+
+              {/* Body Text */}
+              <div className="px-4 py-3 text-left text-xs text-zinc-300 whitespace-pre-line leading-relaxed font-sans select-text border-b border-zinc-900/50">
+                {postText || <span className="text-zinc-650 italic select-none">Write post caption above to see preview...</span>}
+              </div>
             </div>
           </div>
         </div>
