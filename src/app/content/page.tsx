@@ -294,8 +294,15 @@ export default function ContentQueuePage() {
                   placeholder="What's on your mind today? Write post caption here..."
                   value={postText}
                   onChange={(e) => setPostText(e.target.value)}
+                  maxLength={1000}
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3.5 text-xs text-zinc-300 focus:outline-none focus:border-blue-500 resize-none min-h-[120px] font-sans"
                 />
+                <div className="flex items-center justify-between text-[10px] text-zinc-500 px-1 mt-1">
+                  <span>Max characters: 1000</span>
+                  <span className={postText.length > 900 ? 'text-red-450 font-bold' : ''}>
+                    {postText.length} / 1000
+                  </span>
+                </div>
               </div>
 
               {/* Media Attachments selector */}
