@@ -459,8 +459,24 @@ export default function ContentQueuePage() {
               <Globe className="h-4 w-4 text-blue-500" />
               Live Feed Preview
             </h3>
-            <div className="bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden shadow-md p-4 text-center text-xs text-zinc-500">
-              Visual mockup preview will load here...
+            <div className="bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden shadow-md">
+              {/* Header */}
+              <div className="p-3.5 flex items-center gap-2.5 border-b border-zinc-900">
+                <img
+                  src={activeCreator.avatarUrl || '/placeholder-avatar.png'}
+                  className="h-9 w-9 rounded-full object-cover border border-zinc-800"
+                  alt="avatar"
+                />
+                <div className="min-w-0 text-left">
+                  <div className="text-xs font-extrabold text-zinc-200 truncate flex items-center gap-1">
+                    {activeCreator.displayName}
+                    <span className="text-[9px] bg-blue-500/20 text-blue-400 px-1 rounded font-black">✓</span>
+                  </div>
+                  <div className="text-[9px] text-zinc-500 font-semibold tracking-wide truncate">
+                    @{activeCreator.username}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
