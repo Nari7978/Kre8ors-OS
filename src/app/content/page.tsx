@@ -482,6 +482,26 @@ export default function ContentQueuePage() {
               <div className="px-4 py-3 text-left text-xs text-zinc-300 whitespace-pre-line leading-relaxed font-sans select-text border-b border-zinc-900/50">
                 {postText || <span className="text-zinc-650 italic select-none">Write post caption above to see preview...</span>}
               </div>
+
+              {/* Media Grid Preview */}
+              {selectedMedia.length > 0 && (
+                <div className="relative border-b border-zinc-900 bg-zinc-950">
+                  <div className={`grid gap-1 ${
+                    selectedMedia.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
+                  }`}>
+                    {selectedMedia.slice(0, 2).map((url, idx) => (
+                      <div key={idx} className="relative aspect-video w-full overflow-hidden bg-zinc-900">
+                        <img src={url} className="object-cover w-full h-full" alt="attachment preview" />
+                        {idx === 1 && selectedMedia.length > 2 && (
+                          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center text-xs font-black text-white">
+                            +{selectedMedia.length - 2} MORE
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
