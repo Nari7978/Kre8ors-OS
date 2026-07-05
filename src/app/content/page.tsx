@@ -515,6 +515,21 @@ export default function ContentQueuePage() {
                   </div>
                 </div>
               )}
+
+              {/* Engagement Bar */}
+              <div className="p-3 flex items-center justify-between text-zinc-500 text-[10px] font-bold tracking-wide">
+                <div className="flex items-center gap-4">
+                  <span className="flex items-center gap-1 hover:text-red-400 cursor-pointer transition-colors">
+                    ❤️ 0
+                  </span>
+                  <span className="flex items-center gap-1 hover:text-blue-400 cursor-pointer transition-colors">
+                    💬 0
+                  </span>
+                </div>
+                <span className="hover:text-amber-400 cursor-pointer transition-colors flex items-center gap-1">
+                  🪙 Tip
+                </span>
+              </div>
             </div>
           </div>
         </div>
