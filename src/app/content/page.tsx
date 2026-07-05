@@ -452,6 +452,17 @@ export default function ContentQueuePage() {
               </button>
             </form>
           </div>
+
+          {/* Live Feed Preview Container */}
+          <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-4">
+            <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+              <Globe className="h-4 w-4 text-blue-500" />
+              Live Feed Preview
+            </h3>
+            <div className="bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden shadow-md p-4 text-center text-xs text-zinc-500">
+              Visual mockup preview will load here...
+            </div>
+          </div>
         </div>
 
         {/* Right Column: Scheduled List / Queue */}
