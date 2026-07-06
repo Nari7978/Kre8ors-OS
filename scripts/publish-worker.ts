@@ -1,7 +1,5 @@
 import 'dotenv/config';
-import { PrismaClient } from '@prisma/client';
-
-const db = new PrismaClient();
+import { db } from '../src/lib/db';
 
 async function runWorker() {
   console.log('Standalone publishing queue worker initialized...');
