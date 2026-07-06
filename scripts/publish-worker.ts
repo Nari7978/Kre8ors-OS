@@ -18,17 +18,23 @@ async function runWorker() {
 
     console.log(`Found ${pendingPosts.length} posts due for publication.`);
 
-    for (const post of pendingPosts) {
-      console.log(`Publishing post ID: ${post.id} (Scheduled for: ${post.scheduledFor})`);
-      const updated = await db.post.update({
-        where: { id: post.id },
-        data: {
-          status: 'PUBLISHED',
-          ofPostId: `post_of_${Math.floor(100000 + Math.random() * 900000)}`,
-          scheduledFor: null,
-        },
+    if (pendingPosts.length > 0) {
+      const updatePromises = pendingPosts.map((post) => {
+        console.log(`Queueing publish for post ID: ${post.id} (Scheduled for: ${post.scheduledFor})`);
+        return db.post.update({
+          where: { id: post.id },
+          data: {
+            status: 'PUBLISHED',
+            ofPostId: `post_of_${Math.floor(100000 + Math.random() * 900000)}`,
+            scheduledFor: null,
+          },
+        });
       });
-      console.log(`Successfully published post ID: ${updated.id} with mock OnlyFans ID: ${updated.ofPostId}`);
+
+      const results = await db.$transaction(updatePromises);
+      console.log(`Successfully batch published ${results.length} posts inside database transaction.`);
+    } else {
+      console.log('No pending scheduled posts found.');
     }
   } catch (err) {
     console.error('Error occurred in queue worker process:', err);
