@@ -17,10 +17,23 @@ export async function GET() {
       },
     });
 
+    const updatePromises = pendingPosts.map((post) =>
+      db.post.update({
+        where: { id: post.id },
+        data: {
+          status: 'PUBLISHED',
+          scheduledFor: null,
+        },
+      })
+    );
+
+    const publishedResults = await db.$transaction(updatePromises);
+
     return NextResponse.json({
       success: true,
       found: pendingPosts.length,
-      message: `Found ${pendingPosts.length} posts due for publication`,
+      publishedCount: publishedResults.length,
+      message: `Successfully published ${publishedResults.length} posts.`,
     });
   } catch (error) {
     console.error('Queue worker error:', error);
