@@ -3,6 +3,10 @@ import { db } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * GET: Cron queue worker endpoint. Checks database for all SCHEDULED posts
+ * whose publish time is past-due, and executes publication.
+ */
 export async function GET() {
   try {
     const now = new Date();
