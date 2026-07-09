@@ -53,28 +53,42 @@ export default function MessageBubble({
         >
           {/* Locked overlay for pay-per-view content */}
           {isLocked && (
-            <div className="mb-3 bg-black/40 border border-[#252A35] rounded-[10px] p-4 flex flex-col items-center text-center">
-              <div className="h-10 w-10 rounded-full bg-[#FFC857]/10 flex items-center justify-center mb-2">
-                <Lock className="h-5 w-5 text-[#FFC857]" />
+            <div className="relative mb-3 aspect-video rounded-[10px] overflow-hidden border border-[#252A35] bg-zinc-950 flex flex-col items-center justify-center group/ppv">
+              {/* Blurred background image or gradient */}
+              <div 
+                className="absolute inset-0 bg-cover bg-center filter blur-xl opacity-40 scale-110"
+                style={{
+                  backgroundImage: media.length > 0 
+                    ? `url(${media[0]})` 
+                    : `url('https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=400')`
+                }}
+              />
+              <div className="absolute inset-0 bg-black/30" />
+              
+              {/* Lock badge in the center */}
+              <div className="relative z-10 flex flex-col items-center gap-2">
+                <div className="h-11 w-11 rounded-full bg-black/60 border border-white/10 flex items-center justify-center text-white backdrop-blur-sm shadow-md group-hover/ppv:scale-105 transition-transform duration-200">
+                  <Lock className="h-5 w-5" />
+                </div>
+                {!isOwn && onUnlock && (
+                  <button
+                    onClick={() => onUnlock(message.id)}
+                    disabled={isUnlocking}
+                    className="mt-2 bg-[#7C5CFC] hover:bg-[#6c4ee2] text-white font-extrabold text-[11px] px-3.5 py-1.5 rounded-full transition-all shadow-lg flex items-center gap-1.5 backdrop-blur-sm active:scale-95 animate-pulse"
+                  >
+                    {isUnlocking ? (
+                      <span className="animate-spin border-2 border-white border-t-transparent rounded-full h-3 w-3" />
+                    ) : (
+                      <span>Unlock for ${Number(message.price).toFixed(2)}</span>
+                    )}
+                  </button>
+                )}
+                {isOwn && (
+                  <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 bg-black/50 px-2.5 py-1 rounded-full border border-white/5">
+                    Locked Offer • ${Number(message.price).toFixed(2)}
+                  </span>
+                )}
               </div>
-              <span className="text-xs font-extrabold text-white block">Locked Pay-Per-View Content</span>
-              <span className="text-sm font-black text-[#16C784] mt-1 block">
-                Price: ${Number(message.price).toFixed(2)}
-              </span>
-              {!isOwn && onUnlock && (
-                <button
-                  onClick={() => onUnlock(message.id)}
-                  disabled={isUnlocking}
-                  className="mt-3 bg-[#16C784] hover:bg-[#12a16a] disabled:opacity-50 text-[#0F1117] font-black text-xs px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5"
-                >
-                  {isUnlocking ? (
-                    <span className="animate-spin border-2 border-[#0F1117] border-t-transparent rounded-full h-3.5 w-3.5" />
-                  ) : (
-                    <Unlock className="h-3.5 w-3.5" />
-                  )}
-                  Unlock PPV Message
-                </button>
-              )}
             </div>
           )}
 

@@ -8,35 +8,15 @@ interface QueueBadgeProps {
 export default function QueueBadge({ status }: QueueBadgeProps) {
   switch (status) {
     case 'seen':
-      return (
-        <span className="flex items-center gap-1 text-[10px] font-bold text-[#16C784] uppercase tracking-wider">
-          <CheckCheck className="h-3 w-3" /> Seen
-        </span>
-      );
+      return <CheckCheck className="h-3.5 w-3.5 text-purple-300" />;
     case 'delivered':
-      return (
-        <span className="flex items-center gap-1 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">
-          <CheckCheck className="h-3 w-3" /> Delivered
-        </span>
-      );
+      return <CheckCheck className="h-3.5 w-3.5 text-zinc-400" />;
     case 'queued':
-      return (
-        <span className="flex items-center gap-1 text-[10px] font-bold text-[#FFC857] uppercase tracking-wider animate-pulse">
-          <Clock className="h-3 w-3 animate-spin" /> Queued
-        </span>
-      );
+      return <Clock className="h-3 w-3 animate-spin text-[#FFC857]" />;
     case 'scheduled':
-      return (
-        <span className="flex items-center gap-1 text-[10px] font-bold text-[#7C5CFC] uppercase tracking-wider">
-          <Clock className="h-3 w-3" /> Scheduled
-        </span>
-      );
+      return <Clock className="h-3.5 w-3.5 text-[#7C5CFC]" />;
     case 'failed':
-      return (
-        <span className="flex items-center gap-1 text-[10px] font-bold text-[#FF5B5B] uppercase tracking-wider">
-          <AlertCircle className="h-3 w-3" /> Failed
-        </span>
-      );
+      return <AlertCircle className="h-3.5 w-3.5 text-[#FF5B5B]" />;
     default:
       return null;
   }
