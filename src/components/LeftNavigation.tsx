@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation';
 import { useGlobalStore } from '@/lib/store/global-store';
 import { Creator } from '@/types';
 import {
-  LayoutDashboard,
   MessageSquare,
   FileText,
   Zap,
@@ -19,16 +18,39 @@ import {
   ChevronRight,
   LogOut,
   Clock,
-  Sparkles
+  Gift,
+  Wallet,
+  Bell,
+  Sparkles,
+  ChevronDown
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+
+interface SidebarSubItem {
+  name: string;
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  path: string;
+}
+
+interface SidebarGroup {
+  id: string;
+  name: string;
+  icon: any;
+  items: SidebarSubItem[];
+}
 
 export default function LeftNavigation() {
   const pathname = usePathname();
   const { activeCreator, setActiveCreator, isShiftActive, activeShiftId, startShift, endShift } = useGlobalStore();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [creators, setCreators] = useState<Creator[]>([]);
-  const [notificationsCount, setNotificationsCount] = useState<number>(3);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+    messages: true,
+    posts: true,
+    banking: false,
+    users: false,
+    settings: false
+  });
 
   // Load creators list
   useEffect(() => {
@@ -49,17 +71,80 @@ export default function LeftNavigation() {
     fetchCreators();
   }, [activeCreator, setActiveCreator]);
 
-  // Main navigation items
-  const menuItems = [
-    { name: 'Dashboard', path: '/', icon: LayoutDashboard },
-    { name: 'Inbox Chat', path: '/messages', icon: MessageSquare, badge: notificationsCount },
-    { name: 'Feed Posts', path: '/content', icon: FileText },
-    { name: 'Automations', path: '/automations', icon: Zap },
-    { name: 'CRM Fans', path: '/fans', icon: Users },
-    { name: 'Earnings', path: '/earnings', icon: DollarSign },
-    { name: 'Analytics', path: '/analytics', icon: BarChart3 },
-    { name: 'Stories & PPV', path: '/messages/ppv-builder', icon: Compass },
-    { name: 'Settings', path: '/settings', icon: Settings }
+  const toggleGroup = (groupId: string) => {
+    setExpandedGroups((prev) => ({
+      ...prev,
+      [groupId]: !prev[groupId]
+    }));
+  };
+
+  // OnlyFans API documentation categories mapping
+  const apiGroups: SidebarGroup[] = [
+    {
+      id: 'messages',
+      name: 'Messages',
+      icon: MessageSquare,
+      items: [
+        { name: 'List Chats', method: 'GET', path: '/messages' },
+        { name: 'List Chat Media (Gallery)', method: 'GET', path: '/messages' },
+        { name: 'Mute Chat Notifications', method: 'POST', path: '/messages' },
+        { name: 'Start Typing Indicator', method: 'POST', path: '/messages' },
+        { name: 'Send Message', method: 'POST', path: '/messages' },
+        { name: 'Delete Message', method: 'DELETE', path: '/messages' },
+        { name: 'Get Message Settings', method: 'GET', path: '/messages' }
+      ]
+    },
+    {
+      id: 'posts',
+      name: 'Posts',
+      icon: FileText,
+      items: [
+        { name: 'List Posts', method: 'GET', path: '/content' },
+        { name: 'Get Post', method: 'GET', path: '/content' },
+        { name: 'Send Post', method: 'POST', path: '/content' },
+        { name: 'Show Post Statistics', method: 'GET', path: '/analytics' },
+        { name: 'Archive Post', method: 'POST', path: '/content' },
+        { name: 'Publish Queue Item', method: 'PUT', path: '/content' }
+      ]
+    },
+    {
+      id: 'promotions',
+      name: 'Promotions & Bundles',
+      icon: Gift,
+      items: [
+        { name: 'Promotions List', method: 'GET', path: '/messages/ppv-builder' },
+        { name: 'Subscription Bundles', method: 'GET', path: '/messages/ppv-builder' }
+      ]
+    },
+    {
+      id: 'banking',
+      name: 'Banking & Payouts',
+      icon: Wallet,
+      items: [
+        { name: 'Transactions', method: 'GET', path: '/earnings' },
+        { name: 'Payouts Statistics', method: 'GET', path: '/earnings' },
+        { name: 'Request Payouts', method: 'POST', path: '/earnings' }
+      ]
+    },
+    {
+      id: 'users',
+      name: 'Users & CRM Fans',
+      icon: Users,
+      items: [
+        { name: 'List Users', method: 'GET', path: '/fans' },
+        { name: 'Public Profiles', method: 'GET', path: '/fans' }
+      ]
+    },
+    {
+      id: 'settings',
+      name: 'OnlyFans Settings',
+      icon: Settings,
+      items: [
+        { name: 'Get Settings', method: 'GET', path: '/settings' },
+        { name: 'Update Profile', method: 'POST', path: '/settings' },
+        { name: 'Automatic Messaging', method: 'PATCH', path: '/automations' }
+      ]
+    }
   ];
 
   const handleCreatorChange = (creatorId: string) => {
@@ -92,14 +177,31 @@ export default function LeftNavigation() {
     }
   };
 
+  const getMethodColor = (method?: string) => {
+    switch (method) {
+      case 'GET':
+        return 'text-[#16C784]';
+      case 'POST':
+        return 'text-[#7C5CFC]';
+      case 'DELETE':
+        return 'text-[#FF5B5B]';
+      case 'PUT':
+        return 'text-[#FFC857]';
+      case 'PATCH':
+        return 'text-[#f97316]';
+      default:
+        return 'text-zinc-500';
+    }
+  };
+
   return (
     <motion.div
-      animate={{ width: isCollapsed ? 76 : 240 }}
+      animate={{ width: isCollapsed ? 76 : 260 }}
       transition={{ duration: 0.2, ease: 'easeInOut' }}
       className="h-full bg-[#13161D] border-r border-[#252A35] flex flex-col flex-shrink-0 select-none text-zinc-300 overflow-hidden"
     >
       {/* Workspace Branding Logo header */}
-      <div className="p-4 border-b border-[#252A35] flex items-center justify-between h-16">
+      <div className="p-4 border-b border-[#252A35] flex items-center justify-between h-16 flex-shrink-0">
         {!isCollapsed && (
           <div className="flex items-center gap-2">
             <div className="h-7 w-7 rounded-lg bg-[#7C5CFC] flex items-center justify-center font-black text-white text-sm shadow-md shadow-[#7C5CFC]/20">
@@ -122,7 +224,7 @@ export default function LeftNavigation() {
       </div>
 
       {/* Creator Context Dropdown Selector */}
-      <div className="p-3 border-b border-[#252A35] bg-[#0F1117]/20">
+      <div className="p-3 border-b border-[#252A35] bg-[#0F1117]/20 flex-shrink-0">
         {isCollapsed ? (
           <div className="h-9 w-9 mx-auto rounded-full bg-[#181B23] border border-[#252A35] flex items-center justify-center font-black text-white text-xs" title={activeCreator?.displayName}>
             {activeCreator?.displayName?.charAt(0) || '@'}
@@ -146,7 +248,7 @@ export default function LeftNavigation() {
       </div>
 
       {/* Shift logging clock button */}
-      <div className="p-3 border-b border-[#252A35]">
+      <div className="p-3 border-b border-[#252A35] flex-shrink-0">
         {isCollapsed ? (
           <button
             onClick={handleShiftClock}
@@ -177,38 +279,67 @@ export default function LeftNavigation() {
         )}
       </div>
 
-      {/* Navigation Directory list */}
-      <div className="flex-1 py-4 overflow-y-auto space-y-1 px-2.5">
-        {menuItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = pathname === item.path;
+      {/* API Reference Directory list */}
+      <div className="flex-1 py-4 overflow-y-auto space-y-4 px-3 scrollbar-thin">
+        {apiGroups.map((group) => {
+          const Icon = group.icon;
+          const isExpanded = expandedGroups[group.id];
+
           return (
-            <Link key={item.name} href={item.path} passHref>
-              <span
-                className={`flex items-center rounded-[8px] py-2.5 transition-all cursor-pointer ${
-                  isCollapsed ? 'justify-center px-0' : 'px-3 gap-3'
-                } ${
-                  isActive
-                    ? 'bg-[#7C5CFC] text-white font-extrabold shadow-sm'
-                    : 'hover:bg-[#181B23]/60 hover:text-white text-[#94A3B8] font-medium'
-                }`}
-                title={item.name}
-              >
-                <Icon className="h-4.5 w-4.5 flex-shrink-0" />
-                {!isCollapsed && <span className="text-xs">{item.name}</span>}
-                {!isCollapsed && item.badge && (
-                  <span className="ml-auto bg-[#FF5B5B] text-white text-[10px] font-black rounded-full h-4 min-w-4 px-1.5 flex items-center justify-center">
-                    {item.badge}
+            <div key={group.id} className="space-y-1.5">
+              {/* Category Header */}
+              {isCollapsed ? (
+                <div className="flex justify-center py-1 text-[#7C5CFC]" title={group.name}>
+                  <Icon className="h-5 w-5" />
+                </div>
+              ) : (
+                <button
+                  onClick={() => toggleGroup(group.id)}
+                  className="w-full flex items-center justify-between text-xs font-bold text-[#7C5CFC] hover:text-[#8d71fd] transition-colors px-1"
+                >
+                  <span className="flex items-center gap-2 uppercase tracking-wider text-[10px]">
+                    <Icon className="h-3.5 w-3.5" />
+                    {group.name}
                   </span>
-                )}
-              </span>
-            </Link>
+                  <ChevronDown
+                    className={`h-3.5 w-3.5 transition-transform duration-200 ${
+                      isExpanded ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+              )}
+
+              {/* Sub items */}
+              {!isCollapsed && isExpanded && (
+                <div className="space-y-1 pl-5 border-l border-[#252A35]/50 ml-1.5">
+                  {group.items.map((item) => {
+                    const isActive = pathname === item.path;
+                    return (
+                      <Link key={item.name} href={item.path} passHref>
+                        <span
+                          className={`flex items-center justify-between py-1 text-[11px] font-semibold cursor-pointer transition-colors ${
+                            isActive ? 'text-white' : 'text-[#94A3B8] hover:text-white'
+                          }`}
+                        >
+                          <span className="truncate pr-2">{item.name}</span>
+                          {item.method && (
+                            <span className={`text-[9px] font-extrabold uppercase shrink-0 ${getMethodColor(item.method)}`}>
+                              {item.method}
+                            </span>
+                          )}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           );
         })}
       </div>
 
       {/* Footer Operator Info */}
-      <div className="p-4 border-t border-[#252A35] bg-[#0F1117]/20 flex items-center">
+      <div className="p-4 border-t border-[#252A35] bg-[#0F1117]/20 flex items-center flex-shrink-0">
         {isCollapsed ? (
           <div className="h-8 w-8 mx-auto rounded-full bg-[#181B23] border border-[#252A35] flex items-center justify-center font-bold text-white text-xs">
             OP
