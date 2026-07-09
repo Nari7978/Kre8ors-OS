@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Plus, SlidersHorizontal, Filter } from 'lucide-react';
-import { Creator } from '@/types';
+import { Creator, Fan } from '@/types';
 import { useGlobalStore } from '@/lib/store/global-store';
 
 interface ChatSidebarProps {
@@ -10,6 +10,7 @@ interface ChatSidebarProps {
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   onNewChat?: () => void;
+  fans: Fan[];
 }
 
 export default function ChatSidebar({
@@ -19,13 +20,14 @@ export default function ChatSidebar({
   searchQuery,
   setSearchQuery,
   onNewChat,
+  fans,
 }: ChatSidebarProps) {
   const { activeFilter, setActiveFilter } = useGlobalStore();
 
   const filters = [
-    { id: 'all', label: 'All', count: 128 },
-    { id: 'unread', label: 'Unread', count: 18 },
-    { id: 'vip', label: 'VIP', count: 16 },
+    { id: 'all', label: 'All', count: fans.length },
+    { id: 'unread', label: 'Unread', count: fans.filter((_, idx) => idx === 0 || idx === 2).length },
+    { id: 'vip', label: 'VIP', count: fans.filter(f => Number(f.totalSpent) > 500).length },
   ];
 
   return (

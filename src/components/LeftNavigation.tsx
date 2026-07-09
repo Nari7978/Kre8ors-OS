@@ -196,6 +196,7 @@ export default function LeftNavigation() {
     endShift,
     activeSubMenu,
     setActiveSubMenu,
+    activeCreatorFans,
   } = useGlobalStore();
   const [creators, setCreators] = useState<Creator[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -334,6 +335,12 @@ export default function LeftNavigation() {
                   {section.items.map((item) => {
                     const Icon = item.icon;
                     const isActive = activeSubMenu === item.name;
+                    let displayBadge = item.badge;
+                    if (item.name === 'Chat Requests') {
+                      displayBadge = activeCreatorFans.filter((_, idx) => idx % 3 === 0).length;
+                    } else if (item.name === 'Pending Messages') {
+                      displayBadge = activeCreatorFans.filter((_, idx) => idx % 2 === 1).length;
+                    }
                     return (
                       <Link key={item.name} href={item.path} passHref>
                         <span
@@ -346,13 +353,13 @@ export default function LeftNavigation() {
                         >
                           <Icon className="h-3.5 w-3.5 flex-shrink-0 opacity-70" />
                           <span className="truncate flex-1">{item.name}</span>
-                          {item.badge !== undefined && (
+                          {displayBadge !== undefined && displayBadge > 0 && (
                             <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
                               isActive
                                 ? 'bg-white/20 text-white'
                                 : 'bg-[#7C5CFC]/15 text-[#7C5CFC]'
                             }`}>
-                              {item.badge}
+                              {displayBadge}
                             </span>
                           )}
                         </span>

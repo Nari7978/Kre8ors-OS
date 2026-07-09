@@ -27,6 +27,9 @@ interface GlobalState {
   setActiveFilter: (filter: string) => void;
   activeSubMenu: string;
   setActiveSubMenu: (subMenu: string) => void;
+
+  activeCreatorFans: any[];
+  setActiveCreatorFans: (fans: any[]) => void;
 }
 
 export const useGlobalStore = create<GlobalState>((set) => ({
@@ -59,4 +62,7 @@ export const useGlobalStore = create<GlobalState>((set) => ({
   setActiveFilter: (filter) => set({ activeFilter: filter }),
   activeSubMenu: 'List Chats',
   setActiveSubMenu: (subMenu) => set({ activeSubMenu: subMenu }),
+
+  activeCreatorFans: [],
+  setActiveCreatorFans: (fans) => set({ activeCreatorFans: fans }),
 }));

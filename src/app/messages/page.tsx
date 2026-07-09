@@ -32,7 +32,7 @@ export const getTagStyles = (tag: string) => {
 };
 
 export default function MessagesPage() {
-  const { activeCreator, chatCache, setChatCache, activeFilter, activeSubMenu } = useGlobalStore();
+  const { activeCreator, chatCache, setChatCache, activeFilter, activeSubMenu, setActiveCreatorFans } = useGlobalStore();
   const [creators, setCreators] = useState<Creator[]>([]);
   const [fans, setFans] = useState<Fan[]>([]);
   const [selectedFan, setSelectedFan] = useState<Fan | null>(null);
@@ -132,7 +132,9 @@ export default function MessagesPage() {
         }
         const res = await fetch(url);
         const data = await res.json();
-        setFans(Array.isArray(data) ? data : []);
+        const fansList = Array.isArray(data) ? data : [];
+        setFans(fansList);
+        setActiveCreatorFans(fansList);
       } catch (err) {
         console.error('Error fetching fans:', err);
       } finally {
@@ -542,6 +544,7 @@ export default function MessagesPage() {
             creators={creators}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
+            fans={fans}
           />
           <ChatList
             fans={getFilteredFans()}
