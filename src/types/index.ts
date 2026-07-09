@@ -63,6 +63,7 @@ export interface Message {
   tipAmount: number;
   isPurchased: boolean;
   sentAt: Date | string;
+  price?: number;
 }
 
 export interface MediaItem {
