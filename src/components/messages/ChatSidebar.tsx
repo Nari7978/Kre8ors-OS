@@ -33,7 +33,7 @@ export default function ChatSidebar({
   ];
 
   return (
-    <div className="w-80 border-r border-[#252A35] bg-[#13161D] flex flex-col h-full select-none flex-shrink-0">
+    <div className="flex flex-col flex-shrink-0">
       {/* Creator Context Selector */}
       <div className="p-4 border-b border-[#252A35] flex flex-col gap-3">
         <div className="flex items-center justify-between">
