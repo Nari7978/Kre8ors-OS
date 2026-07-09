@@ -9,8 +9,6 @@ import {
   MessageSquare,
   FileText,
   Zap,
-  Settings,
-  BarChart3,
   Users,
   Compass,
   DollarSign,
@@ -51,11 +49,9 @@ export default function LeftNavigation() {
     promotions: false,
     banking: false,
     users: false,
-    settings: false,
     media: false,
     stories: false,
     exports: false,
-    analytics: false,
   });
 
   // Load creators list
@@ -168,27 +164,9 @@ export default function LeftNavigation() {
         { name: 'Create Data Export', method: 'POST', path: '/settings' },
         { name: 'Get Data Export Status', method: 'GET', path: '/settings' }
       ]
-    },
-    {
-      id: 'analytics',
-      name: 'Analytics',
-      icon: BarChart3,
-      items: [
-        { name: 'Summary Summary', method: 'GET', path: '/analytics' },
-        { name: 'Financial Revenue', method: 'GET', path: '/analytics' }
-      ]
-    },
-    {
-      id: 'settings',
-      name: 'OnlyFans Settings',
-      icon: Settings,
-      items: [
-        { name: 'Get Settings', method: 'GET', path: '/settings' },
-        { name: 'Update Profile', method: 'POST', path: '/settings' },
-        { name: 'Automatic Messaging', method: 'PATCH', path: '/automations' }
-      ]
     }
   ];
+
 
   const handleCreatorChange = (creatorId: string) => {
     const found = creators.find((c) => c.id === creatorId);
