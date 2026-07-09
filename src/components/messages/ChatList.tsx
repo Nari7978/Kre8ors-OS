@@ -27,6 +27,7 @@ export default function ChatList({ fans, selectedFan, setSelectedFan, loadingFan
               // Mock states for demo indicators
               const isPinned = index === 0 || index === 2;
               const isMuted = index === 1;
+              const unreadCount = index === 0 ? '4+' : index === 2 ? '2' : null;
 
               return (
                 <motion.div
@@ -70,7 +71,14 @@ export default function ChatList({ fans, selectedFan, setSelectedFan, loadingFan
 
                       <div className="flex items-center justify-between mt-1">
                         <p className="text-[11px] text-[#94A3B8] truncate">@{fan.username}</p>
-                        <span className="text-[9px] text-[#94A3B8] font-semibold flex-shrink-0">10:30 AM</span>
+                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                          <span className="text-[9px] text-[#94A3B8] font-semibold">10:30 AM</span>
+                          {unreadCount && (
+                            <span className="bg-[#7C5CFC] text-white text-[9px] font-black rounded-full h-4.5 min-w-4.5 px-1.5 flex items-center justify-center shadow-sm animate-pulse">
+                              {unreadCount}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       {/* Snippet summary info */}

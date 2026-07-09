@@ -47,9 +47,15 @@ export default function LeftNavigation() {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     messages: true,
     posts: true,
+    promotions: false,
     banking: false,
     users: false,
-    settings: false
+    settings: false,
+    media: false,
+    stories: false,
+    exports: false,
+    analytics: false,
+    onlyfans_api: false
   });
 
   // Load creators list
@@ -108,6 +114,30 @@ export default function LeftNavigation() {
       ]
     },
     {
+      id: 'media',
+      name: 'Media Vault',
+      icon: Compass,
+      items: [
+        { name: 'List Vault Media', method: 'GET', path: '/vault' },
+        { name: 'Get Vault Media', method: 'GET', path: '/vault' },
+        { name: 'Upload Media to Vault', method: 'POST', path: '/vault' },
+        { name: 'Delete Vault Media', method: 'DELETE', path: '/vault' },
+        { name: 'Add Media To List', method: 'POST', path: '/vault' },
+        { name: 'Create Vault List', method: 'POST', path: '/vault' }
+      ]
+    },
+    {
+      id: 'stories',
+      name: 'Stories',
+      icon: Sparkles,
+      items: [
+        { name: 'List Active Stories', method: 'GET', path: '/stories' },
+        { name: 'List Story Archive', method: 'GET', path: '/stories' },
+        { name: 'Show Story', method: 'GET', path: '/stories' },
+        { name: 'Add to Story', method: 'POST', path: '/stories' }
+      ]
+    },
+    {
       id: 'promotions',
       name: 'Promotions & Bundles',
       icon: Gift,
@@ -133,6 +163,25 @@ export default function LeftNavigation() {
       items: [
         { name: 'List Users', method: 'GET', path: '/fans' },
         { name: 'Public Profiles', method: 'GET', path: '/fans' }
+      ]
+    },
+    {
+      id: 'exports',
+      name: 'Data Exports',
+      icon: Bell,
+      items: [
+        { name: 'List Data Exports', method: 'GET', path: '/settings' },
+        { name: 'Create Data Export', method: 'POST', path: '/settings' },
+        { name: 'Get Data Export Status', method: 'GET', path: '/settings' }
+      ]
+    },
+    {
+      id: 'analytics',
+      name: 'Analytics',
+      icon: BarChart3,
+      items: [
+        { name: 'Summary Summary', method: 'GET', path: '/analytics' },
+        { name: 'Financial Revenue', method: 'GET', path: '/analytics' }
       ]
     },
     {
