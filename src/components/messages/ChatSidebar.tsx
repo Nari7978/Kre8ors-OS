@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Plus, Filter, MessageSquare, AlertCircle, Heart, Star, Archive, EyeOff, Save, Pin, Film } from 'lucide-react';
+import { Search, Plus, SlidersHorizontal, Filter } from 'lucide-react';
 import { Creator } from '@/types';
 
 interface ChatSidebarProps {
@@ -21,79 +21,61 @@ export default function ChatSidebar({
 }: ChatSidebarProps) {
   const [activeFilter, setActiveFilter] = useState('all');
 
-  const filterTabs = [
-    { id: 'all', label: 'All Chats', icon: MessageSquare },
-    { id: 'unread', label: 'Unread', icon: AlertCircle },
-    { id: 'vip', label: 'VIP / High Spend', icon: Star },
-    { id: 'muted', label: 'Muted', icon: EyeOff },
-    { id: 'archived', label: 'Archived', icon: Archive },
-    { id: 'saved', label: 'Saved Replies', icon: Save },
-    { id: 'pinned', label: 'Pinned', icon: Pin },
-    { id: 'media', label: 'Media shared', icon: Film },
+  const filters = [
+    { id: 'all', label: 'All', count: 128 },
+    { id: 'unread', label: 'Unread', count: 18 },
+    { id: 'vip', label: 'VIP', count: 16 },
   ];
 
   return (
     <div className="flex flex-col flex-shrink-0">
-      {/* Creator Context Selector */}
-      <div className="p-4 border-b border-[#252A35] flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs uppercase tracking-wider font-extrabold text-[#94A3B8]">Active Workspace</span>
-          <button
-            onClick={onNewChat}
-            className="p-1 hover:bg-[#252A35] text-[#7C5CFC] hover:text-white rounded transition-colors flex items-center gap-1 text-[11px] font-bold"
-          >
-            <Plus className="h-3.5 w-3.5" /> New Chat
-          </button>
-        </div>
-
-        <select
-          value={selectedCreatorId}
-          onChange={(e) => setSelectedCreatorId(e.target.value)}
-          className="w-full bg-[#181B23] border border-[#252A35] rounded-[8px] px-3 py-2 text-xs text-white focus:outline-none focus:border-[#7C5CFC] cursor-pointer font-semibold transition-colors"
-        >
-          <option value="" className="bg-[#181B23]">Select Creator Workspace...</option>
-          {creators.map((c) => (
-            <option key={c.id} value={c.id} className="bg-[#181B23]">
-              @{c.username} ({c.displayName})
-            </option>
-          ))}
-        </select>
-
-        {/* Search Subscribers */}
-        <div className="relative">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-[#94A3B8]/60" />
-          <input
-            type="text"
-            placeholder="Search fans, notes, tags..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#181B23] border border-[#252A35] rounded-[8px] py-2 pl-9 pr-4 text-xs text-white placeholder-[#94A3B8]/30 focus:outline-none focus:border-[#7C5CFC] transition-colors"
-          />
-        </div>
+      {/* Header */}
+      <div className="h-14 px-4 flex items-center justify-between border-b border-[#1A1D25] flex-shrink-0">
+        <span className="text-[14px] font-bold text-white">List Chats</span>
+        <button className="p-1.5 hover:bg-[#14171E] rounded-[6px] text-[#5A6070] hover:text-[#94A3B8] transition-colors">
+          <SlidersHorizontal className="h-4 w-4" />
+        </button>
       </div>
 
-      {/* FILTERS section with 2-column grid */}
-      <div className="p-3 border-b border-[#252A35]">
-        <span className="text-[10px] font-black uppercase tracking-wider text-[#94A3B8] px-1 block mb-2">Filters</span>
-        <div className="grid grid-cols-2 gap-1">
-          {filterTabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeFilter === tab.id;
+      {/* Search */}
+      <div className="px-3 pt-3">
+        <div className="relative">
+          <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-[#5A6070]" />
+          <input
+            type="text"
+            placeholder="Search chats..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-[#14171E] border border-[#1E222B] rounded-[8px] py-2 pl-8 pr-3 text-[12px] text-white placeholder-[#5A6070] focus:outline-none focus:border-[#7C5CFC]/50 transition-colors"
+          />
+        </div>
+
+        {/* Filter pills */}
+        <div className="flex items-center gap-1.5 mt-3 mb-2 select-none">
+          {filters.map((f) => {
+            const isActive = activeFilter === f.id;
             return (
               <button
-                key={tab.id}
-                onClick={() => setActiveFilter(tab.id)}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] text-[11px] font-bold transition-all text-left ${
+                key={f.id}
+                onClick={() => setActiveFilter(f.id)}
+                className={`flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold transition-all ${
                   isActive
-                    ? 'bg-[#7C5CFC] text-white'
-                    : 'text-[#94A3B8] hover:bg-[#181B23] hover:text-white'
+                    ? 'bg-[#7C5CFC]/15 text-[#7C5CFC] border border-[#7C5CFC]/25'
+                    : 'text-[#5A6070] border border-[#1E222B] hover:text-[#94A3B8] hover:border-[#252A35]'
                 }`}
               >
-                <Icon className="h-3.5 w-3.5 flex-shrink-0" />
-                <span className="truncate">{tab.label}</span>
+                {f.label}
+                <span className={`text-[10px] font-bold px-1 py-0 rounded-full ${
+                  isActive ? 'bg-[#7C5CFC] text-white' : 'bg-[#1E222B] text-[#5A6070]'
+                }`}>
+                  {f.count}
+                </span>
               </button>
             );
           })}
+          <button className="h-6 w-6 rounded-full border border-[#1E222B] text-[#5A6070] hover:text-[#94A3B8] hover:border-[#252A35] flex items-center justify-center transition-colors flex-shrink-0">
+            <Plus className="h-3 w-3" />
+          </button>
         </div>
       </div>
     </div>
