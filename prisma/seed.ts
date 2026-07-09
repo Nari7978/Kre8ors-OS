@@ -95,6 +95,7 @@ async function main() {
   // 3. Create Creators
   const creator1 = await prisma.creator.create({
     data: {
+      id: '8f27d781-0245-4f4c-87a1-35603b2ca07c',
       username: 'sophiasweet',
       displayName: 'Sophia Sweet',
       avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150',
@@ -109,6 +110,7 @@ async function main() {
 
   const creator2 = await prisma.creator.create({
     data: {
+      id: '8413e2a6-29ba-429d-bb80-61372da66421',
       username: 'emmarose',
       displayName: 'Emma Rose',
       avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150',
@@ -123,6 +125,7 @@ async function main() {
 
   const creator3 = await prisma.creator.create({
     data: {
+      id: '1c1e0cea-18fa-4df2-a276-894bac2f2a06',
       username: 'pending_creator',
       displayName: 'Pending Onboarding',
       avatarUrl: null,
@@ -170,6 +173,7 @@ async function main() {
   // 6. Create Fans for Sophia Sweet (creator1)
   const fansDataSophia = [
     {
+      id: '21c9bc53-f1af-41ce-b9c4-f18103b62ed6',
       ofId: 'fan_of_001',
       username: 'johnny_rich',
       displayName: 'John Rich',
@@ -182,6 +186,7 @@ async function main() {
       expiresAt: new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000), 
     },
     {
+      id: '3096059b-dedc-4e6f-a1cc-e82d8123813a',
       ofId: 'fan_of_002',
       username: 'crypto_boss',
       displayName: 'Crypto Boss',
@@ -194,6 +199,7 @@ async function main() {
       expiresAt: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000),
     },
     {
+      id: 'c4ee994a-e60d-4877-88e4-cee89275039b',
       ofId: 'fan_of_003',
       username: 'billy_boy',
       displayName: 'Billy',
@@ -206,6 +212,7 @@ async function main() {
       expiresAt: new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000),
     },
     {
+      id: '8a5e5204-ad30-41b3-95f7-88da83433be4',
       ofId: 'fan_of_004',
       username: 'lurker_dan',
       displayName: 'Dan',
@@ -233,6 +240,7 @@ async function main() {
   // Create Fans for Emma Rose (creator2)
   const fansDataEmma = [
     {
+      id: '8571c698-9bbb-4b82-ad19-916576888cb7',
       ofId: 'fan_of_101',
       username: 'gentleman_sam',
       displayName: 'Samuel T.',
@@ -245,6 +253,7 @@ async function main() {
       expiresAt: new Date(now.getTime() + 6 * 24 * 60 * 60 * 1000),
     },
     {
+      id: '705594ae-d8fd-42ce-88a1-468eb5f47da8',
       ofId: 'fan_of_102',
       username: 'lonely_rider',
       displayName: 'Rider',
