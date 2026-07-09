@@ -21,3 +21,4 @@
 - Day 9 Commit 21: Logged proxy route parameters checks.
 - Day 9 Commit 22: Logged sqlite client adapter settings rules.
 - Day 9 Commit 23: Logged build check compile integrity log.
+- Day 9 Commit 24: Logged user shortcuts mappings rules.
