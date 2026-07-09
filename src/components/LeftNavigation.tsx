@@ -187,7 +187,16 @@ const topLevelIcons = [
 
 export default function LeftNavigation() {
   const pathname = usePathname();
-  const { activeCreator, setActiveCreator, isShiftActive, activeShiftId, startShift, endShift } = useGlobalStore();
+  const {
+    activeCreator,
+    setActiveCreator,
+    isShiftActive,
+    activeShiftId,
+    startShift,
+    endShift,
+    activeSubMenu,
+    setActiveSubMenu,
+  } = useGlobalStore();
   const [creators, setCreators] = useState<Creator[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -324,10 +333,11 @@ export default function LeftNavigation() {
                 <div className="space-y-0.5">
                   {section.items.map((item) => {
                     const Icon = item.icon;
-                    const isActive = pathname === item.path && item.name === 'List Chats';
+                    const isActive = activeSubMenu === item.name;
                     return (
                       <Link key={item.name} href={item.path} passHref>
                         <span
+                          onClick={() => setActiveSubMenu(item.name)}
                           className={`flex items-center gap-2 px-2.5 py-[7px] rounded-[7px] text-[12px] font-medium cursor-pointer transition-all ${
                             isActive
                               ? 'bg-[#7C5CFC] text-white font-semibold'

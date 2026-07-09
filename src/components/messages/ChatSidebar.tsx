@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Plus, SlidersHorizontal, Filter } from 'lucide-react';
 import { Creator } from '@/types';
+import { useGlobalStore } from '@/lib/store/global-store';
 
 interface ChatSidebarProps {
   selectedCreatorId: string;
@@ -19,7 +20,7 @@ export default function ChatSidebar({
   setSearchQuery,
   onNewChat,
 }: ChatSidebarProps) {
-  const [activeFilter, setActiveFilter] = useState('all');
+  const { activeFilter, setActiveFilter } = useGlobalStore();
 
   const filters = [
     { id: 'all', label: 'All', count: 128 },

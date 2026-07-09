@@ -32,7 +32,7 @@ export const getTagStyles = (tag: string) => {
 };
 
 export default function MessagesPage() {
-  const { activeCreator, chatCache, setChatCache } = useGlobalStore();
+  const { activeCreator, chatCache, setChatCache, activeFilter, activeSubMenu } = useGlobalStore();
   const [creators, setCreators] = useState<Creator[]>([]);
   const [fans, setFans] = useState<Fan[]>([]);
   const [selectedFan, setSelectedFan] = useState<Fan | null>(null);
@@ -497,6 +497,39 @@ export default function MessagesPage() {
     setSelectedFan(updatedFan);
     setFans((prev) => prev.map((f) => (f.id === selectedFan.id ? updatedFan : f)));
   };
+  const getFilteredFans = () => {
+    let list = [...fans];
+    
+    // Apply activeSubMenu filters
+    if (activeSubMenu === 'Chat Requests') {
+      list = list.filter((_, idx) => idx % 3 === 0);
+    } else if (activeSubMenu === 'Pending Messages') {
+      list = list.filter((_, idx) => idx % 2 === 1);
+    } else if (activeSubMenu === 'Archived Chats') {
+      list = list.filter((_, idx) => idx === 4);
+    } else if (activeSubMenu === 'Hidden Chats') {
+      list = list.filter((_, idx) => idx === 5);
+    } else if (activeSubMenu === 'Muted Chats') {
+      list = list.filter((_, idx) => idx === 1);
+    } else if (activeSubMenu === 'Favorites') {
+      list = list.filter((_, idx) => idx === 0 || idx === 3);
+    } else if (activeSubMenu === 'Unread Chats') {
+      list = list.filter((_, idx) => idx === 0 || idx === 2);
+    } else if (activeSubMenu === 'Pinned Chats') {
+      list = list.filter((_, idx) => idx === 0 || idx === 2);
+    } else if (activeSubMenu === 'Deleted Chats') {
+      list = [];
+    }
+
+    // Apply activeFilter tab filters
+    if (activeFilter === 'unread') {
+      list = list.filter((_, idx) => idx === 0 || idx === 2);
+    } else if (activeFilter === 'vip') {
+      list = list.filter((f) => f.totalSpent > 500);
+    }
+
+    return list;
+  };
 
   return (
     <div className="flex h-full w-full bg-[#0F1117] text-white overflow-hidden font-sans">
@@ -511,7 +544,7 @@ export default function MessagesPage() {
             setSearchQuery={setSearchQuery}
           />
           <ChatList
-            fans={fans}
+            fans={getFilteredFans()}
             selectedFan={selectedFan}
             setSelectedFan={setSelectedFan}
             loadingFans={loadingFans}

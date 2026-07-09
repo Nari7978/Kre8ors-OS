@@ -21,6 +21,12 @@ interface GlobalState {
   chatCache: Record<string, { messages: any[]; hasMore: boolean; nextCursor: string | null }>;
   setChatCache: (key: string, cache: { messages: any[]; hasMore: boolean; nextCursor: string | null }) => void;
   clearChatCache: (key: string) => void;
+
+  // Filter and sub-menu state synchronization
+  activeFilter: string;
+  setActiveFilter: (filter: string) => void;
+  activeSubMenu: string;
+  setActiveSubMenu: (subMenu: string) => void;
 }
 
 export const useGlobalStore = create<GlobalState>((set) => ({
@@ -48,4 +54,9 @@ export const useGlobalStore = create<GlobalState>((set) => ({
     delete updated[key];
     return { chatCache: updated };
   }),
+
+  activeFilter: 'all',
+  setActiveFilter: (filter) => set({ activeFilter: filter }),
+  activeSubMenu: 'List Chats',
+  setActiveSubMenu: (subMenu) => set({ activeSubMenu: subMenu }),
 }));
