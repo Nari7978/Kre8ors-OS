@@ -350,7 +350,77 @@ async function main() {
   await prisma.message.createMany({
     data: mockMessagesList,
   });
-  console.log('Created Chat Messages');
+
+  // Seed messages for Emma Rose's fans to avoid empty chat streams
+  const sam = seededEmmaFans[0];
+  const rider = seededEmmaFans[1];
+  
+  await prisma.message.createMany({
+    data: [
+      {
+        ofMessageId: 'msg_emma_001',
+        creatorId: creator2.id,
+        fanId: sam.id,
+        direction: 'in',
+        text: 'Hey Emma! I saw your new post. You look amazing!',
+        mediaUrls: JSON.stringify([]),
+        isTip: false,
+        tipAmount: 0.00,
+        isPurchased: false,
+        sentAt: new Date(now.getTime() - 5 * 60 * 60 * 1000),
+      },
+      {
+        ofMessageId: 'msg_emma_002',
+        creatorId: creator2.id,
+        fanId: sam.id,
+        direction: 'out',
+        text: 'Thank you Sam! I appreciate the sweet words. How is your day going?',
+        mediaUrls: JSON.stringify([]),
+        isTip: false,
+        tipAmount: 0.00,
+        isPurchased: false,
+        sentAt: new Date(now.getTime() - 4.5 * 60 * 60 * 1000),
+      },
+      {
+        ofMessageId: 'msg_emma_003',
+        creatorId: creator2.id,
+        fanId: sam.id,
+        direction: 'in',
+        text: 'Going great now! Do you have any private pictures to share today?',
+        mediaUrls: JSON.stringify([]),
+        isTip: false,
+        tipAmount: 0.00,
+        isPurchased: false,
+        sentAt: new Date(now.getTime() - 4 * 60 * 60 * 1000),
+      },
+      {
+        ofMessageId: 'msg_emma_004',
+        creatorId: creator2.id,
+        fanId: sam.id,
+        direction: 'out',
+        text: 'I just uploaded a brand new set to my vault. Unlock it here!',
+        mediaUrls: JSON.stringify([]),
+        isTip: false,
+        tipAmount: 15.00,
+        isPurchased: false,
+        sentAt: new Date(now.getTime() - 3.5 * 60 * 60 * 1000),
+      },
+      {
+        ofMessageId: 'msg_emma_005',
+        creatorId: creator2.id,
+        fanId: rider.id,
+        direction: 'in',
+        text: 'Hey Emma, welcome to my feed!',
+        mediaUrls: JSON.stringify([]),
+        isTip: false,
+        tipAmount: 0.00,
+        isPurchased: false,
+        sentAt: new Date(now.getTime() - 10 * 60 * 60 * 1000),
+      }
+    ]
+  });
+
+  console.log('Created Chat Messages for Sophia Sweet and Emma Rose');
 
   // 8. Create Media Vault Items
   await prisma.mediaItem.createMany({
