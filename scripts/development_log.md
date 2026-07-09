@@ -14,3 +14,4 @@
 - Day 9 Commit 14: Logged bulk PATCH action validation schemas.
 - Day 9 Commit 15: Logged campaign post fields details.
 - Day 9 Commit 16: Logged cell grid date calculations specs.
+- Day 9 Commit 17: Logged preview locks UI layers specs.
