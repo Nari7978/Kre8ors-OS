@@ -363,6 +363,31 @@ async function main() {
   // Seed messages for Emma Rose's fans to avoid empty chat streams
   const sam = seededEmmaFans[0];
   const rider = seededEmmaFans[1];
+
+  // Generate 50 historical messages for Samuel T. to support full chat history / scroll pagination testing
+  const emmaSamMessages = [];
+  for (let i = 50; i >= 1; i--) {
+    const isOut = i % 2 === 0;
+    const sentTime = new Date(now.getTime() - i * 15 * 60 * 1000 - 6 * 60 * 60 * 1000); // spaced 15 mins apart, before the main conversation
+    emmaSamMessages.push({
+      ofMessageId: `msg_emma_paginated_${50 - i + 1}`,
+      creatorId: creator2.id,
+      fanId: sam.id,
+      direction: isOut ? 'out' : 'in',
+      text: isOut 
+        ? `Message ${50 - i + 1} from Emma Rose: hope you are having an amazing day! #${50 - i + 1}`
+        : `Reply ${50 - i + 1} from Samuel: absolutely, love your content! #${50 - i + 1}`,
+      mediaUrls: JSON.stringify([]),
+      isTip: false,
+      tipAmount: 0.00,
+      isPurchased: false,
+      sentAt: sentTime,
+    });
+  }
+
+  await prisma.message.createMany({
+    data: emmaSamMessages,
+  });
   
   await prisma.message.createMany({
     data: [
