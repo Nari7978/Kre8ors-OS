@@ -70,20 +70,30 @@ export default function ChatSidebar({
             className="w-full bg-[#181B23] border border-[#252A35] rounded-[8px] py-2 pl-9 pr-4 text-xs text-white placeholder-[#94A3B8]/30 focus:outline-none focus:border-[#7C5CFC] transition-colors"
           />
         </div>
-        {/* Horizontal filters row */}
-        <div className="flex items-center gap-1.5 mt-2.5 overflow-x-auto scrollbar-none pb-1 select-none">
-          <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#7C5CFC]/20 text-[#7C5CFC] border border-[#7C5CFC]/30 text-[10px] font-bold">
-            All <span className="bg-[#7C5CFC] text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">128</span>
-          </button>
-          <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#181B23] text-[#94A3B8] border border-[#252A35] text-[10px] font-bold hover:text-white transition-colors">
-            Unread <span className="bg-[#252A35] text-[#94A3B8] text-[9px] font-black px-1.5 py-0.5 rounded-full">18</span>
-          </button>
-          <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#181B23] text-[#94A3B8] border border-[#252A35] text-[10px] font-bold hover:text-white transition-colors">
-            VIP <span className="bg-[#252A35] text-[#94A3B8] text-[9px] font-black px-1.5 py-0.5 rounded-full">16</span>
-          </button>
-          <button className="p-1 rounded-full bg-[#181B23] text-[#94A3B8] border border-[#252A35] hover:text-white transition-colors flex items-center justify-center h-6 w-6 shrink-0">
-            <Plus className="h-3 w-3" />
-          </button>
+      </div>
+
+      {/* FILTERS section with 2-column grid */}
+      <div className="p-3 border-b border-[#252A35]">
+        <span className="text-[10px] font-black uppercase tracking-wider text-[#94A3B8] px-1 block mb-2">Filters</span>
+        <div className="grid grid-cols-2 gap-1">
+          {filterTabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeFilter === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveFilter(tab.id)}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] text-[11px] font-bold transition-all text-left ${
+                  isActive
+                    ? 'bg-[#7C5CFC] text-white'
+                    : 'text-[#94A3B8] hover:bg-[#181B23] hover:text-white'
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5 flex-shrink-0" />
+                <span className="truncate">{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

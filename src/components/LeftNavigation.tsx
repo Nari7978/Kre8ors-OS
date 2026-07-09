@@ -8,28 +8,36 @@ import { Creator } from '@/types';
 import {
   MessageSquare,
   FileText,
+  Zap,
   Settings,
   BarChart3,
+  Users,
   Compass,
-  Wallet,
-  Clock,
-  LogOut,
+  DollarSign,
   ChevronLeft,
   ChevronRight,
+  LogOut,
+  Clock,
+  Gift,
+  Wallet,
+  Bell,
+  Sparkles,
   ChevronDown,
-  User
+  ChevronUp
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-interface SubMenuItem {
+interface SidebarSubItem {
   name: string;
-  badge?: string | number;
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   path: string;
 }
 
-interface MenuSection {
-  title: string;
-  items: SubMenuItem[];
+interface SidebarGroup {
+  id: string;
+  name: string;
+  icon: any;
+  items: SidebarSubItem[];
 }
 
 export default function LeftNavigation() {
@@ -37,7 +45,18 @@ export default function LeftNavigation() {
   const { activeCreator, setActiveCreator, isShiftActive, activeShiftId, startShift, endShift } = useGlobalStore();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [creators, setCreators] = useState<Creator[]>([]);
-  const [showCreatorSelect, setShowCreatorSelect] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+    messages: true,
+    posts: true,
+    promotions: false,
+    banking: false,
+    users: false,
+    settings: false,
+    media: false,
+    stories: false,
+    exports: false,
+    analytics: false,
+  });
 
   // Load creators list
   useEffect(() => {
@@ -58,18 +77,125 @@ export default function LeftNavigation() {
     fetchCreators();
   }, [activeCreator, setActiveCreator]);
 
-  // Determine active section based on route
-  const getActiveSection = () => {
-    if (pathname.startsWith('/messages')) return 'messages';
-    if (pathname.startsWith('/content') || pathname.startsWith('/stories')) return 'content';
-    if (pathname.startsWith('/vault')) return 'vault';
-    if (pathname.startsWith('/earnings')) return 'earnings';
-    if (pathname.startsWith('/analytics')) return 'analytics';
-    if (pathname.startsWith('/settings')) return 'settings';
-    return 'messages'; // fallback
+  const toggleGroup = (id: string) => {
+    setExpandedGroups((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const activeSection = getActiveSection();
+  const apiGroups: SidebarGroup[] = [
+    {
+      id: 'messages',
+      name: 'Messages',
+      icon: MessageSquare,
+      items: [
+        { name: 'List Chats', method: 'GET', path: '/messages' },
+        { name: 'List Chat Media (Gallery)', method: 'GET', path: '/messages' },
+        { name: 'Mute Chat Notifications', method: 'POST', path: '/messages' },
+        { name: 'Start Typing Indicator', method: 'POST', path: '/messages' },
+        { name: 'Send Message', method: 'POST', path: '/messages' },
+        { name: 'Delete Message', method: 'DELETE', path: '/messages' },
+        { name: 'Get Message Settings', method: 'GET', path: '/messages' },
+      ]
+    },
+    {
+      id: 'posts',
+      name: 'Posts',
+      icon: FileText,
+      items: [
+        { name: 'List Posts', method: 'GET', path: '/content' },
+        { name: 'Get Post', method: 'GET', path: '/content' },
+        { name: 'Send Post', method: 'POST', path: '/content' },
+        { name: 'Show Post Statistics', method: 'GET', path: '/content' },
+        { name: 'Archive Post', method: 'POST', path: '/content' },
+        { name: 'Publish Queue Item', method: 'PUT', path: '/content' },
+      ]
+    },
+    {
+      id: 'media',
+      name: 'Media Vault',
+      icon: Compass,
+      items: [
+        { name: 'List Vault Media', method: 'GET', path: '/vault' },
+        { name: 'Get Vault Media', method: 'GET', path: '/vault' },
+        { name: 'Upload Media to Vault', method: 'POST', path: '/vault' },
+        { name: 'Delete Vault Media', method: 'DELETE', path: '/vault' },
+      ]
+    },
+    {
+      id: 'stories',
+      name: 'Stories',
+      icon: Sparkles,
+      items: [
+        { name: 'List Active Stories', method: 'GET', path: '/stories' },
+        { name: 'List Story Archive', method: 'GET', path: '/stories' },
+        { name: 'Show Story', method: 'GET', path: '/stories' },
+        { name: 'Add to Story', method: 'POST', path: '/stories' },
+      ]
+    },
+    {
+      id: 'promotions',
+      name: 'Promotions & Bundles',
+      icon: Gift,
+      items: [
+        { name: 'Promotions List', method: 'GET', path: '/messages/ppv-builder' },
+        { name: 'Subscription Bundles', method: 'GET', path: '/messages/ppv-builder' }
+      ]
+    },
+    {
+      id: 'banking',
+      name: 'Banking & Payouts',
+      icon: Wallet,
+      items: [
+        { name: 'Transactions', method: 'GET', path: '/earnings' },
+        { name: 'Payouts Statistics', method: 'GET', path: '/earnings' },
+        { name: 'Request Payouts', method: 'POST', path: '/earnings' }
+      ]
+    },
+    {
+      id: 'users',
+      name: 'Users & CRM Fans',
+      icon: Users,
+      items: [
+        { name: 'List Users', method: 'GET', path: '/fans' },
+        { name: 'Public Profiles', method: 'GET', path: '/fans' }
+      ]
+    },
+    {
+      id: 'exports',
+      name: 'Data Exports',
+      icon: Bell,
+      items: [
+        { name: 'List Data Exports', method: 'GET', path: '/settings' },
+        { name: 'Create Data Export', method: 'POST', path: '/settings' },
+        { name: 'Get Data Export Status', method: 'GET', path: '/settings' }
+      ]
+    },
+    {
+      id: 'analytics',
+      name: 'Analytics',
+      icon: BarChart3,
+      items: [
+        { name: 'Summary Summary', method: 'GET', path: '/analytics' },
+        { name: 'Financial Revenue', method: 'GET', path: '/analytics' }
+      ]
+    },
+    {
+      id: 'settings',
+      name: 'OnlyFans Settings',
+      icon: Settings,
+      items: [
+        { name: 'Get Settings', method: 'GET', path: '/settings' },
+        { name: 'Update Profile', method: 'POST', path: '/settings' },
+        { name: 'Automatic Messaging', method: 'PATCH', path: '/automations' }
+      ]
+    }
+  ];
+
+  const handleCreatorChange = (creatorId: string) => {
+    const found = creators.find((c) => c.id === creatorId);
+    if (found) {
+      setActiveCreator(found);
+    }
+  };
 
   const handleShiftClock = async () => {
     try {
@@ -94,348 +220,189 @@ export default function LeftNavigation() {
     }
   };
 
-  // Define secondary navigation menus for each top-level section
-  const sectionMenus: Record<string, { title: string; sections: MenuSection[] }> = {
-    messages: {
-      title: 'Messages',
-      sections: [
-        {
-          title: 'Chats',
-          items: [
-            { name: 'List Chats', path: '/messages' },
-            { name: 'Chat Requests', badge: 12, path: '/messages' },
-            { name: 'Pending Messages', badge: 8, path: '/messages' },
-            { name: 'Archived Chats', path: '/messages' },
-            { name: 'Hidden Chats', path: '/messages' },
-            { name: 'Muted Chats', path: '/messages' },
-            { name: 'Favorites', path: '/messages' },
-            { name: 'Unread Chats', path: '/messages' },
-            { name: 'Pinned Chats', path: '/messages' },
-            { name: 'Deleted Chats', path: '/messages' }
-          ]
-        },
-        {
-          title: 'Messages',
-          items: [
-            { name: 'List Messages', path: '/messages' },
-            { name: 'Search Messages', path: '/messages' },
-            { name: 'Scheduled Messages', path: '/messages' },
-            { name: 'Saved For Later', path: '/messages' }
-          ]
-        },
-        {
-          title: 'Automation',
-          items: [
-            { name: 'Auto Reply', path: '/automations' },
-            { name: 'Mass Messaging', path: '/automations' },
-            { name: 'Campaigns', path: '/automations' },
-            { name: 'Drip Sequences', path: '/automations' }
-          ]
-        }
-      ]
-    },
-    content: {
-      title: 'Content',
-      sections: [
-        {
-          title: 'Posts',
-          items: [
-            { name: 'List Posts', path: '/content' },
-            { name: 'Create Post', path: '/content' },
-            { name: 'Queue Items', path: '/content' },
-            { name: 'Archived Posts', path: '/content' }
-          ]
-        },
-        {
-          title: 'Stories',
-          items: [
-            { name: 'List Active Stories', path: '/stories' },
-            { name: 'List Story Archive', path: '/stories' },
-            { name: 'Show Story', path: '/stories' },
-            { name: 'Add to Story', path: '/stories' }
-          ]
-        }
-      ]
-    },
-    vault: {
-      title: 'Media Vault',
-      sections: [
-        {
-          title: 'Vault Storage',
-          items: [
-            { name: 'List Vault Media', path: '/vault' },
-            { name: 'Get Vault Media', path: '/vault' },
-            { name: 'Upload Media to Vault', path: '/vault' },
-            { name: 'Delete Vault Media', path: '/vault' }
-          ]
-        },
-        {
-          title: 'Vault Lists',
-          items: [
-            { name: 'Add Media To List', path: '/vault' },
-            { name: 'Create Vault List', path: '/vault' }
-          ]
-        }
-      ]
-    },
-    earnings: {
-      title: 'Earnings',
-      sections: [
-        {
-          title: 'Banking & Payouts',
-          items: [
-            { name: 'Transactions', path: '/earnings' },
-            { name: 'Payouts Statistics', path: '/earnings' },
-            { name: 'Request Payouts', path: '/earnings' }
-          ]
-        }
-      ]
-    },
-    analytics: {
-      title: 'Analytics',
-      sections: [
-        {
-          title: 'Performance',
-          items: [
-            { name: 'Revenue Analytics', path: '/analytics' },
-            { name: 'Chatter Conversions', path: '/analytics' },
-            { name: 'Subscriber Retention', path: '/analytics' }
-          ]
-        },
-        {
-          title: 'Operators',
-          items: [
-            { name: 'Leaderboard', path: '/analytics' },
-            { name: 'Shift Records', path: '/analytics' }
-          ]
-        }
-      ]
-    },
-    settings: {
-      title: 'Settings',
-      sections: [
-        {
-          title: 'General',
-          items: [
-            { name: 'Get Settings', path: '/settings' },
-            { name: 'Update Profile', path: '/settings' }
-          ]
-        },
-        {
-          title: 'OnlyFans API',
-          items: [
-            { name: 'Webhooks', path: '/settings' },
-            { name: 'API Keys', path: '/settings' },
-            { name: 'Client Sessions', path: '/settings' }
-          ]
-        }
-      ]
+  const getMethodColor = (method?: string) => {
+    switch (method) {
+      case 'GET':
+        return 'text-[#16C784]';
+      case 'POST':
+        return 'text-[#7C5CFC]';
+      case 'DELETE':
+        return 'text-[#FF5B5B]';
+      case 'PUT':
+        return 'text-[#FFC857]';
+      case 'PATCH':
+        return 'text-[#f97316]';
+      default:
+        return 'text-zinc-500';
     }
   };
 
-  const activeMenu = sectionMenus[activeSection] || sectionMenus.messages;
-
   return (
     <motion.div
-      animate={{ width: isCollapsed ? 64 : 260 }}
+      animate={{ width: isCollapsed ? 76 : 260 }}
       transition={{ duration: 0.2, ease: 'easeInOut' }}
-      className="h-full flex bg-[#13161D] border-r border-[#252A35] flex-shrink-0 select-none text-zinc-300 overflow-hidden"
+      className="h-full bg-[#13161D] border-r border-[#252A35] flex flex-col flex-shrink-0 select-none text-zinc-300 overflow-hidden"
     >
-      {/* COLUMN 1: Far Left Thin Icon-Only Sidebar */}
-      <div className="w-16 h-full bg-[#0B0D12] flex flex-col items-center py-4 justify-between border-r border-[#252A35]/35 flex-shrink-0 relative">
-        <div className="flex flex-col items-center gap-6 w-full">
-          {/* Logo icon */}
-          <div className="h-8 w-8 rounded-lg bg-[#7C5CFC] flex items-center justify-center font-black text-white text-sm shadow-md shadow-[#7C5CFC]/20">
-            K
+      {/* Workspace Branding Logo header */}
+      <div className="p-4 border-b border-[#252A35] flex items-center justify-between h-16 flex-shrink-0">
+        {!isCollapsed && (
+          <div className="flex items-center gap-2">
+            <div className="h-7 w-7 rounded-lg bg-[#7C5CFC] flex items-center justify-center font-black text-white text-sm shadow-md shadow-[#7C5CFC]/20">
+              K
+            </div>
+            <span className="font-extrabold text-white text-sm tracking-wide">Kre8ors OS</span>
+            <span className="text-[9px] bg-[#7C5CFC]/10 border border-[#7C5CFC]/25 text-[#7C5CFC] font-black rounded-full px-2 py-0.5 uppercase tracking-wide">Pro</span>
           </div>
+        )}
 
-          {/* Vertical Menu Icons list */}
-          <div className="flex flex-col items-center gap-4 w-full px-2 mt-4">
-            {[
-              { id: 'messages', icon: MessageSquare, label: 'Messages', path: '/messages' },
-              { id: 'content', icon: FileText, label: 'Content', path: '/content' },
-              { id: 'vault', icon: Compass, label: 'Vault', path: '/vault' },
-              { id: 'earnings', icon: Wallet, label: 'Earnings', path: '/earnings' },
-              { id: 'analytics', icon: BarChart3, label: 'Analytics', path: '/analytics' },
-              { id: 'settings', icon: Settings, label: 'Settings', path: '/settings' }
-            ].map((iconItem) => {
-              const Icon = iconItem.icon;
-              const isActive = activeSection === iconItem.id;
-              return (
-                <Link key={iconItem.id} href={iconItem.path} passHref className="w-full">
-                  <div
-                    className={`h-10 w-10 mx-auto rounded-[10px] flex items-center justify-center cursor-pointer transition-all relative ${
-                      isActive 
-                        ? 'bg-[#7C5CFC]/15 text-[#7C5CFC]' 
-                        : 'text-[#94A3B8] hover:bg-[#181B23] hover:text-white'
-                    }`}
-                    title={iconItem.label}
-                  >
-                    <Icon className="h-5 w-5" />
-                    {isActive && (
-                      <div className="absolute left-0 top-1/4 h-1/2 w-1 bg-[#7C5CFC] rounded-r-full" />
-                    )}
-                  </div>
-                </Link>
-              );
-            })}
+        {/* Collapsible toggle buttons */}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className={`p-1.5 hover:bg-[#181B23] border border-[#252A35]/30 rounded-[8px] text-[#94A3B8] hover:text-white transition-colors ${
+            isCollapsed ? 'mx-auto' : ''
+          }`}
+        >
+          {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+        </button>
+      </div>
+
+      {/* Creator Context Dropdown Selector */}
+      <div className="p-3 border-b border-[#252A35] bg-[#0F1117]/20 flex-shrink-0">
+        {isCollapsed ? (
+          <div className="h-9 w-9 mx-auto rounded-full bg-[#181B23] border border-[#252A35] flex items-center justify-center font-black text-white text-xs" title={activeCreator?.displayName}>
+            {activeCreator?.displayName?.charAt(0) || '@'}
           </div>
-        </div>
+        ) : (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[9px] uppercase font-bold text-[#94A3B8] tracking-wider block">Active Creator</span>
+            <select
+              value={activeCreator?.id || ''}
+              onChange={(e) => handleCreatorChange(e.target.value)}
+              className="w-full bg-[#181B23] border border-[#252A35] rounded-[8px] px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#7C5CFC] font-bold cursor-pointer"
+            >
+              {creators.map((c) => (
+                <option key={c.id} value={c.id} className="bg-[#181B23]">
+                  @{c.username}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
 
-        {/* Column 1 bottom controls */}
-        <div className="flex flex-col items-center gap-4 w-full">
-          {/* Clock-in shift triggers */}
+      {/* Shift logging clock button */}
+      <div className="p-3 border-b border-[#252A35] flex-shrink-0">
+        {isCollapsed ? (
           <button
             onClick={handleShiftClock}
-            className={`p-2 rounded-full transition-colors ${
-              isShiftActive ? 'bg-[#16C784]/15 text-[#16C784]' : 'bg-[#FF5B5B]/15 text-[#FF5B5B]'
+            className={`p-2 rounded-full mx-auto block transition-colors ${
+              isShiftActive ? 'bg-[#16C784]/10 text-[#16C784]' : 'bg-[#FF5B5B]/10 text-[#FF5B5B]'
             }`}
-            title={isShiftActive ? 'Clock Out Shift' : 'Clock In Shift'}
+            title={isShiftActive ? 'Shift Active (Clock Out)' : 'Shift Inactive (Clock In)'}
           >
             <Clock className="h-4.5 w-4.5" />
           </button>
-
-          {/* Workspace Avatar Selection */}
-          <div className="relative">
-            <button
-              onClick={() => setShowCreatorSelect(!showCreatorSelect)}
-              className="h-9 w-9 rounded-full bg-[#181B23] border border-[#252A35] flex items-center justify-center font-black text-white text-xs overflow-hidden hover:border-[#7C5CFC] transition-colors"
-              title={activeCreator?.displayName}
-            >
-              {activeCreator?.avatarUrl ? (
-                <img src={activeCreator.avatarUrl} alt={activeCreator.username} className="object-cover h-full w-full" />
-              ) : (
-                activeCreator?.displayName?.charAt(0) || '@'
-              )}
-            </button>
-
-            {/* Creator Popover Workspace Dropdown selector */}
-            <AnimatePresence>
-              {showCreatorSelect && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  className="absolute bottom-12 left-2 w-48 bg-[#13161D] border border-[#252A35] rounded-[10px] p-2 shadow-xl z-55 space-y-1"
-                >
-                  <span className="text-[9px] uppercase font-black tracking-wider text-[#94A3B8] px-2 block mb-1">Select Workspace</span>
-                  {creators.map((c) => (
-                    <button
-                      key={c.id}
-                      onClick={() => {
-                        setActiveCreator(c);
-                        setShowCreatorSelect(false);
-                      }}
-                      className={`w-full text-left px-2.5 py-1.5 rounded-[6px] text-xs font-semibold flex items-center gap-2 transition-colors ${
-                        activeCreator?.id === c.id
-                          ? 'bg-[#7C5CFC] text-white'
-                          : 'text-[#94A3B8] hover:bg-[#181B23] hover:text-white'
-                      }`}
-                    >
-                      <div className="h-5 w-5 rounded-full overflow-hidden shrink-0 border border-white/5 bg-zinc-950 flex items-center justify-center">
-                        {c.avatarUrl ? (
-                          <img src={c.avatarUrl} alt={c.username} className="object-cover h-full w-full" />
-                        ) : (
-                          <User className="h-3 w-3" />
-                        )}
-                      </div>
-                      <span className="truncate">@{c.username}</span>
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
+        ) : (
+          <button
+            onClick={handleShiftClock}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-[8px] text-xs font-bold transition-all ${
+              isShiftActive
+                ? 'bg-[#16C784]/15 border border-[#16C784]/20 text-[#16C784]'
+                : 'bg-[#FF5B5B]/15 border border-[#FF5B5B]/20 text-[#FF5B5B]'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <Clock className={`h-4 w-4 ${isShiftActive ? 'animate-pulse' : ''}`} />
+              {isShiftActive ? 'Shift Logged' : 'Clocked Out'}
+            </span>
+            <span className="text-[9px] font-black uppercase tracking-wider">
+              {isShiftActive ? 'Active' : 'Clock In'}
+            </span>
+          </button>
+        )}
       </div>
 
-      {/* COLUMN 2: Secondary Section Menus (List layout) */}
-      <AnimatePresence mode="wait">
-        {!isCollapsed && (
-          <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
-            transition={{ duration: 0.15 }}
-            className="flex-1 flex flex-col h-full bg-[#13161D]"
-          >
-            {/* Header branding / Toggle button */}
-            <div className="p-4 border-b border-[#252A35] flex items-center justify-between h-16 flex-shrink-0">
-              <span className="font-extrabold text-white text-base tracking-tight select-none">
-                {activeMenu.title}
-              </span>
-              <button
-                onClick={() => setIsCollapsed(true)}
-                className="p-1 hover:bg-[#181B23] border border-[#252A35]/30 rounded-[8px] text-[#94A3B8] hover:text-white transition-colors"
-                title="Collapse sidebar"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-            </div>
+      {/* API Reference Directory list */}
+      <div className="flex-1 py-4 overflow-y-auto space-y-4 px-3 scrollbar-thin">
+        {apiGroups.map((group) => {
+          const Icon = group.icon;
+          const isExpanded = expandedGroups[group.id];
 
-            {/* List scrollable content */}
-            <div className="flex-1 overflow-y-auto py-3 space-y-4 px-2.5 scrollbar-thin">
-              {activeMenu.sections.map((section, idx) => (
-                <div key={idx} className="space-y-1">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-[#94A3B8]/60 px-3 block mb-1">
-                    {section.title}
-                  </span>
-                  
-                  <div className="space-y-0.5">
-                    {section.items.map((item) => {
-                      const isActive = pathname === item.path && item.name === 'List Chats';
-                      return (
-                        <Link key={item.name} href={item.path} passHref>
-                          <span
-                            className={`flex items-center justify-between px-3 py-2 rounded-[8px] text-xs font-semibold cursor-pointer transition-all ${
-                              isActive
-                                ? 'bg-[#7C5CFC]/15 text-[#7C5CFC] font-extrabold'
-                                : 'text-[#94A3B8] hover:bg-[#181B23] hover:text-white'
-                            }`}
-                          >
-                            <span className="truncate">{item.name}</span>
-                            {item.badge !== undefined && (
-                              <span className="bg-[#7C5CFC] text-white text-[9px] font-black px-1.5 py-0.5 rounded-full shrink-0">
-                                {item.badge}
-                              </span>
-                            )}
-                          </span>
-                        </Link>
-                      );
-                    })}
-                  </div>
+          return (
+            <div key={group.id} className="space-y-1.5">
+              {/* Category Header */}
+              {isCollapsed ? (
+                <div className="flex justify-center py-1 text-[#7C5CFC]" title={group.name}>
+                  <Icon className="h-5 w-5" />
                 </div>
-              ))}
-            </div>
+              ) : (
+                <button
+                  onClick={() => toggleGroup(group.id)}
+                  className="w-full flex items-center justify-between text-xs font-bold text-[#7C5CFC] hover:text-[#8d71fd] transition-colors px-1"
+                >
+                  <span className="flex items-center gap-2 uppercase tracking-wider text-[10px]">
+                    <Icon className="h-3.5 w-3.5" />
+                    {group.name}
+                  </span>
+                  {isExpanded ? (
+                    <ChevronUp className="h-3.5 w-3.5 transition-transform duration-200" />
+                  ) : (
+                    <ChevronDown className="h-3.5 w-3.5 transition-transform duration-200" />
+                  )}
+                </button>
+              )}
 
-            {/* Column 2 Bottom session footer */}
-            <div className="p-3 border-t border-[#252A35] bg-[#0F1117]/20 flex items-center justify-between flex-shrink-0 text-xs text-[#94A3B8]">
-              <div>
-                <span className="font-bold text-white block">Level 1 chatter</span>
-                <span className="text-[10px] block mt-0.5">Active Session</span>
-              </div>
-              <button
-                onClick={() => alert('Log out simulated successfully')}
-                className="p-1 hover:bg-[#FF5B5B]/15 hover:text-[#FF5B5B] rounded-[6px] transition-colors"
-                title="Logout session"
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
+              {/* Sub items */}
+              {!isCollapsed && isExpanded && (
+                <div className="space-y-1 pl-5 border-l border-[#252A35]/50 ml-1.5">
+                  {group.items.map((item) => {
+                    const isActive = pathname === item.path;
+                    return (
+                      <Link key={item.name} href={item.path} passHref>
+                        <span
+                          className={`flex items-center justify-between py-1 text-[11px] font-semibold cursor-pointer transition-colors ${
+                            isActive ? 'text-white' : 'text-[#94A3B8] hover:text-white'
+                          }`}
+                        >
+                          <span className="truncate pr-2">{item.name}</span>
+                          {item.method && (
+                            <span className={`text-[9px] font-extrabold uppercase shrink-0 ${getMethodColor(item.method)}`}>
+                              {item.method}
+                            </span>
+                          )}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Footer Operator Info */}
+      <div className="p-4 border-t border-[#252A35] bg-[#0F1117]/20 flex items-center flex-shrink-0">
+        {isCollapsed ? (
+          <div className="h-8 w-8 mx-auto rounded-full bg-[#181B23] border border-[#252A35] flex items-center justify-center font-bold text-white text-xs">
+            OP
+          </div>
+        ) : (
+          <div className="flex items-center justify-between w-full">
+            <div>
+              <span className="text-xs font-bold text-white block">Operator Shift</span>
+              <span className="text-[10px] text-[#94A3B8] mt-0.5 block">Level 1 Chatter</span>
+            </div>
+            <button
+              onClick={() => alert('Log out simulated successfully')}
+              className="p-1.5 hover:bg-[#FF5B5B]/10 hover:text-[#FF5B5B] rounded-[8px] text-[#94A3B8] transition-colors"
+              title="Logout session"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
         )}
-      </AnimatePresence>
-
-      {/* Floating expander button if collapsed */}
-      {isCollapsed && (
-        <button
-          onClick={() => setIsCollapsed(false)}
-          className="absolute left-14 top-5 p-1.5 bg-[#7C5CFC] hover:bg-[#6c4ee2] text-white rounded-full shadow-lg border border-white/10 z-50 transition-all active:scale-95"
-          title="Expand sidebar"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
-      )}
+      </div>
     </motion.div>
   );
 }
