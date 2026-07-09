@@ -29,3 +29,4 @@
 - Day 9 Commit 29: Logged files structure clean rules.
 - Day 9 Commit 30: Configured dev tools debug panel.
 - Day 9 Commit 31: Optimized static routes pre-rendering constraints.
+- Day 9 Commit 32: Added rate limiting headers parsing logs.
