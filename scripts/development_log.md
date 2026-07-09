@@ -34,3 +34,4 @@
 - Day 9 Commit 34: Described multi-step wizard transition durations.
 - Day 9 Commit 35: Logged user session timeouts duration updates.
 - Day 9 Commit 36: Described global filters reset handlers.
+- Day 9 Commit 37: Updated team permission schema guidelines.
