@@ -17,3 +17,4 @@
 - Day 9 Commit 17: Logged preview locks UI layers specs.
 - Day 9 Commit 18: Logged sqlite transaction batch sizes specs.
 - Day 9 Commit 19: Logged AES encrypt rotate session parameters rules.
+- Day 9 Commit 20: Logged wizard step handlers state.
