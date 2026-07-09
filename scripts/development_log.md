@@ -19,3 +19,4 @@
 - Day 9 Commit 19: Logged AES encrypt rotate session parameters rules.
 - Day 9 Commit 20: Logged wizard step handlers state.
 - Day 9 Commit 21: Logged proxy route parameters checks.
+- Day 9 Commit 22: Logged sqlite client adapter settings rules.
