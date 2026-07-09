@@ -5,3 +5,4 @@
 - Day 9 Commit 5: Mapped local state bindings to sub-components.
 - Day 9 Commit 6: Synced creator dropdown with global store selectors.
 - Day 9 Commit 7: Mapped pricingRules discount calculations logic.
+- Day 9 Commit 8: Logged AI prompt suggestion insert events mapping.
