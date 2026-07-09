@@ -10,3 +10,4 @@
 - Day 9 Commit 10: Logged clock in / out shift logs attribute updates.
 - Day 9 Commit 11: Logged team invite POST action models details.
 - Day 9 Commit 12: Logged polling check intervals specs.
+- Day 9 Commit 13: Logged revenue graphs layout configurations.
