@@ -60,3 +60,4 @@
 - Day 28 Commit 13: Standardized active rules counts metrics calculations.
 - Day 28 Commit 14: Logged rule activation API test details.
 - Day 28 Commit 15: Added onboarding welcome responder triggers checks.
+- Day 28 Commit 16: Documented automations configuration schema constraints rules.
