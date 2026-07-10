@@ -63,3 +63,4 @@
 - Day 28 Commit 16: Documented automations configuration schema constraints rules.
 - Day 28 Commit 17: Verified Day 28 automations features stability compile build.
 - Day 29 Commit 1: Designed ledger transaction details drawer.
+- Day 29 Commit 2: Added CSV headers formatting configurations.
