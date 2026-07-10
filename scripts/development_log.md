@@ -76,3 +76,4 @@
 - Day 29 Commit 12: Added net profit calculations validator.
 - Day 29 Commit 13: Mapped commission logs print styling configurations.
 - Day 29 Commit 14: Added bulk ledger transactions select actions logic.
+- Day 29 Commit 15: Designed search and sort panels layout indicators.
