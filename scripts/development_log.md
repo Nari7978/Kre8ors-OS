@@ -65,3 +65,4 @@
 - Day 29 Commit 1: Designed ledger transaction details drawer.
 - Day 29 Commit 2: Added CSV headers formatting configurations.
 - Day 29 Commit 3: Documented net earnings records mapping constraints.
+- Day 29 Commit 4: Implemented commission split ledger calculator UI components.
