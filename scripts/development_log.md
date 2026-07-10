@@ -53,3 +53,4 @@
 - Day 28 Commit 6: Added rule details drawer toggle action state.
 - Day 28 Commit 7: Stated triggers event logging format specifications.
 - Day 28 Commit 8: Documented triggers delay timing checks.
+- Day 28 Commit 9: Added rule priority index sorting helper.
