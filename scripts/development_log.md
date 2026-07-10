@@ -79,3 +79,4 @@
 - Day 29 Commit 15: Designed search and sort panels layout indicators.
 - Day 29 Commit 16: Added earnings metrics caching rules.
 - Day 29 Commit 17: Mapped transaction history API testing mocks.
+- Day 29 Commit 18: Documented split ledger validation safety checklist.
