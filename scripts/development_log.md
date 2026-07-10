@@ -72,3 +72,4 @@
 - Day 29 Commit 8: Mapped payout request validation thresholds rules.
 - Day 29 Commit 9: Designed chart summary cards animations transitions.
 - Day 29 Commit 10: Added shift ledger filters layout rules.
+- Day 29 Commit 11: Documented earnings records grouping helper formulas.
