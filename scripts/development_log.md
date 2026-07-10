@@ -77,3 +77,4 @@
 - Day 29 Commit 13: Mapped commission logs print styling configurations.
 - Day 29 Commit 14: Added bulk ledger transactions select actions logic.
 - Day 29 Commit 15: Designed search and sort panels layout indicators.
+- Day 29 Commit 16: Added earnings metrics caching rules.
