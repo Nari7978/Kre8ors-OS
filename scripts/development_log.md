@@ -81,3 +81,4 @@
 - Day 29 Commit 17: Mapped transaction history API testing mocks.
 - Day 29 Commit 18: Documented split ledger validation safety checklist.
 - Day 29 Commit 19: Added ledger drawer collapse handle transitions.
+- Day 29 Commit 20: Verified earnings ledger exports compile build parameters.
