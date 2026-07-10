@@ -75,3 +75,4 @@
 - Day 29 Commit 11: Documented earnings records grouping helper formulas.
 - Day 29 Commit 12: Added net profit calculations validator.
 - Day 29 Commit 13: Mapped commission logs print styling configurations.
+- Day 29 Commit 14: Added bulk ledger transactions select actions logic.
