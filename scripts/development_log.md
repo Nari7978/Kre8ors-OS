@@ -68,3 +68,4 @@
 - Day 29 Commit 4: Implemented commission split ledger calculator UI components.
 - Day 29 Commit 5: Linked transaction exports download click actions.
 - Day 29 Commit 6: Standardized date formats filters for CSV exporter.
+- Day 29 Commit 7: Added commission percentage adjustments state bindings.
