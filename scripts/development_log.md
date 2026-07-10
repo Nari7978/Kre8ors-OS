@@ -50,3 +50,4 @@
 - Day 28 Commit 3: Added regex filters check for user-defined response matching rules.
 - Day 28 Commit 4: Implemented validation notifications warnings logic.
 - Day 28 Commit 5: Designed drawer panel layouts for responders templates.
+- Day 28 Commit 6: Added rule details drawer toggle action state.
