@@ -56,3 +56,4 @@
 - Day 28 Commit 9: Added rule priority index sorting helper.
 - Day 28 Commit 10: Logged automation error boundary fallback handler logic.
 - Day 28 Commit 11: Set validation check test parameters.
+- Day 28 Commit 12: Added keyword case sensitivity options toggle.
