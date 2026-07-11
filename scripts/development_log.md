@@ -95,3 +95,4 @@
 - Day 31 Commit 10: Verified Day 31 inline ai panel features stability compile build.
 - Day 32 Commit 1: Implemented api route to send thread context to LLM for suggestions.
 - Day 32 Commit 2: Added thread history parser logic constraints.
+- Day 32 Commit 3: Structured json payloads format for LLM api request.
