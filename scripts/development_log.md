@@ -109,3 +109,4 @@
 - Day 33 Commit 4: Added revenue grids tooltips formatting helpers.
 - Day 33 Commit 5: Designed earnings projection tab controls state logic.
 - Day 33 Commit 6: Added hover transitions effects to chart elements.
+- Day 33 Commit 7: Mapped active subscription retention curves calculations.
