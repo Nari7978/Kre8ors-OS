@@ -111,3 +111,4 @@
 - Day 33 Commit 6: Added hover transitions effects to chart elements.
 - Day 33 Commit 7: Mapped active subscription retention curves calculations.
 - Day 33 Commit 8: Logged charts data loading spinner indicators.
+- Day 33 Commit 9: Formatted y-axis values scaling parameters.
