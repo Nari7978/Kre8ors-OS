@@ -100,3 +100,4 @@
 - Day 32 Commit 5: Added response body validation schema definitions.
 - Day 32 Commit 6: Logged connection retry parameters threshold values.
 - Day 32 Commit 7: Documented fan profile bio tag indicators extraction helper.
+- Day 32 Commit 8: Added suggestions score filtering logics.
