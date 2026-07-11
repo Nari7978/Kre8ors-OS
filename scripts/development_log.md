@@ -106,3 +106,4 @@
 - Day 33 Commit 1: Designed dashboard analytics dashboards using styled charts.
 - Day 33 Commit 2: Integrated chart containers with tailwind classes.
 - Day 33 Commit 3: Mapped custom color schemes configurations for charts.
+- Day 33 Commit 4: Added revenue grids tooltips formatting helpers.
