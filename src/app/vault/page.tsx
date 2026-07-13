@@ -8,6 +8,7 @@ import {
   Upload, AlertCircle, RefreshCw, X, Play, Download, Server, HardDrive, List
 } from 'lucide-react';
 
+/** MediaVaultPage browse layout helper */
 export default function MediaVaultPage() {
   const { activeCreator, activeSubMenu } = useGlobalStore();
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
