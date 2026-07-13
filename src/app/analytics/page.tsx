@@ -32,6 +32,7 @@ interface OperatorData {
   averageRevenuePerHour: number;
 }
 
+/** AnalyticsPage performance dashboard helper */
 export default function AnalyticsPage() {
   const { activeCreator, activeSubMenu } = useGlobalStore();
   const [loading, setLoading] = useState(false);
