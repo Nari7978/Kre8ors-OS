@@ -3,6 +3,7 @@ import axios from 'axios';
 const BASE_URL = 'http://localhost:3000';
 const CREATOR_ID = 'test_creator_123';
 
+/** DRM and exports test suite entry */
 async function runTests() {
   console.log('🚀 Starting OnlyFans DRM and Data Exports API Integration Tests...');
 
