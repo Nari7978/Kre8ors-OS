@@ -127,11 +127,33 @@ const sectionMenus: Record<string, { title: string; sections: NavSection[] }> = 
     title: 'Fans & CRM',
     sections: [
       {
-        title: 'Fans',
+        title: 'Statistics / Engagement',
         items: [
-          { name: 'Fans', icon: Users, path: '/fans', method: 'GET' },
-          { name: 'Following', icon: Users, path: '/fans', method: 'GET' },
-          { name: 'User List Collections', icon: Users, path: '/fans', method: 'GET' },
+          { name: 'Engagement / Messages', icon: Sparkles, path: '/fans' },
+        ]
+      },
+      {
+        title: 'Release Forms',
+        items: [
+          { name: 'Release Forms', icon: FileText, path: '/fans' },
+        ]
+      },
+      {
+        title: 'Users',
+        items: [
+          { name: 'Users', icon: Users, path: '/fans' },
+          { name: 'Blocked / Restricted Users', icon: Users, path: '/fans' },
+          { name: 'Public Profiles', icon: Users, path: '/fans' },
+        ]
+      },
+      {
+        title: 'Notifications',
+        items: [
+          { name: 'Get Notification Counts', icon: MessageSquare, path: '/fans', method: 'GET' },
+          { name: 'Get Notification Tabs Order', icon: MessageSquare, path: '/fans', method: 'GET' },
+          { name: 'List Notifications', icon: MessageSquare, path: '/fans', method: 'GET' },
+          { name: 'Mark All Notifications As Read', icon: MessageSquare, path: '/fans', method: 'POST' },
+          { name: 'Search Users In Notifications', icon: MessageSquare, path: '/fans', method: 'GET' },
         ]
       }
     ]
@@ -166,12 +188,49 @@ const sectionMenus: Record<string, { title: string; sections: NavSection[] }> = 
     title: 'OnlyFans Settings',
     sections: [
       {
-        title: 'Settings',
+        title: 'OnlyFans Settings',
         items: [
           { name: 'Get Settings', icon: Settings, path: '/settings', method: 'GET' },
-          { name: 'Update Settings', icon: Settings, path: '/settings', method: 'POST' },
+          { name: 'Update Profile', icon: Settings, path: '/settings', method: 'POST' },
+          { name: 'Check Username Availability', icon: Settings, path: '/settings', method: 'POST' },
+          { name: 'Update Subscription Price', icon: Settings, path: '/settings', method: 'PATCH' },
+          { name: 'Get Blocked Countries', icon: Settings, path: '/settings', method: 'GET' },
+          { name: 'Update Blocked Countries', icon: Settings, path: '/settings', method: 'PUT' },
+        ]
+      },
+      {
+        title: 'Welcome Message',
+        items: [
+          { name: 'Enable/Disable Welcome Message', icon: Settings, path: '/settings', method: 'PATCH' },
           { name: 'Get Welcome Message', icon: Settings, path: '/settings', method: 'GET' },
+          { name: 'Update Welcome Message', icon: Settings, path: '/settings', method: 'POST' },
+        ]
+      },
+      {
+        title: 'Social Media Buttons',
+        items: [
+          { name: 'List Social Media Buttons', icon: Settings, path: '/settings', method: 'GET' },
+          { name: 'Add Social Media Button', icon: Settings, path: '/settings', method: 'POST' },
+          { name: 'Update Social Media Button', icon: Settings, path: '/settings', method: 'PUT' },
+          { name: 'Delete Social Media Button', icon: Settings, path: '/settings', method: 'DELETE' },
+          { name: 'Reorder Social Media Buttons', icon: Settings, path: '/settings', method: 'POST' },
+        ]
+      },
+      {
+        title: 'DRM Protection',
+        items: [
           { name: 'Get DRM Status', icon: Settings, path: '/settings', method: 'GET' },
+          { name: 'Enable/Disable DRM', icon: Settings, path: '/settings', method: 'PATCH' },
+        ]
+      },
+      {
+        title: 'Data Exports',
+        items: [
+          { name: 'List Data Exports', icon: Settings, path: '/settings', method: 'GET' },
+          { name: 'Create Data Export', icon: Settings, path: '/settings', method: 'POST' },
+          { name: 'Start Data Export', icon: Settings, path: '/settings', method: 'POST' },
+          { name: 'Get Data Export Status', icon: Settings, path: '/settings', method: 'GET' },
+          { name: 'Cancel Data Export', icon: Settings, path: '/settings', method: 'DELETE' },
         ]
       }
     ]
@@ -213,7 +272,8 @@ export default function LeftNavigation() {
     if (pathname.startsWith('/fans')) return 'fans';
     if (pathname.startsWith('/analytics')) return 'analytics';
     if (pathname.startsWith('/earnings')) return 'earnings';
-    if (pathname.startsWith('/settings') || pathname.startsWith('/automations')) return 'messages';
+    if (pathname.startsWith('/settings')) return 'settings';
+    if (pathname.startsWith('/automations')) return 'messages';
     return 'messages';
   };
 
