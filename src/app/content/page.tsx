@@ -5,11 +5,11 @@ import { useGlobalStore } from '@/lib/store/global-store';
 import { Post, MediaItem } from '@/types';
 import { 
   Calendar, Clock, Plus, Folder, Trash2, Globe, Lock, 
-  AlertCircle, RefreshCw, X, CheckCircle2, ChevronLeft, ChevronRight
+  AlertCircle, RefreshCw, X, CheckCircle2, ChevronLeft, ChevronRight, Play, Send
 } from 'lucide-react';
 
 export default function ContentQueuePage() {
-  const { activeCreator } = useGlobalStore();
+  const { activeCreator, activeSubMenu } = useGlobalStore();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'scheduled' | 'published' | 'draft'>('all');
@@ -105,8 +105,50 @@ export default function ContentQueuePage() {
     }
   }, [activeCreator]);
 
+  // Queue Items List state
+  const [queueItems, setQueueItems] = useState<any[]>([]);
+  const [loadingQueue, setLoadingQueue] = useState(false);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
+
+  const loadQueueItems = useCallback(async () => {
+    if (!activeCreator) return;
+    setLoadingQueue(true);
+    try {
+      const res = await fetch(`/api/posts/queue?creatorId=${activeCreator.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setQueueItems(data || []);
+      }
+    } catch (err) {
+      console.error('Error loading queue items:', err);
+    } finally {
+      setLoadingQueue(false);
+    }
+  }, [activeCreator]);
+
+  const handlePublishQueueItem = async (queueId: string) => {
+    if (!activeCreator) return;
+    setPublishingId(queueId);
+    try {
+      const res = await fetch('/api/posts/queue', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ creatorId: activeCreator.id, queueId })
+      });
+      if (res.ok) {
+        loadQueueItems();
+        loadQueueCount();
+        loadPosts();
+      }
+    } catch (err) {
+      console.error('Error publishing queue item:', err);
+    } finally {
+      setPublishingId(null);
+    }
+  };
+
   // Post Labels & Comments States
-  const [featureMode, setFeatureMode] = useState<'posts' | 'labels' | 'comments'>('posts');
+  const [featureMode, setFeatureMode] = useState<'posts' | 'labels' | 'comments' | 'queue'>('posts');
   const [labels, setLabels] = useState<string[]>([]);
   const [newLabelName, setNewLabelName] = useState('');
   const [loadingLabels, setLoadingLabels] = useState(false);
@@ -164,6 +206,27 @@ export default function ContentQueuePage() {
       active = false;
     };
   }, [loadPosts, loadMedia, loadLabels, loadComments, loadQueueCount]);
+
+  // Switch to queue mode when sidebar Queue items are clicked
+  useEffect(() => {
+    if (activeSubMenu && [
+      'Count Queue Items', 'List Queue Items', 'Publish Queue Item'
+    ].includes(activeSubMenu)) {
+      setFeatureMode('queue');
+      loadQueueItems();
+      loadQueueCount();
+    }
+    // Switch to posts/labels/comments mode when sidebar items are clicked
+    if (activeSubMenu === 'Posts') {
+      setFeatureMode('posts');
+    } else if (activeSubMenu === 'Post Labels') {
+      setFeatureMode('labels');
+      loadLabels();
+    } else if (activeSubMenu === 'Post Comments') {
+      setFeatureMode('comments');
+      loadComments();
+    }
+  }, [activeSubMenu, loadQueueItems, loadQueueCount, loadLabels, loadComments]);
 
   // Handle post scheduling submit
   const handleComposeSubmit = async (e: React.FormEvent) => {
@@ -268,15 +331,6 @@ export default function ContentQueuePage() {
     }
   };
 
-  if (!activeCreator) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-zinc-950 text-zinc-400 p-8">
-        <RefreshCw className="h-8 w-8 animate-spin text-blue-500 mb-4" />
-        <p className="text-sm font-semibold">Loading Creator Context...</p>
-      </div>
-    );
-  }
-
   // Group scheduled posts by local date string (YYYY-MM-DD)
   const postsByDate = React.useMemo(() => {
     const groups: Record<string, Post[]> = {};
@@ -291,6 +345,15 @@ export default function ContentQueuePage() {
     });
     return groups;
   }, [posts]);
+
+  if (!activeCreator) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center bg-zinc-950 text-zinc-400 p-8">
+        <RefreshCw className="h-8 w-8 animate-spin text-blue-500 mb-4" />
+        <p className="text-sm font-semibold">Loading Creator Context...</p>
+      </div>
+    );
+  }
 
   // Filter posts list
   const filteredPosts = posts.filter((p) => {
@@ -336,6 +399,22 @@ export default function ContentQueuePage() {
           }`}
         >
           Post Comments (OnlyFans API)
+        </button>
+        <button
+          onClick={() => { setFeatureMode('queue'); loadQueueItems(); loadQueueCount(); }}
+          className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 ${
+            featureMode === 'queue'
+              ? 'bg-[#7C5CFC]/15 text-[#7C5CFC] border border-[#7C5CFC]/30 shadow-md shadow-[#7C5CFC]/10'
+              : 'text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          <Clock className="h-3.5 w-3.5" />
+          <span>Queue Manager</span>
+          {queueCount > 0 && (
+            <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.2 rounded-md font-black">
+              {queueCount}
+            </span>
+          )}
         </button>
       </div>
 
@@ -1182,6 +1261,188 @@ export default function ContentQueuePage() {
               <div className="text-center py-12 text-zinc-500 text-xs">No comments found.</div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* QUEUE MANAGER VIEW */}
+      {featureMode === 'queue' && (
+        <div className="space-y-6">
+          {/* 1. Count Queue Items View */}
+          {activeSubMenu === 'Count Queue Items' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800/60 pb-6">
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-zinc-100 flex items-center gap-2.5">
+                    <Clock className="h-7 w-7 text-amber-500" />
+                    Queue Count Statistics
+                  </h1>
+                  <p className="text-zinc-500 text-sm mt-1">
+                    Live audit of queued contents, scheduling distribution, and capacity records for <strong className="text-zinc-300">@{activeCreator?.username}</strong>
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { loadQueueItems(); loadQueueCount(); }}
+                  className="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border border-zinc-800"
+                >
+                  <RefreshCw className={`h-4 w-4 ${loadingQueue ? 'animate-spin' : ''}`} />
+                  Refresh Counts
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-5 backdrop-blur-sm space-y-2">
+                  <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider block">Total Queued Content [GET]</span>
+                  <span className="text-3xl font-black text-zinc-100 block">{queueCount}</span>
+                  <span className="text-[9px] text-zinc-600 block">Pending worker distribution</span>
+                </div>
+                <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-5 backdrop-blur-sm space-y-2">
+                  <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider block">Free Queue Posts</span>
+                  <span className="text-3xl font-black text-zinc-100 block">
+                    {queueItems.filter(item => !item.price || item.price === 0).length}
+                  </span>
+                  <span className="text-[9px] text-green-400 font-bold uppercase">Standard Subscriptions</span>
+                </div>
+                <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-5 backdrop-blur-sm space-y-2">
+                  <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider block">PPV Locked Queue</span>
+                  <span className="text-3xl font-black text-[#7C5CFC] block">
+                    {queueItems.filter(item => item.price > 0).length}
+                  </span>
+                  <span className="text-[9px] text-purple-400 font-bold uppercase">Direct Message Upsells</span>
+                </div>
+              </div>
+
+              {/* Distribution progress bar */}
+              <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-4">
+                <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Queue Allocation</h3>
+                <div className="space-y-3 text-xs text-zinc-400 font-medium">
+                  <div className="space-y-1">
+                    <div className="flex justify-between">
+                      <span>Outbox Queue Saturation</span>
+                      <span>{Math.min(100, Math.round((queueCount / 20) * 100))}%</span>
+                    </div>
+                    <div className="h-2 w-full bg-zinc-950 rounded-full overflow-hidden">
+                      <div className="h-full bg-amber-500 rounded-full" style={{ width: `${Math.min(100, (queueCount / 20) * 100)}%` }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 2. List Queue Items View */}
+          {(activeSubMenu === 'List Queue Items' || (!activeSubMenu || activeSubMenu === '')) && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800/60 pb-6">
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-zinc-100 flex items-center gap-2.5">
+                    <Clock className="h-7 w-7 text-blue-500" />
+                    Scheduled Queue List
+                  </h1>
+                  <p className="text-zinc-500 text-sm mt-1">
+                    Verify date allocations and content drafts scheduled for <strong className="text-zinc-300">@{activeCreator?.username}</strong>
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { loadQueueItems(); }}
+                  className="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border border-zinc-800"
+                >
+                  <RefreshCw className={`h-4 w-4 ${loadingQueue ? 'animate-spin' : ''}`} />
+                  Refresh List
+                </button>
+              </div>
+
+              <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-4">
+                <div className="flex justify-between items-center border-b border-zinc-800/60 pb-3">
+                  <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Queue Directory [GET]</h3>
+                  <span className="text-[10px] font-mono text-zinc-650">GET /api/posts/queue</span>
+                </div>
+
+                {loadingQueue ? (
+                  <div className="py-12 flex justify-center"><RefreshCw className="h-6 w-6 animate-spin text-blue-500" /></div>
+                ) : queueItems.length > 0 ? (
+                  <div className="space-y-3">
+                    {queueItems.map((item) => (
+                      <div key={item.id} className="bg-zinc-950 border border-zinc-850 rounded-xl p-4 flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] uppercase font-black px-1.5 py-0.5 rounded-lg border text-amber-400 bg-amber-500/10 border-amber-500/20">Scheduled</span>
+                          <span className="text-[9px] text-zinc-550 font-mono">ID: {item.id.slice(0, 8)}...</span>
+                        </div>
+                        <p className="text-xs text-zinc-300 font-medium">{item.text || '(No caption)'}</p>
+                        <div className="flex flex-wrap gap-3 text-[10px] text-zinc-500 font-semibold border-t border-zinc-900 pt-2.5 mt-1">
+                          {item.scheduledFor && (
+                            <span className="flex items-center gap-1">
+                              📅 {new Date(item.scheduledFor).toLocaleString()}
+                            </span>
+                          )}
+                          {item.price > 0 && (
+                            <span className="text-emerald-400 font-bold">${Number(item.price).toFixed(2)}</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-zinc-550 italic text-xs">No items currently queued.</div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 3. Publish Queue Item View */}
+          {activeSubMenu === 'Publish Queue Item' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800/60 pb-6">
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-zinc-100 flex items-center gap-2.5">
+                    <Clock className="h-7 w-7 text-emerald-500" />
+                    Queue Publishing Center
+                  </h1>
+                  <p className="text-zinc-500 text-sm mt-1">
+                    Execute immediate posting overrides on scheduled queue elements for <strong className="text-zinc-300">@{activeCreator?.username}</strong>
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-4">
+                <div className="flex justify-between items-center border-b border-zinc-800/60 pb-3">
+                  <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Publish Controls [PUT]</h3>
+                  <span className="text-[10px] font-mono text-zinc-650">PUT /api/posts/queue</span>
+                </div>
+
+                {loadingQueue ? (
+                  <div className="py-12 flex justify-center"><RefreshCw className="h-6 w-6 animate-spin text-emerald-500" /></div>
+                ) : queueItems.length > 0 ? (
+                  <div className="space-y-3">
+                    {queueItems.map((item) => (
+                      <div key={item.id} className="bg-zinc-950 border border-zinc-850 rounded-xl p-4 flex items-center justify-between gap-4">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs text-zinc-300 font-extrabold truncate">{item.text || '(No caption)'}</p>
+                          <span className="text-[9px] text-zinc-550 block font-mono mt-1">Scheduled for: {new Date(item.scheduledFor).toLocaleString()}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handlePublishQueueItem(item.id)}
+                          disabled={publishingId === item.id}
+                          className="flex items-center gap-1.5 bg-emerald-600/10 hover:bg-emerald-600/25 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold px-4 py-2.5 rounded-xl cursor-pointer transition-all disabled:opacity-50 shrink-0"
+                        >
+                          {publishingId === item.id ? (
+                            <RefreshCw className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Play className="h-3.5 w-3.5" />
+                          )}
+                          Publish Now [PUT]
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-zinc-550 italic text-xs">No scheduled items available for dispatch override.</div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
