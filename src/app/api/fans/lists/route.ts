@@ -67,6 +67,7 @@ async function initializeMockUserLists(creatorId: string) {
 }
 
 // GET: Fetch user lists or list members
+/** GET handler for active fans lists route */
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
