@@ -3,6 +3,7 @@ import axios from 'axios';
 const BASE_URL = 'http://localhost:3000';
 const CREATOR_ID = 'test_creator_123'; // Matches standard database seeding creator ID or fallback
 
+/** Settings and notifications test suite entry */
 async function runTests() {
   console.log('🚀 Starting OnlyFans Settings and Notifications API Integration Tests...');
 
