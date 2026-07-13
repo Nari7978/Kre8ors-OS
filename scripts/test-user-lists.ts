@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { GET, POST, PUT, DELETE } from '../src/app/api/fans/lists/route';
 import { db } from '../src/lib/db';
 
+/** User lists test suite entry */
 async function runTests() {
   console.log('--- RUNNING USER LIST COLLECTIONS API TESTS ---');
   try {
