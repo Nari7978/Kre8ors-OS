@@ -7,6 +7,7 @@ import {
   Sliders, Plus, RefreshCw, AlertCircle, CheckCircle2, PiggyBank, Receipt, Search, X, Users
 } from 'lucide-react';
 
+/** EarningsPage billing ledger layout helper */
 export default function EarningsPage() {
   const { activeCreator, activeSubMenu } = useGlobalStore();
   
