@@ -8,6 +8,7 @@ import ChatList from '@/components/messages/ChatList';
 import Conversation from '@/components/messages/Conversation';
 import MessageInput from '@/components/messages/MessageInput';
 import CustomerProfile from '@/components/messages/CustomerProfile';
+import { Bookmark, Search, MessageSquare, Clock, Trash2, Plus, AlertCircle, Play, Send, CheckCircle2 } from 'lucide-react';
 
 interface MediaItem {
   id: string;
@@ -70,6 +71,81 @@ export default function MessagesPage() {
 
   const [vaultItemsList, setVaultItemsList] = useState<MediaItem[]>([]);
   const [loadingVault, setLoadingVault] = useState(false);
+
+  // Saved for Later state
+  const [savedSearch, setSavedSearch] = useState('');
+  const [savedMessages, setSavedMessages] = useState([
+    {
+      id: 'saved_1',
+      username: 'sophiasweet_new',
+      displayName: 'Sophia Sweet',
+      text: 'Can you send me the special photo compilation tomorrow morning?',
+      dateSaved: '2026-07-12T10:15:30.000Z',
+      notes: 'Send compilations package'
+    },
+    {
+      id: 'saved_2',
+      username: 'charlie_rose',
+      displayName: 'Charlie Rose',
+      text: 'Loved the welcome video! When is the next PPV release?',
+      dateSaved: '2026-07-13T08:22:11.000Z',
+      notes: 'Upsell next PPV package'
+    },
+    {
+      id: 'saved_3',
+      username: 'emma_fan',
+      displayName: 'Emma Rose Fan',
+      text: 'Please check your DM, I sent a tip of $50.',
+      dateSaved: '2026-07-13T09:45:00.000Z',
+      notes: 'High-tier spender, prioritize response'
+    }
+  ]);
+
+  // Global message search state
+  const [globalMessageSearch, setGlobalMessageSearch] = useState('');
+  const [globalFilter, setGlobalFilter] = useState<'all' | 'sent' | 'received' | 'ppv'>('all');
+  const [globalMessages, setGlobalMessages] = useState([
+    {
+      id: 'msg_1',
+      sender: 'Sophia Sweet',
+      username: 'sophiasweet_new',
+      text: 'Thanks for subscribing! Check out my locked items below.',
+      type: 'sent',
+      timestamp: '2026-07-13T09:50:00.000Z',
+      status: 'Read',
+      price: 0
+    },
+    {
+      id: 'msg_2',
+      sender: 'Sophia Sweet',
+      username: 'sophiasweet_new',
+      text: 'Loved the welcome video! When is the next PPV release?',
+      type: 'received',
+      timestamp: '2026-07-13T08:22:11.000Z',
+      status: 'Read',
+      price: 0
+    },
+    {
+      id: 'msg_3',
+      sender: 'Emma Rose Fan',
+      username: 'emma_fan',
+      text: '[PPV Photo Album] Premium set for the week',
+      type: 'sent',
+      timestamp: '2026-07-13T07:15:00.000Z',
+      status: 'Locked ($20.00)',
+      price: 20
+    },
+    {
+      id: 'msg_4',
+      sender: 'Charlie Rose',
+      username: 'charlie_rose',
+      text: 'Can you customize a video for my birthday next Tuesday?',
+      type: 'received',
+      timestamp: '2026-07-13T06:10:00.000Z',
+      status: 'Unread',
+      price: 0
+    }
+  ]);
 
   const toggleAttachMedia = (url: string) => {
     if (attachedMedia.includes(url)) {
@@ -601,66 +677,276 @@ export default function MessagesPage() {
         </div>
       </div>
 
-      {/* Column 2: Chat Conversation & Message Input */}
-      <div className="flex-1 flex flex-col h-full bg-[#0F1117] min-w-0 relative">
-        <Conversation
-          selectedFan={selectedFan}
-          activeCreator={activeCreator}
-          messages={messages}
-          loadingMessages={loadingMessages}
-          loadingMore={loadingMore}
-          hasMore={hasMore}
-          messagesContainerRef={messagesContainerRef}
-          messagesEndRef={messagesEndRef}
-          onUnlockMessage={handleUnlockMessage}
-          unlockingMessageId={unlockingMessageId}
-          onActionsSelect={handleActionsSelect}
-        />
-        {selectedFan && (
-          <MessageInput
-            messageText={messageText}
-            setMessageText={setMessageText}
-            attachedMedia={attachedMedia}
-            setAttachedMedia={setAttachedMedia}
-            vaultOpen={vaultOpen}
-            setVaultOpen={setVaultOpen}
-            vaultItemsList={vaultItemsList}
-            loadingVault={loadingVault}
-            lockPrice={lockPrice}
-            setLockPrice={setLockPrice}
-            showPpvPresets={showPpvPresets}
-            setShowPpvPresets={setShowPpvPresets}
-            ppvTemplates={ppvTemplates}
-            applyPpvTemplate={applyPpvTemplate}
-            showAIPanel={showAIPanel}
-            setShowAIPanel={setShowAIPanel}
-            aiSuggestions={aiSuggestions}
-            loadingSuggestions={loadingSuggestions}
-            selectedFan={selectedFan}
-            selectedCreatorId={selectedCreatorId}
-            sendingMessage={sendingMessage}
-            handleSendMessage={handleSendMessage}
-            toggleAttachMedia={toggleAttachMedia}
-          />
-        )}
-      </div>
+      {/* Column 2: Conditional Views based on activeSubMenu */}
+      {activeSubMenu === 'Saved For Later' ? (
+        <div className="flex-1 flex flex-col h-full bg-[#0F1117] min-w-0 p-8 overflow-y-auto space-y-6">
+          <div className="border-b border-[#252A35] pb-6">
+            <h1 className="text-2xl font-extrabold tracking-tight text-zinc-100 flex items-center gap-2.5">
+              <Bookmark className="h-6 w-6 text-[#7C5CFC]" />
+              Saved For Later
+            </h1>
+            <p className="text-zinc-500 text-sm mt-1">
+              Audit flagged messages, add creator follow-up notes, or jump straight back to live chats.
+            </p>
+            <span className="text-[10px] font-mono text-zinc-650 mt-1 block">GET /api/messages/saved</span>
+          </div>
 
-      {/* Column 3: Customer CRM Profile Sidebar */}
-      {selectedFan && (
-        <div className="w-80 h-full flex-shrink-0">
-          <CustomerProfile
-            selectedFan={selectedFan}
-            newTag={newTag}
-            setNewTag={setNewTag}
-            handleAddTag={handleAddTag}
-            handleRemoveTag={handleRemoveTag}
-            notesText={notesText}
-            setNotesText={setNotesText}
-            handleSaveNotes={handleSaveNotes}
-            saving={saving}
-            messages={messages}
-          />
+          <div className="flex gap-4">
+            <div className="relative flex-1">
+              <span className="absolute left-3.5 top-3 text-zinc-500 text-xs">🔍</span>
+              <input
+                type="text"
+                placeholder="Search saved bookmarks..."
+                value={savedSearch}
+                onChange={(e) => setSavedSearch(e.target.value)}
+                className="w-full bg-[#13161D] border border-[#252A35] rounded-xl py-2 pl-10 pr-4 text-xs text-zinc-350 focus:outline-none focus:border-[#7C5CFC] font-semibold"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {savedMessages
+              .filter(m => m.text.toLowerCase().includes(savedSearch.toLowerCase()) || m.displayName.toLowerCase().includes(savedSearch.toLowerCase()))
+              .map((msg) => (
+                <div key={msg.id} className="bg-[#13161D] border border-[#252A35] rounded-2xl p-5 space-y-4 flex flex-col justify-between hover:border-zinc-800/80 transition-colors">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between border-b border-[#252A35]/60 pb-2">
+                      <div>
+                        <span className="text-xs font-black text-zinc-200 block">{msg.displayName}</span>
+                        <span className="text-[10px] text-zinc-500 font-bold block">@{msg.username}</span>
+                      </div>
+                      <span className="text-[8px] bg-[#7C5CFC]/15 text-[#7C5CFC] border border-[#7C5CFC]/20 px-2 py-0.5 rounded-full font-black uppercase">
+                        Bookmarked
+                      </span>
+                    </div>
+
+                    <div className="bg-[#0F1117] border border-[#252A35]/65 p-3 rounded-xl">
+                      <p className="text-xs text-zinc-300 font-medium leading-relaxed">"{msg.text}"</p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Follow-up Notes</label>
+                      <textarea
+                        value={msg.notes}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setSavedMessages(prev => prev.map(item => item.id === msg.id ? { ...item, notes: val } : item));
+                        }}
+                        placeholder="Add checklist details..."
+                        className="w-full bg-[#0F1117] border border-[#252A35] rounded-xl p-2.5 text-xs text-zinc-350 focus:outline-none focus:border-[#7C5CFC] h-16 resize-none font-sans"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 pt-2 border-t border-[#252A35]/60 mt-2">
+                    <button
+                      onClick={() => {
+                        // Switch active creator fan, then switch submenu to Chats
+                        const foundFan = fans.find(f => f.username === msg.username);
+                        if (foundFan) {
+                          setSelectedFan(foundFan);
+                        }
+                        const { setActiveSubMenu } = useGlobalStore.getState();
+                        setActiveSubMenu('Chats');
+                      }}
+                      className="flex-1 bg-[#7C5CFC]/10 hover:bg-[#7C5CFC]/20 border border-[#7C5CFC]/30 text-[#7C5CFC] text-[10px] font-bold py-2 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <Play className="h-3 w-3" />
+                      Go to Conversation
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSavedMessages(prev => prev.filter(item => item.id !== msg.id));
+                      }}
+                      className="bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 text-[10px] font-bold px-3 py-2 rounded-xl transition-all cursor-pointer"
+                      title="Remove Bookmark"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+          </div>
         </div>
+      ) : activeSubMenu === 'Chat Messages' ? (
+        <div className="flex-1 flex flex-col h-full bg-[#0F1117] min-w-0 p-8 overflow-y-auto space-y-6">
+          <div className="border-b border-[#252A35] pb-6">
+            <h1 className="text-2xl font-extrabold tracking-tight text-zinc-100 flex items-center gap-2.5">
+              <MessageSquare className="h-6 w-6 text-[#7C5CFC]" />
+              Chat Messages Inspector
+            </h1>
+            <p className="text-zinc-500 text-sm mt-1">
+              Global lookup of recent messages dispatched and received across all subscribers.
+            </p>
+            <span className="text-[10px] font-mono text-zinc-650 mt-1 block">GET /api/messages</span>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+            <div className="relative flex-1 w-full">
+              <span className="absolute left-3.5 top-3 text-zinc-500 text-xs">🔍</span>
+              <input
+                type="text"
+                placeholder="Search across all message texts..."
+                value={globalMessageSearch}
+                onChange={(e) => setGlobalMessageSearch(e.target.value)}
+                className="w-full bg-[#13161D] border border-[#252A35] rounded-xl py-2 pl-10 pr-4 text-xs text-zinc-350 focus:outline-none focus:border-[#7C5CFC] font-semibold"
+              />
+            </div>
+            
+            <div className="flex gap-2 shrink-0">
+              {[
+                { id: 'all', label: 'All Messages' },
+                { id: 'sent', label: 'Sent' },
+                { id: 'received', label: 'Received' },
+                { id: 'ppv', label: 'PPV Outbox' }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setGlobalFilter(tab.id as any)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    globalFilter === tab.id
+                      ? 'bg-[#7C5CFC]/15 text-[#7C5CFC] border border-[#7C5CFC]/30 shadow-md shadow-[#7C5CFC]/10'
+                      : 'text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-[#13161D] border border-[#252A35] rounded-2xl overflow-hidden shadow-lg">
+            <div className="grid grid-cols-12 gap-4 bg-[#1B1F2A]/60 px-6 py-3 border-b border-[#252A35] text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
+              <div className="col-span-3">Contact</div>
+              <div className="col-span-5">Message Text</div>
+              <div className="col-span-2">Direction</div>
+              <div className="col-span-2 text-right">Actions</div>
+            </div>
+
+            <div className="divide-y divide-[#252A35]/50">
+              {globalMessages
+                .filter(m => {
+                  if (globalFilter === 'sent') return m.type === 'sent';
+                  if (globalFilter === 'received') return m.type === 'received';
+                  if (globalFilter === 'ppv') return m.price > 0;
+                  return true;
+                })
+                .filter(m => m.text.toLowerCase().includes(globalMessageSearch.toLowerCase()) || m.sender.toLowerCase().includes(globalMessageSearch.toLowerCase()))
+                .map((msg) => (
+                  <div key={msg.id} className="grid grid-cols-12 gap-4 px-6 py-4 items-center text-xs hover:bg-[#181C25]/50 transition-colors">
+                    <div className="col-span-3 min-w-0">
+                      <span className="font-extrabold text-zinc-200 block truncate">{msg.sender}</span>
+                      <span className="text-[10px] text-zinc-550 block truncate">@{msg.username}</span>
+                    </div>
+
+                    <div className="col-span-5 text-zinc-300 font-medium line-clamp-2 pr-4">
+                      {msg.text}
+                    </div>
+
+                    <div className="col-span-2 flex items-center gap-1.5">
+                      <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase border ${
+                        msg.type === 'sent'
+                          ? 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20'
+                          : 'text-amber-400 bg-amber-500/10 border-amber-500/20'
+                      }`}>
+                        {msg.type}
+                      </span>
+                      {msg.price > 0 && (
+                        <span className="text-[9px] font-bold text-emerald-400">${Number(msg.price).toFixed(2)}</span>
+                      )}
+                    </div>
+
+                    <div className="col-span-2 text-right">
+                      <button
+                        onClick={() => {
+                          const foundFan = fans.find(f => f.username === msg.username);
+                          if (foundFan) {
+                            setSelectedFan(foundFan);
+                          }
+                          const { setActiveSubMenu } = useGlobalStore.getState();
+                          setActiveSubMenu('Chats');
+                        }}
+                        className="bg-[#7C5CFC]/10 hover:bg-[#7C5CFC]/20 border border-[#7C5CFC]/30 text-[#7C5CFC] font-extrabold px-3 py-1.5 rounded-lg text-[10px] cursor-pointer transition-colors"
+                      >
+                        Inspect Chat
+                      </button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Column 2: Chat Conversation & Message Input */}
+          <div className="flex-1 flex flex-col h-full bg-[#0F1117] min-w-0 relative">
+            {/* Visual indicator of the view */}
+            <div className="absolute top-4 left-4 z-10 pointer-events-none select-none">
+              <span className="text-[8px] bg-zinc-900/60 border border-zinc-800 text-zinc-500 font-black uppercase px-2 py-0.5 rounded-md">
+                Chats View [GET]
+              </span>
+            </div>
+
+            <Conversation
+              selectedFan={selectedFan}
+              activeCreator={activeCreator}
+              messages={messages}
+              loadingMessages={loadingMessages}
+              loadingMore={loadingMore}
+              hasMore={hasMore}
+              messagesContainerRef={messagesContainerRef}
+              messagesEndRef={messagesEndRef}
+              onUnlockMessage={handleUnlockMessage}
+              unlockingMessageId={unlockingMessageId}
+              onActionsSelect={handleActionsSelect}
+            />
+            {selectedFan && (
+              <MessageInput
+                messageText={messageText}
+                setMessageText={setMessageText}
+                attachedMedia={attachedMedia}
+                setAttachedMedia={setAttachedMedia}
+                vaultOpen={vaultOpen}
+                setVaultOpen={setVaultOpen}
+                vaultItemsList={vaultItemsList}
+                loadingVault={loadingVault}
+                lockPrice={lockPrice}
+                setLockPrice={setLockPrice}
+                showPpvPresets={showPpvPresets}
+                setShowPpvPresets={setShowPpvPresets}
+                ppvTemplates={ppvTemplates}
+                applyPpvTemplate={applyPpvTemplate}
+                showAIPanel={showAIPanel}
+                setShowAIPanel={setShowAIPanel}
+                aiSuggestions={aiSuggestions}
+                loadingSuggestions={loadingSuggestions}
+                selectedFan={selectedFan}
+                selectedCreatorId={selectedCreatorId}
+                sendingMessage={sendingMessage}
+                handleSendMessage={handleSendMessage}
+                toggleAttachMedia={toggleAttachMedia}
+              />
+            )}
+          </div>
+
+          {/* Column 3: Customer CRM Profile Sidebar */}
+          {selectedFan && (
+            <div className="w-80 h-full flex-shrink-0">
+              <CustomerProfile
+                selectedFan={selectedFan}
+                newTag={newTag}
+                setNewTag={setNewTag}
+                handleAddTag={handleAddTag}
+                handleRemoveTag={handleRemoveTag}
+                notesText={notesText}
+                setNotesText={setNotesText}
+                handleSaveNotes={handleSaveNotes}
+                saving={saving}
+                messages={messages}
+              />
+            </div>
+          )}
+        </>
       )}
     </div>
   );
