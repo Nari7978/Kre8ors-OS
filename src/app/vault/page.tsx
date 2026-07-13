@@ -5,11 +5,11 @@ import { useGlobalStore } from '@/lib/store/global-store';
 import { MediaItem } from '@/types';
 import { 
   Folder, Plus, Search, Image, Video, 
-  Upload, AlertCircle, RefreshCw, X, Play
+  Upload, AlertCircle, RefreshCw, X, Play, Download, Server, HardDrive, List
 } from 'lucide-react';
 
 export default function MediaVaultPage() {
-  const { activeCreator } = useGlobalStore();
+  const { activeCreator, activeSubMenu } = useGlobalStore();
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(false);
   
@@ -140,45 +140,22 @@ export default function MediaVaultPage() {
     }
   };
 
-  if (!activeCreator) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-zinc-950 text-zinc-400 p-8">
-        <RefreshCw className="h-8 w-8 animate-spin text-blue-500 mb-4" />
-        <p className="text-sm font-semibold">Loading Creator Context...</p>
-      </div>
-    );
-  }
-
-  // Get distinct folders from creator's media items
-  const folderSet = new Set<string>();
-  mediaItems.forEach(item => {
-    if (item.folderName) {
-      folderSet.add(item.folderName);
-    }
-  });
-  const folders = ['All', ...Array.from(folderSet)];
-
-  // Filter items based on sidebar select, search query, and type select
-  const filteredItems = mediaItems.filter(item => {
-    const matchesFolder = selectedFolder === 'All' || item.folderName === selectedFolder;
-    const matchesType = selectedType === 'All' || item.fileType === selectedType.toLowerCase();
-    const matchesSearch = searchQuery.trim() === '' || 
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      item.folderName.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesFolder && matchesType && matchesSearch;
-  });
-
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const dm = 2;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-  };
-
   // CDN Media Vault sub-features Tab states
-  const [vaultTab, setVaultTab] = useState<'browse' | 'upload' | 'download' | 'status'>('browse');
+  const [vaultTab, setVaultTab] = useState<'browse' | 'lists' | 'upload' | 'download' | 'status'>('browse');
+
+  // Map activeSubMenu to vaultTab
+  useEffect(() => {
+    if (activeSubMenu === 'Media Vault') {
+      setVaultTab('browse');
+    } else if (activeSubMenu === 'Media Vault Lists') {
+      setVaultTab('lists');
+    } else if (activeSubMenu === 'Upload media to CDN') {
+      setVaultTab('upload');
+    } else if (activeSubMenu === 'Download Media from CDN') {
+      setVaultTab('download');
+    }
+  }, [activeSubMenu]);
+
   const [searchCdnMediaId, setSearchCdnMediaId] = useState('');
   const [downloadedMediaInfo, setDownloadedMediaInfo] = useState<any>(null);
   const [loadingDownload, setLoadingDownload] = useState(false);
@@ -228,6 +205,43 @@ export default function MediaVaultPage() {
       loadUploadStatuses();
     }
   }, [activeCreator, vaultTab]);
+
+  if (!activeCreator) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center bg-zinc-950 text-zinc-400 p-8">
+        <RefreshCw className="h-8 w-8 animate-spin text-blue-500 mb-4" />
+        <p className="text-sm font-semibold">Loading Creator Context...</p>
+      </div>
+    );
+  }
+
+  // Get distinct folders from creator's media items
+  const folderSet = new Set<string>();
+  mediaItems.forEach(item => {
+    if (item.folderName) {
+      folderSet.add(item.folderName);
+    }
+  });
+  const folders = ['All', ...Array.from(folderSet)];
+
+  // Filter items based on sidebar select, search query, and type select
+  const filteredItems = mediaItems.filter(item => {
+    const matchesFolder = selectedFolder === 'All' || item.folderName === selectedFolder;
+    const matchesType = selectedType === 'All' || item.fileType === selectedType.toLowerCase();
+    const matchesSearch = searchQuery.trim() === '' || 
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      item.folderName.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesFolder && matchesType && matchesSearch;
+  });
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = 2;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  };
 
   return (
     <div className="flex-1 flex flex-col md:flex-row bg-zinc-950 overflow-hidden text-white w-full h-full">
@@ -332,6 +346,16 @@ export default function MediaVaultPage() {
             Browse Vault
           </button>
           <button
+            onClick={() => setVaultTab('lists')}
+            className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${
+              vaultTab === 'lists'
+                ? 'bg-[#7C5CFC]/15 text-[#7C5CFC] border border-[#7C5CFC]/30 shadow-md shadow-[#7C5CFC]/10'
+                : 'text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            Vault Folder Lists
+          </button>
+          <button
             onClick={() => setVaultTab('upload')}
             className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${
               vaultTab === 'upload'
@@ -362,6 +386,59 @@ export default function MediaVaultPage() {
             Upload Status (GET)
           </button>
         </div>
+
+        {/* Media Vault Lists / Directory view */}
+        {vaultTab === 'lists' && (
+          <div className="flex-1 overflow-y-auto p-6 min-h-0 space-y-6 text-left animate-in fade-in duration-200">
+            <div className="border-b border-zinc-800/60 pb-6">
+              <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider flex items-center gap-2">
+                <List className="h-4 w-4 text-[#7C5CFC]" />
+                Media Vault Lists & Folders
+              </h2>
+              <p className="text-[10px] text-zinc-500 mt-1 font-medium">
+                Overview of custom folders, file allocations, and disk storage distribution.
+              </p>
+              <span className="text-[10px] font-mono text-zinc-650 mt-1 block">GET /api/media?action=folders</span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {folders.filter(f => f !== 'All').map((folderName) => {
+                const folderItems = mediaItems.filter(item => item.folderName === folderName);
+                const totalSize = folderItems.reduce((acc, curr) => acc + curr.fileSize, 0);
+                return (
+                  <div key={folderName} className="bg-zinc-950 border border-zinc-850 p-5 rounded-2xl flex flex-col justify-between h-36 hover:border-zinc-700/60 transition-all shadow-lg group">
+                    <div className="flex justify-between items-start">
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-xs font-black text-zinc-250 uppercase tracking-wide truncate flex items-center gap-1.5">
+                          <Folder className="h-4 w-4 text-blue-400" />
+                          {folderName}
+                        </h4>
+                        <p className="text-[9px] text-zinc-550 mt-1.5 font-bold uppercase tracking-wider">
+                          Folder Location
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-between items-center border-t border-zinc-900 pt-3 mt-2">
+                      <span className="text-[10px] font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
+                        {folderItems.length} file(s)
+                      </span>
+                      <button
+                        onClick={() => {
+                          setSelectedFolder(folderName);
+                          setVaultTab('browse');
+                        }}
+                        className="text-[10px] font-bold text-zinc-400 hover:text-white bg-zinc-900 border border-zinc-800 hover:border-zinc-750 px-2.5 py-1 rounded-lg flex items-center gap-1 transition-all"
+                      >
+                        Browse Folder
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {vaultTab === 'browse' && (
           /* Media Grid View */
