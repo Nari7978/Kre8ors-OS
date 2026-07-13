@@ -45,6 +45,7 @@ const getMockBlockedUsersPath = () => {
 };
 
 // GET: List blocked/restricted users
+/** GET handler for blocked users route */
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
