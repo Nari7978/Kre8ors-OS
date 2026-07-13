@@ -466,6 +466,7 @@ export class OnlyFansApiClient {
   }
 
   // GET /api/{account}/notifications/counts
+  /** Retrieves unread notification counts */
   async getNotificationCounts() {
     const response = await axios.get(`${BASE_URL}/${this.accountId}/notifications/counts`, {
       headers: getHeaders(this.token),
