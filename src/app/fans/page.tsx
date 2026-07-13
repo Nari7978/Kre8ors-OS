@@ -19,6 +19,7 @@ export const getTagStyles = (tag: string) => {
   return colors[hash % colors.length];
 };
 
+/** FansCRMPage interactions layout helper */
 export default function FansCRMPage() {
   const { activeCreator, activeSubMenu, setActiveSubMenu } = useGlobalStore();
   const [fans, setFans] = useState<Fan[]>([]);
