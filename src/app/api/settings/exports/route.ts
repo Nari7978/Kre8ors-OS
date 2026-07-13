@@ -35,6 +35,7 @@ const getMockDataExportsPath = () => {
 };
 
 // GET: List exports or check status of single export
+/** GET handler for profile data exports list */
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
