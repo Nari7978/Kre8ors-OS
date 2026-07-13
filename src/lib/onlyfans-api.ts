@@ -220,13 +220,76 @@ export class OnlyFansApiClient {
     return response.data;
   }
 
-  // GET /api/{account}/lists
+  // GET /api/{account}/user-lists
   async getUserListCollections() {
-    const response = await axios.get(`${BASE_URL}/${this.accountId}/lists`, {
+    const response = await axios.get(`${BASE_URL}/${this.accountId}/user-lists`, {
       headers: getHeaders(this.token),
     });
     return response.data;
   }
+
+  // POST /api/{account}/user-lists
+  async createUserList(name: string) {
+    const response = await axios.post(`${BASE_URL}/${this.accountId}/user-lists`, {
+      name,
+    }, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // PUT /api/{account}/user-lists/{userListId}
+  async updateUserList(userListId: string, name: string) {
+    const response = await axios.put(`${BASE_URL}/${this.accountId}/user-lists/${userListId}`, {
+      name,
+    }, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // DELETE /api/{account}/user-lists/{userListId}
+  async deleteUserList(userListId: string) {
+    const response = await axios.delete(`${BASE_URL}/${this.accountId}/user-lists/${userListId}`, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // GET /api/{account}/user-lists/{userListId}/users
+  async listUserListUsers(userListId: string) {
+    const response = await axios.get(`${BASE_URL}/${this.accountId}/user-lists/${userListId}/users`, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // POST /api/{account}/user-lists/{userListId}/users
+  async addUsersToUserList(userListId: string, userIds: string[]) {
+    const response = await axios.post(`${BASE_URL}/${this.accountId}/user-lists/${userListId}/users`, {
+      ids: userIds,
+    }, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // DELETE /api/{account}/user-lists/{userListId}/users/{userId}
+  async removeUserFromUserList(userListId: string, userId: string) {
+    const response = await axios.delete(`${BASE_URL}/${this.accountId}/user-lists/${userListId}/users/${userId}`, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // DELETE /api/{account}/user-lists/{userListId}/users
+  async clearUserList(userListId: string) {
+    const response = await axios.delete(`${BASE_URL}/${this.accountId}/user-lists/${userListId}/users`, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
 
   // POST /api/{account}/media/upload
   async uploadMediaToCDN(mediaData: any) {
@@ -268,19 +331,59 @@ export class OnlyFansApiClient {
     return response.data;
   }
 
-  // GET /api/{account}/settings/welcome
-  async getWelcomeMessage() {
-    const response = await axios.get(`${BASE_URL}/${this.accountId}/settings/welcome`, {
+  // GET /api/{account}/settings
+  async getSettings() {
+    const response = await axios.get(`${BASE_URL}/${this.accountId}/settings`, {
       headers: getHeaders(this.token),
     });
     return response.data;
   }
 
-  // POST /api/{account}/settings/welcome
+  // POST /api/{account}/settings/profile
+  async updateProfile(data: { displayName?: string; about?: string; website?: string; location?: string }) {
+    const response = await axios.post(`${BASE_URL}/${this.accountId}/settings/profile`, data, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // POST /api/{account}/settings/username-exists
+  async checkUsernameAvailability(username: string) {
+    const response = await axios.post(`${BASE_URL}/${this.accountId}/settings/username-exists`, { username }, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // PATCH /api/{account}/settings/subscription-price
+  async updateSubscriptionPrice(price: number) {
+    const response = await axios.patch(`${BASE_URL}/${this.accountId}/settings/subscription-price`, { price }, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // GET /api/{account}/settings/welcome-message
+  async getWelcomeMessage() {
+    const response = await axios.get(`${BASE_URL}/${this.accountId}/settings/welcome-message`, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // POST /api/{account}/settings/welcome-message
   async updateWelcomeMessage(text: string) {
-    const response = await axios.post(`${BASE_URL}/${this.accountId}/settings/welcome`, {
+    const response = await axios.post(`${BASE_URL}/${this.accountId}/settings/welcome-message`, {
       text,
     }, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // PATCH /api/{account}/settings/welcome-message
+  async enableDisableWelcomeMessage(enabled: boolean) {
+    const response = await axios.patch(`${BASE_URL}/${this.accountId}/settings/welcome-message`, { enabled }, {
       headers: getHeaders(this.token),
     });
     return response.data;
@@ -322,6 +425,92 @@ export class OnlyFansApiClient {
     return response.data;
   }
 
+  // GET /api/{account}/settings/social-media-buttons
+  async listSocialMediaButtons() {
+    const response = await axios.get(`${BASE_URL}/${this.accountId}/settings/social-media-buttons`, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // POST /api/{account}/settings/social-media-buttons
+  async addSocialMediaButton(label: string, url: string) {
+    const response = await axios.post(`${BASE_URL}/${this.accountId}/settings/social-media-buttons`, { label, url }, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // PUT /api/{account}/settings/social-media-buttons/{button_id}
+  async updateSocialMediaButton(buttonId: string, label: string, url: string) {
+    const response = await axios.put(`${BASE_URL}/${this.accountId}/settings/social-media-buttons/${buttonId}`, { label, url }, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // DELETE /api/{account}/settings/social-media-buttons/{button_id}
+  async deleteSocialMediaButton(buttonId: string) {
+    const response = await axios.delete(`${BASE_URL}/${this.accountId}/settings/social-media-buttons/${buttonId}`, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // POST /api/{account}/settings/social-media-buttons/reorder
+  async reorderSocialMediaButtons(buttonIds: string[]) {
+    const response = await axios.post(`${BASE_URL}/${this.accountId}/settings/social-media-buttons/reorder`, { buttonIds }, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // GET /api/{account}/notifications/counts
+  async getNotificationCounts() {
+    const response = await axios.get(`${BASE_URL}/${this.accountId}/notifications/counts`, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // GET /api/{account}/notifications/tabs-order
+  async getNotificationTabsOrder() {
+    const response = await axios.get(`${BASE_URL}/${this.accountId}/notifications/tabs-order`, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // GET /api/{account}/notifications
+  async listNotifications(limit?: number, cursor?: string, type?: string) {
+    const queryParams = new URLSearchParams();
+    if (limit) queryParams.append('limit', limit.toString());
+    if (cursor) queryParams.append('cursor', cursor);
+    if (type) queryParams.append('type', type);
+    
+    const url = `${BASE_URL}/${this.accountId}/notifications${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    const response = await axios.get(url, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // POST /api/{account}/notifications/mark-all-as-read
+  async markAllNotificationsAsRead() {
+    const response = await axios.post(`${BASE_URL}/${this.accountId}/notifications/mark-all-as-read`, {}, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // GET /api/{account}/notifications/search-users
+  async searchUsersInNotifications(query: string) {
+    const response = await axios.get(`${BASE_URL}/${this.accountId}/notifications/search-users?query=${encodeURIComponent(query)}`, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
   // GET /api/{account}/queue
   async getQueue() {
     const response = await axios.get(`${BASE_URL}/${this.accountId}/queue`, {
@@ -341,6 +530,46 @@ export class OnlyFansApiClient {
   // PUT /api/{account}/queue/{queue_id}
   async publishQueueItem(queueId: string) {
     const response = await axios.put(`${BASE_URL}/${this.accountId}/queue/${queueId}`, {}, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // GET /api/{account}/settings/data-exports
+  async listDataExports() {
+    const response = await axios.get(`${BASE_URL}/${this.accountId}/settings/data-exports`, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // POST /api/{account}/settings/data-exports
+  async createDataExport() {
+    const response = await axios.post(`${BASE_URL}/${this.accountId}/settings/data-exports`, {}, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // POST /api/{account}/settings/data-exports/{exportId}/start
+  async startDataExport(exportId: string) {
+    const response = await axios.post(`${BASE_URL}/${this.accountId}/settings/data-exports/${exportId}/start`, {}, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // GET /api/{account}/settings/data-exports/{exportId}
+  async getDataExportStatus(exportId: string) {
+    const response = await axios.get(`${BASE_URL}/${this.accountId}/settings/data-exports/${exportId}`, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // DELETE /api/{account}/settings/data-exports/{exportId}
+  async cancelDataExport(exportId: string) {
+    const response = await axios.delete(`${BASE_URL}/${this.accountId}/settings/data-exports/${exportId}`, {
       headers: getHeaders(this.token),
     });
     return response.data;
