@@ -130,6 +130,7 @@ const getMockOnlyFansNotificationsPath = async (creatorId: string) => {
 };
 
 // GET: Fetch OnlyFans notifications counts, tabs, search results, or general listings
+/** GET handler for notifications stream */
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
