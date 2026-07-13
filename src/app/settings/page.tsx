@@ -3,11 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { useGlobalStore } from '@/lib/store/global-store';
 import { 
-  Settings, Key, Globe, Bell, RefreshCw, CheckCircle2, AlertTriangle, ShieldCheck
+  Settings, Key, Globe, Bell, RefreshCw, CheckCircle2, AlertTriangle, ShieldCheck,
+  Edit2, Trash2, Plus, ArrowUp, ArrowDown, UserCheck
 } from 'lucide-react';
 
 export default function SettingsPage() {
-  const { activeCreator, setActiveCreator } = useGlobalStore();
+  const { activeCreator, setActiveCreator, activeSubMenu, setActiveSubMenu } = useGlobalStore();
   
   // Settings Form State
   const [authId, setAuthId] = useState('');
@@ -132,9 +133,128 @@ export default function SettingsPage() {
   // OnlyFans Settings state and handlers
   const [settingsTab, setSettingsTab] = useState<'agency' | 'onlyfans'>('agency');
   const [welcomeMessage, setWelcomeMessage] = useState('');
+  const [welcomeMessageEnabled, setWelcomeMessageEnabled] = useState(true);
   const [blockedCountries, setBlockedCountries] = useState('');
   const [drmEnabled, setDrmEnabled] = useState(true);
   const [loadingOF, setLoadingOF] = useState(false);
+
+  const [profileDisplayName, setProfileDisplayName] = useState('');
+  const [profileAbout, setProfileAbout] = useState('');
+  const [profileWebsite, setProfileWebsite] = useState('');
+  const [profileLocation, setProfileLocation] = useState('');
+  const [subscriptionPrice, setSubscriptionPrice] = useState(9.99);
+  const [socialMediaButtons, setSocialMediaButtons] = useState<any[]>([]);
+
+  const [usernameToCheck, setUsernameToCheck] = useState('');
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
+
+  const [newSocialLabel, setNewSocialLabel] = useState('');
+  const [newSocialUrl, setNewSocialUrl] = useState('');
+  
+  const [editingSocialId, setEditingSocialId] = useState<string | null>(null);
+  const [editingSocialLabel, setEditingSocialLabel] = useState('');
+  const [editingSocialUrl, setEditingSocialUrl] = useState('');
+
+  // Data Exports state and handlers
+  const [dataExportsList, setDataExportsList] = useState<any[]>([]);
+  const [loadingExports, setLoadingExports] = useState(false);
+  const [newExportType, setNewExportType] = useState('messages');
+
+  const loadDataExports = async () => {
+    if (!activeCreator) return;
+    setLoadingExports(true);
+    try {
+      const res = await fetch(`/api/settings/exports?creatorId=${activeCreator.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setDataExportsList(data || []);
+      }
+    } catch (err) {
+      console.error('Error loading data exports:', err);
+    } finally {
+      setLoadingExports(false);
+    }
+  };
+
+  const handleCreateExport = async () => {
+    if (!activeCreator) return;
+    setSaving(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+    try {
+      const res = await fetch('/api/settings/exports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          creatorId: activeCreator.id,
+          action: 'create',
+          type: newExportType
+        })
+      });
+      if (res.ok) {
+        setSuccessMsg('Data export record created successfully!');
+        loadDataExports();
+      } else {
+        setErrorMsg('Failed to create data export.');
+      }
+    } catch (err) {
+      console.error('Error creating data export:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleStartExport = async (exportId: string) => {
+    if (!activeCreator) return;
+    setSaving(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+    try {
+      const res = await fetch('/api/settings/exports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          creatorId: activeCreator.id,
+          action: 'start',
+          exportId
+        })
+      });
+      if (res.ok) {
+        setSuccessMsg('Data export processing started!');
+        loadDataExports();
+        setTimeout(() => loadDataExports(), 5500);
+      } else {
+        setErrorMsg('Failed to start data export.');
+      }
+    } catch (err) {
+      console.error('Error starting data export:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancelExport = async (exportId: string) => {
+    if (!activeCreator) return;
+    if (!confirm('Are you sure you want to cancel or delete this data export?')) return;
+    setSaving(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+    try {
+      const res = await fetch(`/api/settings/exports?creatorId=${activeCreator.id}&exportId=${exportId}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        setSuccessMsg('Data export cancelled/deleted successfully!');
+        loadDataExports();
+      } else {
+        setErrorMsg('Failed to cancel data export.');
+      }
+    } catch (err) {
+      console.error('Error cancelling data export:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const loadOnlyFansSettings = async () => {
     if (!activeCreator) return;
@@ -144,8 +264,15 @@ export default function SettingsPage() {
       if (res.ok) {
         const data = await res.json();
         setWelcomeMessage(data.welcomeMessage || '');
+        setWelcomeMessageEnabled(data.welcomeMessageEnabled ?? true);
         setBlockedCountries(data.blockedCountries?.join(', ') || '');
         setDrmEnabled(data.drmEnabled ?? true);
+        setProfileDisplayName(data.profile?.displayName || '');
+        setProfileAbout(data.profile?.about || '');
+        setProfileWebsite(data.profile?.website || '');
+        setProfileLocation(data.profile?.location || '');
+        setSubscriptionPrice(data.subscriptionPrice ?? 9.99);
+        setSocialMediaButtons(data.socialMediaButtons || []);
       }
     } catch (err) {
       console.error('Error loading OnlyFans settings:', err);
@@ -160,31 +287,106 @@ export default function SettingsPage() {
     }
   }, [activeCreator, settingsTab]);
 
-  const handleSaveOnlyFansSetting = async (type: 'welcome' | 'blocked-countries' | 'drm', value: any) => {
+  useEffect(() => {
+    if (activeCreator && activeSubMenu && [
+      'List Data Exports', 'Create Data Export', 'Start Data Export', 'Get Data Export Status', 'Cancel Data Export'
+    ].includes(activeSubMenu)) {
+      loadDataExports();
+    }
+  }, [activeCreator, activeSubMenu]);
+
+  useEffect(() => {
+    if (activeSubMenu && [
+      'Get Settings', 'Update Profile', 'Check Username Availability', 'Update Subscription Price',
+      'Get Blocked Countries', 'Update Blocked Countries', 'Enable/Disable Welcome Message',
+      'Get Welcome Message', 'Update Welcome Message', 'List Social Media Buttons',
+      'Add Social Media Button', 'Update Social Media Button', 'Delete Social Media Button', 'Reorder Social Media Buttons',
+      'Get DRM Status', 'Enable/Disable DRM',
+      'List Data Exports', 'Create Data Export', 'Start Data Export', 'Get Data Export Status', 'Cancel Data Export'
+    ].includes(activeSubMenu)) {
+      setSettingsTab('onlyfans');
+    }
+  }, [activeSubMenu]);
+
+  const handleSaveOnlyFansSetting = async (type: string, value: any) => {
     if (!activeCreator) return;
     setSaving(true);
     setErrorMsg('');
     setSuccessMsg('');
     try {
       const res = await fetch('/api/settings/onlyfans', {
-        method: 'POST',
+        method: type === 'blocked-countries' || type === 'update-social-btn' ? 'PUT' : 
+                type === 'subscription-price' || type === 'toggle-welcome' || type === 'drm' ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           creatorId: activeCreator.id,
           type,
           welcomeMessage: type === 'welcome' ? value : undefined,
+          profile: type === 'profile' ? value : undefined,
           blockedCountries: type === 'blocked-countries' ? value.split(',').map((s: string) => s.trim().toUpperCase()).filter(Boolean) : undefined,
-          drmEnabled: type === 'drm' ? value : undefined,
+          price: type === 'subscription-price' ? Number(value) : undefined,
+          enabled: type === 'toggle-welcome' ? Boolean(value) : undefined,
+          drmEnabled: type === 'drm' ? Boolean(value) : undefined,
+          label: type === 'add-social-btn' || type === 'update-social-btn' ? value.label : undefined,
+          url: type === 'add-social-btn' || type === 'update-social-btn' ? value.url : undefined,
+          buttonId: type === 'update-social-btn' ? value.buttonId : undefined,
+          buttonIds: type === 'reorder-social-btns' ? value : undefined
         }),
       });
       if (res.ok) {
-        setSuccessMsg('OnlyFans setting saved successfully!');
+        setSuccessMsg(`OnlyFans setting updated successfully!`);
         loadOnlyFansSettings();
       } else {
-        setErrorMsg('Failed to update OnlyFans setting.');
+        const err = await res.json();
+        setErrorMsg(err.error || 'Failed to update OnlyFans setting.');
       }
     } catch (err) {
       setErrorMsg('Error connecting to backend API.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCheckUsername = async () => {
+    if (!usernameToCheck.trim()) return;
+    setUsernameStatus('checking');
+    try {
+      const res = await fetch('/api/settings/onlyfans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'check-username',
+          username: usernameToCheck.trim()
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUsernameStatus(data.available ? 'available' : 'taken');
+      } else {
+        setUsernameStatus('idle');
+      }
+    } catch (err) {
+      console.error('Error checking username:', err);
+      setUsernameStatus('idle');
+    }
+  };
+
+  const handleDeleteSocialBtn = async (buttonId: string) => {
+    if (!activeCreator) return;
+    if (!confirm('Are you sure you want to delete this social link?')) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/settings/onlyfans?creatorId=${activeCreator.id}&buttonId=${buttonId}&type=delete-social-btn`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        setSuccessMsg('Social link deleted successfully!');
+        loadOnlyFansSettings();
+      } else {
+        setErrorMsg('Failed to delete social link.');
+      }
+    } catch (err) {
+      console.error('Error deleting social link:', err);
     } finally {
       setSaving(false);
     }
@@ -821,106 +1023,939 @@ export default function SettingsPage() {
         </div>
       )}
 
-        {settingsTab === 'onlyfans' && (
+      {settingsTab === 'onlyfans' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start text-left">
-          {/* Welcome Message Column */}
-          <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-4 col-span-2">
-            <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
-              <Globe className="h-4 w-4 text-blue-500" />
-              Welcome Message Setup [GET/POST]
-            </h3>
-            {loadingOF ? (
-              <div className="py-6 flex justify-center"><RefreshCw className="h-5 w-5 animate-spin text-blue-500" /></div>
-            ) : (
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-400">Welcome Message Text</label>
-                  <textarea
-                    rows={5}
-                    value={welcomeMessage}
-                    onChange={(e) => setWelcomeMessage(e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-300 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-                {successMsg && <div className="text-emerald-400 text-xs font-bold">{successMsg}</div>}
-                {errorMsg && <div className="text-red-400 text-xs font-bold">{errorMsg}</div>}
-                <button
-                  type="button"
-                  onClick={() => handleSaveOnlyFansSetting('welcome', welcomeMessage)}
-                  className="py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer border-0"
-                >
-                  Update Welcome Message [POST]
-                </button>
+          {/* Active Settings Panel based on activeSubMenu */}
+          <div className="lg:col-span-2 space-y-6">
+            
+            {/* 1. GET SETTINGS (Summary / Overview) */}
+            {(!activeSubMenu || activeSubMenu === 'Get Settings') && (
+              <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-5">
+                <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
+                  <Settings className="h-4 w-4 text-blue-500" />
+                  OnlyFans Account Settings Summary [GET]
+                </h3>
+                
+                {loadingOF ? (
+                  <div className="py-12 flex justify-center"><RefreshCw className="h-5 w-5 animate-spin text-blue-500" /></div>
+                ) : (
+                  <div className="space-y-4 text-xs font-semibold text-zinc-400">
+                    <div className="grid grid-cols-2 gap-4 bg-zinc-950/40 border border-zinc-850 p-4 rounded-xl">
+                      <div className="space-y-1">
+                        <span className="text-[10px] text-zinc-550 uppercase font-black block">Profile Display Name</span>
+                        <span className="text-zinc-200">{profileDisplayName || 'Not Set'}</span>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-[10px] text-zinc-550 uppercase font-black block">Subscription Price</span>
+                        <span className="text-emerald-400 font-extrabold">${subscriptionPrice.toFixed(2)} / Month</span>
+                      </div>
+                      <div className="space-y-1 col-span-2">
+                        <span className="text-[10px] text-zinc-550 uppercase font-black block">About Bio</span>
+                        <p className="text-zinc-200 font-medium leading-relaxed">{profileAbout || 'No description set.'}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-[10px] text-zinc-550 uppercase font-black block">Website</span>
+                        <span className="text-blue-400 underline truncate block">{profileWebsite || 'Not Set'}</span>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-[10px] text-zinc-550 uppercase font-black block">Location</span>
+                        <span className="text-zinc-200">{profileLocation || 'Not Set'}</span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-zinc-950/20 border border-zinc-850 p-4 rounded-xl space-y-1">
+                        <span className="text-[10px] text-zinc-550 uppercase font-black block">DRM Status</span>
+                        <span className={`text-[10px] uppercase font-black ${drmEnabled ? 'text-green-400' : 'text-red-400'}`}>
+                          {drmEnabled ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </div>
+                      <div className="bg-zinc-950/20 border border-zinc-850 p-4 rounded-xl space-y-1">
+                        <span className="text-[10px] text-zinc-550 uppercase font-black block">Welcome Message Template</span>
+                        <span className={`text-[10px] uppercase font-black ${welcomeMessageEnabled ? 'text-green-400' : 'text-red-400'}`}>
+                          {welcomeMessageEnabled ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={loadOnlyFansSettings}
+                      className="py-2.5 px-4 bg-zinc-950 border border-zinc-850 text-zinc-250 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 w-full hover:border-zinc-700 cursor-pointer"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" />
+                      Refresh Settings Details [GET]
+                    </button>
+                  </div>
+                )}
               </div>
             )}
-          </div>
 
-          {/* Blocked Countries & DRM Column */}
-          <div className="space-y-6">
-            {/* Blocked Countries */}
-            <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-4">
-              <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
-                <Globe className="h-4 w-4 text-amber-500" />
-                Blocked Countries [GET/POST]
-              </h3>
-              {loadingOF ? (
-                <div className="py-6 flex justify-center"><RefreshCw className="h-5 w-5 animate-spin text-blue-500" /></div>
-              ) : (
+            {/* 2. UPDATE PROFILE */}
+            {activeSubMenu === 'Update Profile' && (
+              <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-5">
+                <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
+                  <Settings className="h-4 w-4 text-blue-500" />
+                  Update Profile Details [POST]
+                </h3>
+                
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-zinc-400">ISO Country Codes (Comma separated)</label>
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase">Display Name</label>
                     <input
                       type="text"
-                      placeholder="e.g. US, CA, GB"
+                      value={profileDisplayName}
+                      onChange={(e) => setProfileDisplayName(e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-850 rounded-xl py-2 px-3 text-xs text-zinc-300 focus:outline-none focus:border-blue-500 font-semibold"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase">About biography</label>
+                    <textarea
+                      rows={4}
+                      value={profileAbout}
+                      onChange={(e) => setProfileAbout(e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-850 rounded-xl py-2 px-3 text-xs text-zinc-300 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-zinc-400 uppercase">Website URL</label>
+                      <input
+                        type="url"
+                        value={profileWebsite}
+                        onChange={(e) => setProfileWebsite(e.target.value)}
+                        className="w-full bg-zinc-950 border border-zinc-850 rounded-xl py-2 px-3 text-xs text-zinc-300 focus:outline-none focus:border-blue-500 font-semibold"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-zinc-400 uppercase">Location</label>
+                      <input
+                        type="text"
+                        value={profileLocation}
+                        onChange={(e) => setProfileLocation(e.target.value)}
+                        className="w-full bg-zinc-950 border border-zinc-850 rounded-xl py-2 px-3 text-xs text-zinc-300 focus:outline-none focus:border-blue-500 font-semibold"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => handleSaveOnlyFansSetting('profile', {
+                      displayName: profileDisplayName,
+                      about: profileAbout,
+                      website: profileWebsite,
+                      location: profileLocation
+                    })}
+                    disabled={saving}
+                    className="py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer shadow-lg border-0"
+                  >
+                    {saving && <RefreshCw className="h-4 w-4 animate-spin" />}
+                    Update Profile Details [POST]
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* 3. CHECK USERNAME AVAILABILITY */}
+            {activeSubMenu === 'Check Username Availability' && (
+              <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-5">
+                <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
+                  <UserCheck className="h-4 w-4 text-blue-500" />
+                  Check Username Availability [POST]
+                </h3>
+                
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase">Username to query</label>
+                    <div className="flex gap-2">
+                      <span className="bg-zinc-950 border border-zinc-850 rounded-xl py-2 px-3 text-xs text-zinc-550 font-bold flex items-center border-r-0 rounded-r-none select-none">
+                        @
+                      </span>
+                      <input
+                        type="text"
+                        placeholder="e.g. sophiasweet_new"
+                        value={usernameToCheck}
+                        onChange={(e) => {
+                          setUsernameToCheck(e.target.value);
+                          setUsernameStatus('idle');
+                        }}
+                        className="flex-1 bg-zinc-950 border border-zinc-850 rounded-xl rounded-l-none py-2 px-3 text-xs text-zinc-300 focus:outline-none focus:border-blue-500 font-semibold"
+                      />
+                    </div>
+                  </div>
+
+                  {usernameStatus === 'checking' && (
+                    <div className="bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] p-3 rounded-xl flex items-center gap-2">
+                      <RefreshCw className="h-4 w-4 animate-spin text-blue-400" />
+                      <span>Checking database and OnlyFans username records...</span>
+                    </div>
+                  )}
+
+                  {usernameStatus === 'available' && (
+                    <div className="bg-green-500/10 border border-green-500/20 text-green-400 text-[11px] p-3 rounded-xl flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-400" />
+                      <span>✓ Username <strong>@{usernameToCheck}</strong> is available for claim!</span>
+                    </div>
+                  )}
+
+                  {usernameStatus === 'taken' && (
+                    <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-[11px] p-3 rounded-xl flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-red-400" />
+                      <span>✗ Username <strong>@{usernameToCheck}</strong> is already taken.</span>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleCheckUsername}
+                    disabled={!usernameToCheck.trim() || usernameStatus === 'checking'}
+                    className="py-2.5 px-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg border-0"
+                  >
+                    Check Availability [POST]
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* 4. UPDATE SUBSCRIPTION PRICE */}
+            {activeSubMenu === 'Update Subscription Price' && (
+              <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-5">
+                <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
+                  <Settings className="h-4 w-4 text-blue-500" />
+                  Update Monthly Subscription Price [PATCH]
+                </h3>
+                
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase">Subscription Cost (USD per Month)</label>
+                    <div className="flex gap-2">
+                      <span className="bg-zinc-950 border border-zinc-850 rounded-xl py-2 px-3.5 text-xs text-zinc-550 font-bold flex items-center border-r-0 rounded-r-none select-none">
+                        $
+                      </span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="4.99"
+                        max="49.99"
+                        value={subscriptionPrice}
+                        onChange={(e) => setSubscriptionPrice(parseFloat(e.target.value) || 0)}
+                        className="flex-1 bg-zinc-950 border border-zinc-850 rounded-xl rounded-l-none py-2 px-3 text-xs text-zinc-300 focus:outline-none focus:border-blue-500 font-black"
+                      />
+                    </div>
+                    <span className="text-[10px] text-zinc-550 italic block mt-1">Minimum price is $4.99, max is $49.99 matching OnlyFans guidelines.</span>
+                  </div>
+
+                  <button
+                    onClick={() => handleSaveOnlyFansSetting('subscription-price', subscriptionPrice)}
+                    disabled={saving}
+                    className="py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer shadow-lg border-0"
+                  >
+                    {saving && <RefreshCw className="h-4 w-4 animate-spin" />}
+                    Update Subscription Price [PATCH]
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* 5. GET BLOCKED COUNTRIES */}
+            {activeSubMenu === 'Get Blocked Countries' && (
+              <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-5">
+                <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
+                  <Globe className="h-4 w-4 text-amber-500" />
+                  Get Blocked Countries [GET]
+                </h3>
+                
+                <div className="space-y-4 text-xs font-medium text-zinc-400">
+                  <p className="text-[10px] text-zinc-550 italic font-semibold">Countries currently blocked from accessing your profile:</p>
+                  {blockedCountries.trim() ? (
+                    <div className="flex flex-wrap gap-1.5 pt-1.5">
+                      {blockedCountries.split(',').map((c) => c.trim().toUpperCase()).filter(Boolean).map((code) => (
+                        <span key={code} className="text-[9px] font-black text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded-lg">
+                          {code}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-zinc-500 italic">No countries are currently restricted.</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 5.1 UPDATE BLOCKED COUNTRIES */}
+            {activeSubMenu === 'Update Blocked Countries' && (
+              <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-5">
+                <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
+                  <Globe className="h-4 w-4 text-amber-500" />
+                  Update Blocked Countries [PUT]
+                </h3>
+                
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase">ISO Country Codes (Comma separated)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. US, CA, FR, DE"
                       value={blockedCountries}
                       onChange={(e) => setBlockedCountries(e.target.value)}
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-300 focus:outline-none focus:border-blue-500"
+                      className="w-full bg-zinc-950 border border-zinc-805 rounded-xl p-2.5 text-xs text-zinc-300 focus:outline-none focus:border-blue-500 font-semibold"
+                    />
+                  </div>
+
+                  <button
+                    onClick={() => handleSaveOnlyFansSetting('blocked-countries', blockedCountries)}
+                    disabled={saving}
+                    className="py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer shadow-lg border-0"
+                  >
+                    {saving && <RefreshCw className="h-4 w-4 animate-spin" />}
+                    Update Blocked Countries [PUT]
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* 6. ENABLE/DISABLE WELCOME MESSAGE */}
+            {activeSubMenu === 'Enable/Disable Welcome Message' && (
+              <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-6">
+                <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
+                  <Bell className="h-4 w-4 text-emerald-500" />
+                  Enable/Disable Welcome Message [PATCH]
+                </h3>
+                
+                <div className="flex items-center justify-between bg-zinc-950/40 p-4 rounded-xl border border-zinc-850">
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-bold text-zinc-200 uppercase tracking-wider block">Automatic Welcome Responder</span>
+                    <span className="text-[10px] text-zinc-550 italic font-semibold">Toggles welcome template dispatching for new subscribers.</span>
+                  </div>
+                  
+                  <button
+                    onClick={() => {
+                      const nextVal = !welcomeMessageEnabled;
+                      setWelcomeMessageEnabled(nextVal);
+                      handleSaveOnlyFansSetting('toggle-welcome', nextVal);
+                    }}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                      welcomeMessageEnabled ? 'bg-emerald-500' : 'bg-zinc-800'
+                    }`}
+                  >
+                    <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                      welcomeMessageEnabled ? 'translate-x-4.5' : 'translate-x-0.5'
+                    }`} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* 6.1 GET WELCOME MESSAGE */}
+            {activeSubMenu === 'Get Welcome Message' && (
+              <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-6">
+                <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
+                  <Bell className="h-4 w-4 text-emerald-500" />
+                  Get Welcome Message Template [GET]
+                </h3>
+                
+                <div className="space-y-4">
+                  <span className="text-[10px] text-zinc-550 italic font-semibold">Current welcome response content template:</span>
+                  <div className="bg-zinc-950 border border-zinc-850 p-4 rounded-xl text-xs text-zinc-300 font-sans leading-relaxed whitespace-pre-wrap">
+                    {welcomeMessage || 'No welcome message configured.'}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 6.2 UPDATE WELCOME MESSAGE */}
+            {activeSubMenu === 'Update Welcome Message' && (
+              <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-6">
+                <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
+                  <Bell className="h-4 w-4 text-emerald-500" />
+                  Update Welcome Message Template [POST]
+                </h3>
+                
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase">Welcome Message Text Template</label>
+                    <textarea
+                      rows={5}
+                      value={welcomeMessage}
+                      onChange={(e) => setWelcomeMessage(e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-xs text-zinc-300 focus:outline-none focus:border-blue-500 font-sans leading-relaxed resize-none"
+                    />
+                  </div>
+
+                  <button
+                    onClick={() => handleSaveOnlyFansSetting('welcome', welcomeMessage)}
+                    disabled={saving}
+                    className="py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer shadow-lg border-0"
+                  >
+                    {saving && <RefreshCw className="h-4 w-4 animate-spin" />}
+                    Update Welcome Message [POST]
+                  </button>
+                </div>
+              </div>
+            )}
+            {activeSubMenu === 'List Social Media Buttons' && (
+              <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-6">
+                <div>
+                  <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
+                    <Settings className="h-4 w-4 text-blue-500" />
+                    List Social Media Buttons [GET]
+                  </h3>
+                  <p className="text-[10px] text-zinc-550 italic font-semibold mt-1">View active profile links visible under subscriber page headers.</p>
+                </div>
+
+                {loadingOF ? (
+                  <div className="py-6 flex justify-center"><RefreshCw className="h-5 w-5 animate-spin text-blue-500" /></div>
+                ) : (
+                  <div className="space-y-2">
+                    {socialMediaButtons.length > 0 ? (
+                      socialMediaButtons
+                        .sort((a, b) => a.order - b.order)
+                        .map((btn) => (
+                          <div key={btn.id} className="bg-zinc-950 border border-zinc-850 p-3.5 rounded-xl flex justify-between items-center">
+                            <div>
+                              <span className="text-xs font-black text-zinc-200 uppercase tracking-wide block">{btn.label}</span>
+                              <span className="text-[10px] text-zinc-500 font-semibold truncate block max-w-xs">{btn.url}</span>
+                            </div>
+                            <span className="text-[9px] bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded text-zinc-400 font-mono">ORDER: {btn.order}</span>
+                          </div>
+                        ))
+                    ) : (
+                      <div className="text-center py-6 text-zinc-550 text-xs italic">No social media links configured.</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 7.1 ADD SOCIAL MEDIA BUTTON */}
+            {activeSubMenu === 'Add Social Media Button' && (
+              <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-6">
+                <div>
+                  <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
+                    <Plus className="h-4 w-4 text-blue-500" />
+                    Add Social Media Button [POST]
+                  </h3>
+                </div>
+
+                <div className="bg-zinc-950/40 border border-zinc-850/80 p-4 rounded-xl space-y-3">
+                  <div className="grid grid-cols-1 gap-3">
+                    <input
+                      type="text"
+                      placeholder="Link Label (e.g. Fanvue)"
+                      value={newSocialLabel}
+                      onChange={(e) => setNewSocialLabel(e.target.value)}
+                      className="bg-zinc-950 border border-zinc-850 rounded-xl py-2.5 px-3.5 text-xs text-zinc-300 focus:outline-none focus:border-blue-500 font-semibold animate-none"
+                    />
+                    <input
+                      type="url"
+                      placeholder="Link URL (https://...)"
+                      value={newSocialUrl}
+                      onChange={(e) => setNewSocialUrl(e.target.value)}
+                      className="bg-zinc-950 border border-zinc-850 rounded-xl py-2.5 px-3.5 text-xs text-zinc-300 focus:outline-none focus:border-blue-500 font-semibold"
                     />
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleSaveOnlyFansSetting('blocked-countries', blockedCountries)}
-                    className="w-full py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer border-0"
+                    onClick={async () => {
+                      if (!newSocialLabel.trim() || !newSocialUrl.trim()) return;
+                      const label = newSocialLabel.trim();
+                      const url = newSocialUrl.trim();
+                      setNewSocialLabel('');
+                      setNewSocialUrl('');
+                      await handleSaveOnlyFansSetting('add-social-btn', { label, url });
+                    }}
+                    disabled={!newSocialLabel.trim() || !newSocialUrl.trim()}
+                    className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 border-0"
                   >
-                    Update Blocked Countries [POST]
+                    <Plus className="h-3.5 w-3.5" />
+                    Add Social Button [POST]
                   </button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
-            {/* DRM Protection */}
-            <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-4">
-              <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
-                <ShieldCheck className="h-4 w-4 text-emerald-500" />
-                DRM Protection [GET/POST]
-              </h3>
-              {loadingOF ? (
-                <div className="py-6 flex justify-center"><RefreshCw className="h-5 w-5 animate-spin text-blue-500" /></div>
-              ) : (
+            {/* 7.2 UPDATE SOCIAL MEDIA BUTTON */}
+            {activeSubMenu === 'Update Social Media Button' && (
+              <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-6">
+                <div>
+                  <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
+                    <Edit2 className="h-4 w-4 text-blue-500" />
+                    Update Social Media Button [PUT]
+                  </h3>
+                </div>
+
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-zinc-300">Enable DRM Protection</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const nextVal = !drmEnabled;
-                        setDrmEnabled(nextVal);
-                        handleSaveOnlyFansSetting('drm', nextVal);
-                      }}
-                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                        drmEnabled ? 'bg-emerald-500' : 'bg-zinc-800'
-                      }`}
-                    >
-                      <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
-                        drmEnabled ? 'translate-x-4.5' : 'translate-x-0.5'
-                      }`} />
-                    </button>
-                  </div>
-                  <div className="text-[10px] text-zinc-500 italic">
-                    Restricts browser screenshot capabilities and blocks download extensions on OnlyFans.
+                  {socialMediaButtons.length > 0 ? (
+                    socialMediaButtons.map((btn) => (
+                      <div key={btn.id} className="bg-zinc-950 border border-zinc-850 p-4 rounded-xl space-y-3">
+                        {editingSocialId === btn.id ? (
+                          <div className="space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
+                              <input
+                                type="text"
+                                value={editingSocialLabel}
+                                onChange={(e) => setEditingSocialLabel(e.target.value)}
+                                className="bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-zinc-300 focus:outline-none"
+                              />
+                              <input
+                                type="url"
+                                value={editingSocialUrl}
+                                onChange={(e) => setEditingSocialUrl(e.target.value)}
+                                className="bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-zinc-300 focus:outline-none"
+                              />
+                            </div>
+                            <div className="flex justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setEditingSocialId(null)}
+                                className="bg-zinc-900 hover:bg-zinc-800 text-zinc-400 text-[10px] font-bold py-1.5 px-3 rounded-lg cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  if (!editingSocialLabel.trim() || !editingSocialUrl.trim()) return;
+                                  setEditingSocialId(null);
+                                  await handleSaveOnlyFansSetting('update-social-btn', {
+                                    buttonId: editingSocialId,
+                                    label: editingSocialLabel.trim(),
+                                    url: editingSocialUrl.trim()
+                                  });
+                                }}
+                                className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold py-1.5 px-3 rounded-lg cursor-pointer border-0"
+                              >
+                                Save Updates [PUT]
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span className="text-xs font-black text-zinc-200 uppercase tracking-wide block">{btn.label}</span>
+                              <span className="text-[10px] text-zinc-500 font-semibold truncate block max-w-xs">{btn.url}</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingSocialId(btn.id);
+                                setEditingSocialLabel(btn.label);
+                                setEditingSocialUrl(btn.url);
+                              }}
+                              className="text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-[10px] font-extrabold px-3 py-1.5 rounded-lg cursor-pointer flex items-center gap-1"
+                            >
+                              <Edit2 className="h-3 w-3" /> Edit
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-6 text-zinc-550 text-xs italic">No buttons available to update.</div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 7.3 DELETE SOCIAL MEDIA BUTTON */}
+            {activeSubMenu === 'Delete Social Media Button' && (
+              <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-6">
+                <div>
+                  <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
+                    <Trash2 className="h-4 w-4 text-red-500" />
+                    Delete Social Media Button [DELETE]
+                  </h3>
+                </div>
+
+                <div className="space-y-3">
+                  {socialMediaButtons.length > 0 ? (
+                    socialMediaButtons.map((btn) => (
+                      <div key={btn.id} className="bg-zinc-950 border border-zinc-850 p-3.5 rounded-xl flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-black text-zinc-250 uppercase tracking-wide block">{btn.label}</span>
+                          <span className="text-[10px] text-zinc-500 font-semibold truncate block max-w-xs">{btn.url}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteSocialBtn(btn.id)}
+                          className="bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 font-extrabold px-3 py-1.5 rounded-lg text-[10px] flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" /> Delete [DELETE]
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-6 text-zinc-550 text-xs italic">No buttons available to delete.</div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 7.4 REORDER SOCIAL MEDIA BUTTONS */}
+            {activeSubMenu === 'Reorder Social Media Buttons' && (
+              <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-6">
+                <div>
+                  <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
+                    <Settings className="h-4 w-4 text-blue-500" />
+                    Reorder Social Media Buttons [POST]
+                  </h3>
+                  <p className="text-[10px] text-zinc-550 italic font-semibold mt-1">Use arrows to prioritize display hierarchy.</p>
+                </div>
+
+                <div className="space-y-2">
+                  {socialMediaButtons.length > 0 ? (
+                    socialMediaButtons
+                      .sort((a, b) => a.order - b.order)
+                      .map((btn, index) => (
+                        <div key={btn.id} className="bg-zinc-950 border border-zinc-850 p-3.5 rounded-xl flex items-center justify-between">
+                          <div>
+                            <span className="text-xs font-black text-zinc-200 uppercase tracking-wide block">{btn.label}</span>
+                            <span className="text-[10px] text-zinc-550 font-semibold truncate block max-w-xs">{btn.url}</span>
+                          </div>
+                          
+                          <div className="flex gap-2">
+                            <button
+                              disabled={index === 0}
+                              onClick={async () => {
+                                const copy = [...socialMediaButtons];
+                                const temp = copy[index - 1];
+                                copy[index - 1] = copy[index];
+                                copy[index] = temp;
+                                setSocialMediaButtons(copy);
+                                await handleSaveOnlyFansSetting('reorder-social-btns', copy.map(b => b.id));
+                              }}
+                              className="bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-400 p-2 rounded-lg disabled:opacity-30 cursor-pointer text-xs"
+                            >
+                              Move Up ↑
+                            </button>
+                            <button
+                              disabled={index === socialMediaButtons.length - 1}
+                              onClick={async () => {
+                                const copy = [...socialMediaButtons];
+                                const temp = copy[index + 1];
+                                copy[index + 1] = copy[index];
+                                copy[index] = temp;
+                                setSocialMediaButtons(copy);
+                                await handleSaveOnlyFansSetting('reorder-social-btns', copy.map(b => b.id));
+                              }}
+                              className="bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-400 p-2 rounded-lg disabled:opacity-30 cursor-pointer text-xs"
+                            >
+                              Move Down ↓
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                  ) : (
+                    <div className="text-center py-6 text-zinc-550 text-xs italic">No buttons available to reorder.</div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 8. DRM PROTECTION STATUS */}
+            {activeSubMenu === 'Get DRM Status' && (
+              <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-6">
+                <div>
+                  <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
+                    <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                    DRM Protection Status [GET]
+                  </h3>
+                  <p className="text-[10px] text-zinc-550 italic font-semibold mt-1">Real-time decryption compliance and shield integrity diagnostics.</p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="bg-zinc-950/20 border border-zinc-850 p-4 rounded-xl text-xs font-semibold text-zinc-400 space-y-2.5">
+                    <div className="flex justify-between">
+                      <span>DRM Engine Status</span>
+                      <span className={drmEnabled ? 'text-green-400 font-extrabold' : 'text-zinc-500'}>
+                        {drmEnabled ? '✓ ONLINE & PROTECTING' : '✗ STANDBY'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Dynamic Watermark</span>
+                      <span className="text-zinc-300">{drmEnabled ? 'ENABLED (@username)' : 'DISABLED'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>API Endpoint Code</span>
+                      <span className="font-mono text-[10px] text-zinc-500">GET /settings/drm</span>
+                    </div>
                   </div>
                 </div>
-              )}
+              </div>
+            )}
+
+            {/* 8.1 CONFIGURE DRM SHIELDING */}
+            {activeSubMenu === 'Enable/Disable DRM' && (
+              <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-6">
+                <div>
+                  <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
+                    <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                    Configure DRM Shielding [PATCH]
+                  </h3>
+                  <p className="text-[10px] text-zinc-555 italic font-semibold mt-1">Restrict media file downloads and enforce browser capture prevention.</p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between bg-zinc-950/40 p-4 rounded-xl border border-zinc-850">
+                    <div className="space-y-0.5">
+                      <span className="text-xs font-bold text-zinc-200 uppercase tracking-wider block">DRM Media Shielding</span>
+                      <span className="text-[10px] text-zinc-550 font-semibold italic">Enforces dynamic watermarks and blocks third-party video downloaders.</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setDrmEnabled(!drmEnabled)}
+                      className={`px-4 py-2 rounded-lg text-[10px] font-bold cursor-pointer ${
+                        drmEnabled ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                      }`}
+                    >
+                      {drmEnabled ? 'Disable Shield' : 'Enable Shield'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 9. LIST DATA EXPORTS */}
+            {activeSubMenu === 'List Data Exports' && (
+              <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-6">
+                <div className="flex justify-between items-center border-b border-zinc-800/60 pb-3">
+                  <div>
+                    <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+                      <Settings className="h-4 w-4 text-blue-500" />
+                      List Data Exports [GET]
+                    </h3>
+                    <p className="text-[10px] text-zinc-550 italic font-semibold mt-1">Available data archive backup files.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={loadDataExports}
+                    className="text-zinc-500 hover:text-white p-1 rounded hover:bg-zinc-900 transition-colors cursor-pointer border-0 bg-transparent"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${loadingExports ? 'animate-spin' : ''}`} />
+                  </button>
+                </div>
+
+                {loadingExports ? (
+                  <div className="py-8 flex justify-center"><RefreshCw className="h-5 w-5 animate-spin text-blue-500" /></div>
+                ) : dataExportsList.length > 0 ? (
+                  <div className="space-y-2.5">
+                    {dataExportsList.map((exp) => (
+                      <div key={exp.id} className="bg-zinc-950 border border-zinc-850 p-3.5 rounded-xl flex items-center justify-between gap-3">
+                        <div className="min-w-0 space-y-1">
+                          <span className="text-xs font-black text-zinc-200 uppercase tracking-wider block">{exp.type} export</span>
+                          <span className="text-[9px] text-zinc-550 block font-bold">Created: {new Date(exp.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        {exp.status === 'completed' && exp.downloadUrl && (
+                          <a
+                            href={exp.downloadUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="bg-green-600/10 hover:bg-green-600/25 border border-green-500/30 text-green-400 text-[10px] font-bold px-3 py-1.5 rounded-lg text-center"
+                          >
+                            Download
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-zinc-550 text-xs italic">No data export files found.</div>
+                )}
+              </div>
+            )}
+
+            {/* 9.1 CREATE DATA EXPORT */}
+            {activeSubMenu === 'Create Data Export' && (
+              <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-6">
+                <div>
+                  <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
+                    <Settings className="h-4 w-4 text-blue-500" />
+                    Create Data Export [POST]
+                  </h3>
+                  <p className="text-[10px] text-zinc-550 italic font-semibold mt-1">Configure profile quick archive compilation parameter.</p>
+                </div>
+
+                <div className="bg-zinc-955 border border-zinc-850/80 p-4 rounded-xl space-y-3.5">
+                  <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider block">Request New Archive Export</span>
+                  <div className="flex gap-3">
+                    <select
+                      value={newExportType}
+                      onChange={(e) => setNewExportType(e.target.value)}
+                      className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg text-xs font-semibold py-2 px-3 text-zinc-300 outline-none focus:border-blue-500 cursor-pointer"
+                    >
+                      <option value="messages">Direct Chat Messages Archive</option>
+                      <option value="earnings">Financial & Payout Ledger</option>
+                      <option value="users">Subscribers / Fans CRM List</option>
+                      <option value="media">Uploaded Video & Image Library</option>
+                    </select>
+                    <button
+                      type="button"
+                      onClick={handleCreateExport}
+                      disabled={saving}
+                      className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg cursor-pointer border-0"
+                    >
+                      Create Export
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 9.2 START DATA EXPORT */}
+            {activeSubMenu === 'Start Data Export' && (
+              <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-6">
+                <div>
+                  <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
+                    <Settings className="h-4 w-4 text-blue-500" />
+                    Start Pending Data Export [POST]
+                  </h3>
+                </div>
+
+                {dataExportsList.filter(e => e.status === 'pending').length > 0 ? (
+                  <div className="space-y-2.5">
+                    {dataExportsList
+                      .filter(e => e.status === 'pending')
+                      .map((exp) => (
+                        <div key={exp.id} className="bg-zinc-950 border border-zinc-855 p-3.5 rounded-xl flex items-center justify-between">
+                          <div>
+                            <span className="text-xs font-black text-zinc-200 uppercase block">{exp.type} export</span>
+                            <span className="text-[9px] text-zinc-550 block">Status: pending</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleStartExport(exp.id)}
+                            className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold px-3.5 py-1.5 rounded-lg cursor-pointer border-0"
+                          >
+                            Start Export [POST]
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-zinc-550 text-xs italic">No pending export jobs found. Use 'Create Data Export' first.</div>
+                )}
+              </div>
+            )}
+
+            {/* 9.3 GET DATA EXPORT STATUS */}
+            {activeSubMenu === 'Get Data Export Status' && (
+              <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-6">
+                <div>
+                  <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
+                    <Settings className="h-4 w-4 text-blue-500" />
+                    Data Export Status Monitor [GET]
+                  </h3>
+                </div>
+
+                {dataExportsList.length > 0 ? (
+                  <div className="space-y-2.5">
+                    {dataExportsList.map((exp) => (
+                      <div key={exp.id} className="bg-zinc-950 border border-zinc-850 p-3.5 rounded-xl flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-black text-zinc-200 uppercase block">{exp.type} export</span>
+                          <span className="text-[9px] text-zinc-500">Created: {new Date(exp.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <span className={`text-[9px] uppercase font-black px-2.5 py-0.5 rounded-lg border ${
+                          exp.status === 'completed'
+                            ? 'text-green-400 bg-green-500/10 border-green-500/20'
+                            : exp.status === 'processing'
+                            ? 'text-blue-400 bg-blue-500/10 border-blue-500/20 animate-pulse'
+                            : 'text-zinc-400 bg-zinc-500/10 border-zinc-500/20'
+                        }`}>
+                          {exp.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-zinc-555 text-xs italic">No active data export status logs.</div>
+                )}
+              </div>
+            )}
+
+            {/* 9.4 CANCEL DATA EXPORT */}
+            {activeSubMenu === 'Cancel Data Export' && (
+              <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-6">
+                <div>
+                  <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
+                    <Trash2 className="h-4 w-4 text-red-500" />
+                    Cancel/Delete Data Export [DELETE]
+                  </h3>
+                </div>
+
+                {dataExportsList.length > 0 ? (
+                  <div className="space-y-2.5">
+                    {dataExportsList.map((exp) => (
+                      <div key={exp.id} className="bg-zinc-950 border border-zinc-850 p-3.5 rounded-xl flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-black text-zinc-200 uppercase block">{exp.type} export</span>
+                          <span className="text-[9px] text-zinc-500">Status: {exp.status}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleCancelExport(exp.id)}
+                          className="bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 font-extrabold px-3 py-1.5 rounded-lg text-[10px] cursor-pointer"
+                        >
+                          Cancel [DELETE]
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-zinc-550 text-xs italic">No data export jobs to cancel.</div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Right Status Card Overview */}
+          <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-4">
+            <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider border-b border-zinc-800/60 pb-3">
+              OnlyFans Settings Console
+            </h3>
+            
+            <div className="space-y-3.5 text-xs font-semibold">
+              <div className="flex justify-between items-center bg-zinc-950/30 p-2.5 rounded-xl border border-zinc-850">
+                <span className="text-zinc-400">Subscription price</span>
+                <span className="text-emerald-400 font-black">${subscriptionPrice}</span>
+              </div>
+              <div className="flex justify-between items-center bg-zinc-950/30 p-2.5 rounded-xl border border-zinc-850">
+                <span className="text-zinc-400">Blocked Countries</span>
+                <span className="text-zinc-250 font-black bg-zinc-900 px-2 py-0.5 rounded-full border border-zinc-800">
+                  {blockedCountries.split(',').map(s=>s.trim()).filter(Boolean).length}
+                </span>
+              </div>
+              <div className="flex justify-between items-center bg-zinc-950/30 p-2.5 rounded-xl border border-zinc-850">
+                <span className="text-zinc-400">Social Media Buttons</span>
+                <span className="text-zinc-250 font-black bg-zinc-900 px-2 py-0.5 rounded-full border border-zinc-800">
+                  {socialMediaButtons.length}
+                </span>
+              </div>
+
+              {/* DRM Protection Quick Toggle */}
+              <div className="bg-zinc-950/30 p-3 rounded-xl border border-zinc-850 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-350 flex items-center gap-1.5">
+                    <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                    DRM Protection
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nextVal = !drmEnabled;
+                      setDrmEnabled(nextVal);
+                      handleSaveOnlyFansSetting('drm', nextVal);
+                    }}
+                    className={`relative inline-flex h-4 w-8 items-center rounded-full transition-colors cursor-pointer ${
+                      drmEnabled ? 'bg-emerald-500' : 'bg-zinc-800'
+                    }`}
+                  >
+                    <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                      drmEnabled ? 'translate-x-4' : 'translate-x-0.5'
+                    }`} />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -931,8 +1966,9 @@ export default function SettingsPage() {
   );
 }
 
-// Verified: client-side proxy port boundary checking validated.
 
-// Verified: webhook URL protocol verification validated.
 
-// UI alert helper mapping configuration complete.
+
+
+
+
