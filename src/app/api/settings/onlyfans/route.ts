@@ -34,6 +34,7 @@ const getMockOnlyFansSettingsPath = () => {
 };
 
 // GET: Fetch OnlyFans Settings (welcome message, blocked countries, DRM, profile, price, social buttons)
+/** GET handler for settings configuration route */
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
