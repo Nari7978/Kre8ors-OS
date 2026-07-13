@@ -248,6 +248,7 @@ const topLevelIcons = [
   { id: 'settings', icon: Settings, label: 'Settings', path: '/settings' },
 ];
 
+/** Main sidebar left navigation component */
 export default function LeftNavigation() {
   const pathname = usePathname();
   const {
