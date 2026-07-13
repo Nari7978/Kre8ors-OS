@@ -13,6 +13,7 @@ function getHeaders(token?: string) {
 /**
  * Perform active credentials handshake validation against OnlyFans API
  */
+/** verifySession JSDoc annotation helper */
 export async function verifySession(creds: {
   authId: string;
   sessCookie: string;
