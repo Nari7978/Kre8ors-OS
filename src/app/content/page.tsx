@@ -8,6 +8,7 @@ import {
   AlertCircle, RefreshCw, X, CheckCircle2, ChevronLeft, ChevronRight, Play, Send
 } from 'lucide-react';
 
+/** ContentQueuePage dashboard layout helper */
 export default function ContentQueuePage() {
   const { activeCreator, activeSubMenu } = useGlobalStore();
   const [posts, setPosts] = useState<Post[]>([]);
