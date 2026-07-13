@@ -32,6 +32,7 @@ export const getTagStyles = (tag: string) => {
   return colors[hash % colors.length];
 };
 
+/** Dashboard for direct chat message operations */
 export default function MessagesPage() {
   const { activeCreator, chatCache, setChatCache, activeFilter, activeSubMenu, setActiveCreatorFans } = useGlobalStore();
   const [creators, setCreators] = useState<Creator[]>([]);
