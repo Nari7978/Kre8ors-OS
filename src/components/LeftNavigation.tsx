@@ -236,12 +236,12 @@ export default function LeftNavigation() {
 
   const handleShiftClock = async () => {
     try {
-      const res = await fetch('/api/analytics/shift', {
+      const res = await fetch('/api/shifts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: isShiftActive ? 'clock_out' : 'clock_in',
-          shiftId: activeShiftId || undefined
+          action: isShiftActive ? 'end' : 'start',
+          
         })
       });
       if (res.ok) {
@@ -249,7 +249,7 @@ export default function LeftNavigation() {
         if (isShiftActive) {
           endShift();
         } else {
-          startShift(data.shiftId || 'dummy');
+          startShift(data.shift?.id || 'dummy');
         }
       }
     } catch (e) {
