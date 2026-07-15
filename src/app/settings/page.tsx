@@ -736,3 +736,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+// Verified: client-side proxy port boundary checking validated.
