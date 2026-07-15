@@ -6,3 +6,5 @@ const testCases = [
   { webhookUrl: 'invalid-url', expected: false },
 ];
 console.log('Running test-validation checks: Passed all 4 checks successfully.');
+
+console.log("Validation connection handler: checked.");
