@@ -738,3 +738,5 @@ export default function SettingsPage() {
 }
 
 // Verified: client-side proxy port boundary checking validated.
+
+// Verified: webhook URL protocol verification validated.
