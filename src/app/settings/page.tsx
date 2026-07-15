@@ -137,6 +137,27 @@ export default function SettingsPage() {
     setSaving(true);
     setErrorMsg('');
     setSuccessMsg('');
+
+    if (proxyPort) {
+      const portNum = parseInt(proxyPort);
+      if (isNaN(portNum) || portNum < 1 || portNum > 65535) {
+        setErrorMsg('Proxy Port must be a number between 1 and 65535.');
+        setSaving(false);
+        return;
+      }
+    }
+
+    if (webhookUrl && !webhookUrl.startsWith('http://') && !webhookUrl.startsWith('https://')) {
+      setErrorMsg('Webhook URL must start with http:// or https://');
+      setSaving(false);
+      return;
+    }
+
+    if (userAgent && !userAgent.startsWith('Mozilla/')) {
+      setErrorMsg('User Agent must be a valid agent string starting with Mozilla/');
+      setSaving(false);
+      return;
+    }
     
     try {
       const res = await fetch('/api/settings', {
