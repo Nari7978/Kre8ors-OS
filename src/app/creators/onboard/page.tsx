@@ -28,11 +28,11 @@ export default function OnboardCreatorPage() {
 
   // Validate credentials step
   const isCredentialsValid = 
-    formData.displayName.trim().length > 0 &&
-    formData.username.trim().length > 0 &&
+    formData.displayName.trim().length >= 2 &&
+    formData.username.trim().length >= 2 &&
     formData.authId.trim().length > 0 &&
-    formData.sessCookie.trim().length > 0 &&
-    formData.userAgent.trim().length > 0;
+    formData.sessCookie.trim().length >= 10 &&
+    formData.userAgent.trim().startsWith('Mozilla/');
 
   async function handleTestConnection() {
     setLoading(true);
