@@ -379,3 +379,5 @@ export default function OnboardCreatorPage() {
     </div>
   );
 }
+
+// Spacing optimization adjustments for onboarding wizard container.
