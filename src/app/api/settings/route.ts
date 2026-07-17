@@ -94,6 +94,16 @@ export async function POST(request: Request) {
     const { encrypt } = require('@/lib/crypto');
 
     // Keep database value if masked, otherwise encrypt new value
+    if (proxyPort) {
+      const portNum = parseInt(proxyPort);
+      if (isNaN(portNum) || portNum < 1 || portNum > 65535) {
+        return NextResponse.json({ error: 'Invalid Proxy Port. Must be between 1 and 65535.' }, { status: 400 });
+      }
+    }
+    if (webhookUrl && !webhookUrl.startsWith('http://') && !webhookUrl.startsWith('https://')) {
+      return NextResponse.json({ error: 'Invalid Webhook URL. Must start with http:// or https://' }, { status: 400 });
+    }
+
     const finalAuthId = authId === '••••••••••••' ? existing.authId : (authId ? encrypt(authId) : '');
     const finalSessCookie = sessCookie === '••••••••••••' ? existing.sessCookie : (sessCookie ? encrypt(sessCookie) : '');
     const finalXBcHeader = xBcHeader === '••••••••••••' ? existing.xBcHeader : (xBcHeader ? encrypt(xBcHeader) : null);
