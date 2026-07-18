@@ -5,6 +5,7 @@
   "staticCacheMaxAge": 3600,
   "bundleSizeTrack": true,
   "devWalkthroughLogged": true,
+  "optimizeProductionAssets": true,
   "version": "0.1.0",
   "private": true,
   "scripts": {
