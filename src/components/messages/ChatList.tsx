@@ -11,6 +11,17 @@ interface ChatListProps {
 }
 
 export default function ChatList({ fans, selectedFan, setSelectedFan, loadingFans }: ChatListProps) {
+  const [readChatIds, setReadChatIds] = React.useState(new Set());
+
+  React.useEffect(() => {
+    if (selectedFan) {
+      setReadChatIds((prev) => {
+        const next = new Set(prev);
+        next.add(selectedFan.id);
+        return next;
+      });
+    }
+  }, [selectedFan]);
   return (
     <div className="flex-1 overflow-y-auto bg-[#13161D]">
       {loadingFans ? (
@@ -27,7 +38,8 @@ export default function ChatList({ fans, selectedFan, setSelectedFan, loadingFan
               // Mock states for demo indicators
               const isPinned = index === 0 || index === 2;
               const isMuted = index === 1;
-              const unreadCount = index === 0 ? '4+' : index === 2 ? '2' : null;
+              const hasBeenRead = readChatIds.has(fan.id) || isSelected;
+              const unreadCount = hasBeenRead ? null : (index === 0 ? '4+' : index === 2 ? '2' : null);
 
               return (
                 <motion.div
