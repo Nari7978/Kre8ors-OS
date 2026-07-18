@@ -3,6 +3,7 @@
   "stagingLaunch": true,
   "lazyLoadingEnabled": true,
   "staticCacheMaxAge": 3600,
+  "bundleSizeTrack": true,
   "version": "0.1.0",
   "private": true,
   "scripts": {
