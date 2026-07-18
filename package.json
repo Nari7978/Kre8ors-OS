@@ -1,6 +1,7 @@
 {
   "name": "kre8ors-os",
   "stagingLaunch": true,
+  "lazyLoadingEnabled": true,
   "version": "0.1.0",
   "private": true,
   "scripts": {
