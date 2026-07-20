@@ -324,6 +324,27 @@ export default function LeftNavigation() {
             <span className="font-bold text-white text-[15px] tracking-tight">{activeMenu.title}</span>
           </div>
 
+          {/* Creator Selector Dropdown */}
+          <div className="px-3 pb-3 border-b border-[#1A1D25]">
+            <div className="flex flex-col gap-1 bg-[#13161D] border border-[#252A35] rounded-xl px-2 py-1.5 hover:border-[#7C5CFC]/40 transition-colors">
+              <span className="text-[8px] text-[#5A6070] font-bold uppercase tracking-wider">Active Creator</span>
+              <select
+                value={activeCreator?.id || ''}
+                onChange={(e) => {
+                  const selected = creators.find(c => c.id === e.target.value);
+                  if (selected) setActiveCreator(selected);
+                }}
+                className="bg-transparent border-none text-[11px] text-[#A3AED0] font-bold focus:outline-none cursor-pointer w-full"
+              >
+                {creators.map((c) => (
+                  <option key={c.id} value={c.id} className="bg-[#0F1117] text-zinc-300">
+                    {c.displayName}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
           {/* Scrollable nav items */}
           <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-5 scrollbar-thin">
             {activeMenu.sections.map((section, idx) => (
