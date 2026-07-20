@@ -1,0 +1,14 @@
+{
+  "auth_mock_933780": {
+    "attemptId": "auth_mock_933780",
+    "status": "authenticated",
+    "pollCount": 10,
+    "displayName": "SophiaTest Creator",
+    "username": "sophia_oftestcreator",
+    "authId": "mock_auth_id",
+    "sessCookie": "mock_sess_cookie",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+    "xBcHeader": "mock_x_bc_header",
+    "createdAt": "2026-07-12T11:31:03.985Z"
+  }
+}

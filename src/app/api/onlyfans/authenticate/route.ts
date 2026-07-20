@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     const configPath = path.resolve(process.cwd(), 'prisma', 'auth_attempts.json');
 
     // If API Key is present, make real request to OnlyFansAPI.com
-    if (apiKey && apiKey !== 'your_onlyfansapi_key' && !sessCookie?.includes('mock')) {
+    if (apiKey && apiKey !== 'your_onlyfansapi_key' && !apiKey.includes('mock') && !sessCookie?.includes('mock')) {
       try {
         const payload: Record<string, any> = {
           auth_type: authType,

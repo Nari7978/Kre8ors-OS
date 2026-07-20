@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     const configPath = path.resolve(process.cwd(), 'prisma', 'auth_attempts.json');
 
     // Real API polling
-    if (apiKey && apiKey !== 'your_onlyfansapi_key' && !attemptId.startsWith('auth_mock_')) {
+    if (apiKey && apiKey !== 'your_onlyfansapi_key' && !apiKey.includes('mock') && !attemptId.startsWith('auth_mock_')) {
       try {
         const response = await fetch(`https://app.onlyfansapi.com/api/authenticate/${attemptId}`, {
           method: 'GET',
@@ -130,7 +130,7 @@ export async function PUT(request: Request) {
     const configPath = path.resolve(process.cwd(), 'prisma', 'auth_attempts.json');
 
     // Real API 2FA Submission
-    if (apiKey && apiKey !== 'your_onlyfansapi_key' && !attemptId.startsWith('auth_mock_')) {
+    if (apiKey && apiKey !== 'your_onlyfansapi_key' && !apiKey.includes('mock') && !attemptId.startsWith('auth_mock_')) {
       try {
         const response = await fetch(`https://app.onlyfansapi.com/api/authenticate/${attemptId}`, {
           method: 'PUT',
