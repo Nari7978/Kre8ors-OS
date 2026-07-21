@@ -41,7 +41,7 @@ export async function GET(request: Request) {
               });
 
               if (!existing) {
-                await db.creator.create({
+                const newCreator = await db.creator.create({
                   data: {
                     displayName: data.session.displayName || data.session.name || 'Verified Creator',
                     username: data.session.username,
@@ -54,6 +54,9 @@ export async function GET(request: Request) {
                     avatarUrl: data.session.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${data.session.username}`
                   }
                 });
+
+                const { seedCreatorMockData } = require('@/lib/creator-seeder');
+                await seedCreatorMockData(newCreator.id);
               }
             }
           }
@@ -178,7 +181,7 @@ export async function PUT(request: Request) {
       });
 
       if (!existing) {
-        await db.creator.create({
+        const newCreator = await db.creator.create({
           data: {
             displayName: attempt.displayName,
             username: attempt.username,
@@ -191,6 +194,9 @@ export async function PUT(request: Request) {
             avatarUrl: `https://api.dicebear.com/7.x/adventurer/svg?seed=${attempt.username}`
           }
         });
+
+        const { seedCreatorMockData } = require('@/lib/creator-seeder');
+        await seedCreatorMockData(newCreator.id);
       }
     }
 

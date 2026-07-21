@@ -65,6 +65,10 @@ export async function POST(request: Request) {
       },
     });
 
+    // Seed mock chats so they show up instantly in workspace
+    const { seedCreatorMockData } = require('@/lib/creator-seeder');
+    await seedCreatorMockData(newCreator.id);
+
     return NextResponse.json({
       success: true,
       creator: newCreator,
