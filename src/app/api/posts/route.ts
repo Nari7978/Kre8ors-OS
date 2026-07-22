@@ -16,6 +16,36 @@ export async function GET(request: Request) {
       );
     }
 
+    // Try live OnlyFans API call first
+    const creator = await db.creator.findUnique({
+      where: { id: creatorId }
+    });
+
+    if (creator && process.env.ONLYFANS_API_KEY && !process.env.ONLYFANS_API_KEY.includes('mock') && !creator.sessCookie.includes('mock')) {
+      try {
+        const { OnlyFansApiClient } = require('@/lib/onlyfans-api');
+        const client = new OnlyFansApiClient(creator.username);
+        const apiRes = await client.getPosts();
+        if (apiRes && Array.isArray(apiRes.data)) {
+          const formattedPosts = apiRes.data.map((p: any, idx: number) => ({
+            id: p.id?.toString() || `post_${idx}`,
+            ofPostId: p.id?.toString() || `post_of_${idx}`,
+            creatorId,
+            text: p.text || '',
+            mediaUrls: p.media?.map((m: any) => m.url) || [],
+            scheduledFor: p.scheduledFor ? new Date(p.scheduledFor) : null,
+            status: p.status || 'PUBLISHED',
+            price: p.price || 0.00,
+            createdAt: new Date(p.createdAt || Date.now()),
+            updatedAt: new Date(p.updatedAt || Date.now()),
+          }));
+          return NextResponse.json(formattedPosts);
+        }
+      } catch (err: any) {
+        console.warn('GET /api/posts OnlyFans API call failed, falling back to local DB:', err.message);
+      }
+    }
+
     const posts = await db.post.findMany({
       where: {
         creatorId,

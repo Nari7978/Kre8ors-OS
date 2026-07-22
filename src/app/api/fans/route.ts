@@ -41,6 +41,56 @@ export async function GET(request: Request) {
       return NextResponse.json(Array.from(uniqueTags));
     }
 
+    // Try live OnlyFans API call first
+    const creator = await db.creator.findUnique({
+      where: { id: creatorId }
+    });
+
+    if (creator && process.env.ONLYFANS_API_KEY && !process.env.ONLYFANS_API_KEY.includes('mock') && !creator.sessCookie.includes('mock')) {
+      try {
+        const { OnlyFansApiClient } = require('@/lib/onlyfans-api');
+        const client = new OnlyFansApiClient(creator.username);
+        const apiRes = await client.getFans();
+        if (apiRes && Array.isArray(apiRes.data)) {
+          const formattedFans = apiRes.data.map((f: any) => ({
+            id: f.id?.toString() || `fan_${Math.random()}`,
+            ofId: f.id?.toString() || `of_${Math.random()}`,
+            creatorId,
+            username: f.username || 'unknown',
+            displayName: f.displayName || f.name || 'OnlyFans Fan',
+            avatarUrl: f.avatarUrl || f.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150',
+            isSubscriber: f.subscribed || true,
+            totalSpent: f.totalSpent || 0.00,
+            notes: f.notes || '',
+            customTags: JSON.stringify(f.tags || []),
+            subscribedAt: new Date(f.subscribedAt || Date.now()),
+            expiresAt: f.expiresAt ? new Date(f.expiresAt) : null,
+          }));
+          
+          for (const f of formattedFans) {
+            await db.fan.upsert({
+              where: {
+                ofId_creatorId: {
+                  ofId: f.ofId,
+                  creatorId: f.creatorId,
+                }
+              },
+              update: {
+                displayName: f.displayName,
+                avatarUrl: f.avatarUrl,
+                isSubscriber: f.isSubscriber,
+                totalSpent: f.totalSpent,
+              },
+              create: f,
+            });
+          }
+          return NextResponse.json(formattedFans);
+        }
+      } catch (err: any) {
+        console.warn('GET /api/fans OnlyFans API call failed, falling back to local DB:', err.message);
+      }
+    }
+
     const search = searchParams.get('search');
     const isSubscriber = searchParams.get('isSubscriber');
     const minSpent = searchParams.get('minSpent');

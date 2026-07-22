@@ -19,6 +19,41 @@ export async function GET(request: Request) {
       );
     }
 
+    // Try live OnlyFans API call first
+    const creator = await db.creator.findUnique({
+      where: { id: creatorId }
+    });
+
+    if (creator && process.env.ONLYFANS_API_KEY && !process.env.ONLYFANS_API_KEY.includes('mock') && !creator.sessCookie.includes('mock')) {
+      try {
+        const { OnlyFansApiClient } = require('@/lib/onlyfans-api');
+        const client = new OnlyFansApiClient(creator.username);
+        const apiRes = await client.getChatMessages(fanId);
+        if (apiRes && Array.isArray(apiRes.data)) {
+          const formattedMessages = apiRes.data.map((m: any, idx: number) => ({
+            id: m.id || `msg_api_${idx}`,
+            ofMessageId: m.id || `msg_api_${idx}`,
+            creatorId,
+            fanId,
+            direction: m.fromUser?.id?.toString() === creator.username ? 'out' : 'in',
+            text: m.text?.replace(/<[^>]*>/g, '') || '',
+            mediaUrls: m.media?.map((med: any) => med.url) || [],
+            isPpv: !m.isFree,
+            price: m.price || 0,
+            isPurchased: m.isFree || false,
+            sentAt: new Date(m.createdAt || Date.now()),
+          }));
+          return NextResponse.json({
+            messages: formattedMessages.reverse(),
+            hasMore: false,
+            nextCursor: null,
+          });
+        }
+      } catch (err: any) {
+        console.warn('GET /api/messages OnlyFans API call failed, falling back to local DB:', err.message);
+      }
+    }
+
     const where: any = {
       creatorId,
       fanId,
@@ -87,8 +122,24 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generate standard mock OnlyFans message ID
-    const ofMessageId = 'msg_mock_' + Math.random().toString(36).substring(2, 11);
+    const creator = await db.creator.findUnique({
+      where: { id: creatorId }
+    });
+
+    let ofMessageId = 'msg_mock_' + Math.random().toString(36).substring(2, 11);
+
+    if (creator && process.env.ONLYFANS_API_KEY && !process.env.ONLYFANS_API_KEY.includes('mock') && !creator.sessCookie.includes('mock')) {
+      try {
+        const { OnlyFansApiClient } = require('@/lib/onlyfans-api');
+        const client = new OnlyFansApiClient(creator.username);
+        const apiRes = await client.sendMessage(fanId, text);
+        if (apiRes && apiRes.data && apiRes.data.id) {
+          ofMessageId = apiRes.data.id.toString();
+        }
+      } catch (err: any) {
+        console.warn('POST /api/messages OnlyFans API send failed, falling back to mock delivery:', err.message);
+      }
+    }
     
     // If PPV price is set, message is locked (isPurchased = false)
     const isPpv = price > 0;
