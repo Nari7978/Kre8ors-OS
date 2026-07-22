@@ -89,6 +89,48 @@ export default function ContentQueuePage() {
     }
   }, [activeCreator]);
 
+  // Post Labels & Comments States
+  const [featureMode, setFeatureMode] = useState<'posts' | 'labels' | 'comments'>('posts');
+  const [labels, setLabels] = useState<string[]>([]);
+  const [newLabelName, setNewLabelName] = useState('');
+  const [loadingLabels, setLoadingLabels] = useState(false);
+
+  const [comments, setComments] = useState<{ id: string; postId: string; text: string; username: string; createdAt: string }[]>([]);
+  const [newCommentText, setNewCommentText] = useState('');
+  const [loadingComments, setLoadingComments] = useState(false);
+
+  const loadLabels = useCallback(async () => {
+    if (!activeCreator) return;
+    setLoadingLabels(true);
+    try {
+      const res = await fetch(`/api/posts/labels?creatorId=${activeCreator.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setLabels(data || []);
+      }
+    } catch (err) {
+      console.error('Error loading post labels:', err);
+    } finally {
+      setLoadingLabels(false);
+    }
+  }, [activeCreator]);
+
+  const loadComments = useCallback(async () => {
+    if (!activeCreator) return;
+    setLoadingComments(true);
+    try {
+      const res = await fetch(`/api/posts/comments?creatorId=${activeCreator.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setComments(data || []);
+      }
+    } catch (err) {
+      console.error('Error loading comments:', err);
+    } finally {
+      setLoadingComments(false);
+    }
+  }, [activeCreator]);
+
   useEffect(() => {
     let active = true;
 
@@ -96,13 +138,15 @@ export default function ContentQueuePage() {
       if (active) {
         loadPosts();
         loadMedia();
+        loadLabels();
+        loadComments();
       }
     });
 
     return () => {
       active = false;
     };
-  }, [loadPosts, loadMedia]);
+  }, [loadPosts, loadMedia, loadLabels, loadComments]);
 
   // Handle post scheduling submit
   const handleComposeSubmit = async (e: React.FormEvent) => {
@@ -238,8 +282,44 @@ export default function ContentQueuePage() {
 
   return (
     <div className="flex-1 overflow-y-auto bg-zinc-950 p-6 md:p-8 text-white space-y-8 max-w-7xl mx-auto w-full">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800/60 pb-6">
+      {/* Feature Navigation Tabs */}
+      <div className="flex gap-4 border-b border-zinc-800 pb-3">
+        <button
+          onClick={() => setFeatureMode('posts')}
+          className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${
+            featureMode === 'posts'
+              ? 'bg-[#7C5CFC]/15 text-[#7C5CFC] border border-[#7C5CFC]/30 shadow-md shadow-[#7C5CFC]/10'
+              : 'text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          Posts Queue
+        </button>
+        <button
+          onClick={() => setFeatureMode('labels')}
+          className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${
+            featureMode === 'labels'
+              ? 'bg-[#7C5CFC]/15 text-[#7C5CFC] border border-[#7C5CFC]/30 shadow-md shadow-[#7C5CFC]/10'
+              : 'text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          Post Labels (OnlyFans API)
+        </button>
+        <button
+          onClick={() => setFeatureMode('comments')}
+          className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${
+            featureMode === 'comments'
+              ? 'bg-[#7C5CFC]/15 text-[#7C5CFC] border border-[#7C5CFC]/30 shadow-md shadow-[#7C5CFC]/10'
+              : 'text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          Post Comments (OnlyFans API)
+        </button>
+      </div>
+
+      {featureMode === 'posts' && (
+        <>
+        {/* Page Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800/60 pb-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-zinc-100">
             Publishing Scheduler
@@ -933,6 +1013,151 @@ export default function ContentQueuePage() {
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+      </>
+      )}
+
+      {/* Post Labels View */}
+      {featureMode === 'labels' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-left">
+          {/* Create Label Column */}
+          <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-4">
+            <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
+              Create Post Label
+            </h2>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!newLabelName.trim()) return;
+                try {
+                  const res = await fetch('/api/posts/labels', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ creatorId: activeCreator.id, name: newLabelName }),
+                  });
+                  if (res.ok) {
+                    setNewLabelName('');
+                    loadLabels();
+                  }
+                } catch (err) {
+                  console.error('Error creating post label:', err);
+                }
+              }}
+              className="space-y-4"
+            >
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-zinc-400">Label Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Summer Promo"
+                  value={newLabelName}
+                  onChange={(e) => setNewLabelName(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-300 focus:outline-none focus:border-[#7C5CFC]"
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full py-2.5 px-4 bg-[#7C5CFC] hover:bg-[#7C5CFC]/80 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
+              >
+                Create Label [POST]
+              </button>
+            </form>
+          </div>
+
+          {/* List Labels Column */}
+          <div className="lg:col-span-2 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-4">
+            <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
+              Active Post Labels [GET]
+            </h2>
+            {loadingLabels ? (
+              <div className="py-12 flex justify-center"><RefreshCw className="h-6 w-6 animate-spin text-[#7C5CFC]" /></div>
+            ) : labels.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {labels.map((label, idx) => (
+                  <div key={idx} className="bg-zinc-950 border border-[#252A35] p-4 rounded-xl flex items-center justify-between">
+                    <span className="text-xs font-bold text-zinc-300">{label}</span>
+                    <span className="text-[9px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded uppercase tracking-wider">Synced</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-zinc-500 text-xs">No active post labels found.</div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Post Comments View */}
+      {featureMode === 'comments' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-left">
+          {/* Add Comment Column */}
+          <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-4">
+            <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
+              Add Post Comment
+            </h2>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!newCommentText.trim()) return;
+                try {
+                  const res = await fetch('/api/posts/comments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ creatorId: activeCreator.id, postId: 'all', text: newCommentText }),
+                  });
+                  if (res.ok) {
+                    setNewCommentText('');
+                    loadComments();
+                  }
+                } catch (err) {
+                  console.error('Error adding comment:', err);
+                }
+              }}
+              className="space-y-4"
+            >
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-zinc-400">Comment Text</label>
+                <textarea
+                  placeholder="Type your comment..."
+                  rows={4}
+                  value={newCommentText}
+                  onChange={(e) => setNewCommentText(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-300 focus:outline-none focus:border-[#7C5CFC]"
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full py-2.5 px-4 bg-[#7C5CFC] hover:bg-[#7C5CFC]/80 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
+              >
+                Add Comment [POST]
+              </button>
+            </form>
+          </div>
+
+          {/* List Comments Column */}
+          <div className="lg:col-span-2 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-4">
+            <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
+              Post Comments [GET]
+            </h2>
+            {loadingComments ? (
+              <div className="py-12 flex justify-center"><RefreshCw className="h-6 w-6 animate-spin text-[#7C5CFC]" /></div>
+            ) : comments.length > 0 ? (
+              <div className="space-y-3">
+                {comments.map((comment) => (
+                  <div key={comment.id} className="bg-zinc-950 border border-[#252A35] p-4 rounded-xl space-y-2">
+                    <div className="flex justify-between items-center text-[10px] text-zinc-500">
+                      <span className="font-extrabold text-blue-450">@{comment.username}</span>
+                      <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <p className="text-xs text-zinc-300 font-medium">{comment.text}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-zinc-500 text-xs">No comments found.</div>
+            )}
           </div>
         </div>
       )}

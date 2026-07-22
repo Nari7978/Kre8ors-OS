@@ -52,3 +52,6 @@ Thumbs.db
 *.db-journal
 *.db-shm
 *.db-wal
+
+# Mock Config Cache
+.gemini/

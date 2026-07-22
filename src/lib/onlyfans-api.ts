@@ -136,4 +136,41 @@ export class OnlyFansApiClient {
     });
     return response.data;
   }
+
+  // GET /api/{account}/posts/labels
+  async getPostLabels() {
+    const response = await axios.get(`${BASE_URL}/${this.accountId}/posts/labels`, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // POST /api/{account}/posts/labels
+  async createPostLabel(name: string) {
+    const response = await axios.post(`${BASE_URL}/${this.accountId}/posts/labels`, {
+      name,
+    }, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // GET /api/{account}/posts/comments
+  async getPostComments() {
+    const response = await axios.get(`${BASE_URL}/${this.accountId}/posts/comments`, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // POST /api/{account}/posts/comments
+  async createPostComment(postId: string, text: string) {
+    const response = await axios.post(`${BASE_URL}/${this.accountId}/posts/comments`, {
+      postId,
+      text,
+    }, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
 }
