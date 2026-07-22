@@ -177,6 +177,58 @@ export default function MediaVaultPage() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   };
 
+  // CDN Media Vault sub-features Tab states
+  const [vaultTab, setVaultTab] = useState<'browse' | 'upload' | 'download' | 'status'>('browse');
+  const [searchCdnMediaId, setSearchCdnMediaId] = useState('');
+  const [downloadedMediaInfo, setDownloadedMediaInfo] = useState<any>(null);
+  const [loadingDownload, setLoadingDownload] = useState(false);
+  const [downloadError, setDownloadError] = useState('');
+  const [uploadStatusList, setUploadStatusList] = useState<any[]>([]);
+  const [loadingStatus, setLoadingStatus] = useState(false);
+
+  const loadUploadStatuses = async () => {
+    if (!activeCreator) return;
+    setLoadingStatus(true);
+    try {
+      const res = await fetch(`/api/media/status?creatorId=${activeCreator.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setUploadStatusList(data || []);
+      }
+    } catch (err) {
+      console.error('Error loading upload statuses:', err);
+    } finally {
+      setLoadingStatus(false);
+    }
+  };
+
+  const handleCdnDownload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeCreator || !searchCdnMediaId.trim()) return;
+    setLoadingDownload(true);
+    setDownloadError('');
+    setDownloadedMediaInfo(null);
+    try {
+      const res = await fetch(`/api/media/download?creatorId=${activeCreator.id}&mediaId=${searchCdnMediaId.trim()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setDownloadedMediaInfo(data);
+      } else {
+        setDownloadError('CDN Media asset not found or access denied.');
+      }
+    } catch (err) {
+      setDownloadError('Failed to fetch details from OnlyFans CDN.');
+    } finally {
+      setLoadingDownload(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeCreator && vaultTab === 'status') {
+      loadUploadStatuses();
+    }
+  }, [activeCreator, vaultTab]);
+
   return (
     <div className="flex-1 flex flex-col md:flex-row bg-zinc-950 overflow-hidden text-white w-full h-full">
       {/* Sidebar Folders list */}
@@ -267,8 +319,53 @@ export default function MediaVaultPage() {
           </div>
         </div>
 
-        {/* Media Grid View */}
-        <div className="flex-1 overflow-y-auto p-6 min-h-0">
+        {/* Media Vault Sub-tabs */}
+        <div className="flex gap-4 border-b border-zinc-800 px-6 pt-3 pb-3 bg-zinc-900/10">
+          <button
+            onClick={() => setVaultTab('browse')}
+            className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${
+              vaultTab === 'browse'
+                ? 'bg-[#7C5CFC]/15 text-[#7C5CFC] border border-[#7C5CFC]/30 shadow-md shadow-[#7C5CFC]/10'
+                : 'text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            Browse Vault
+          </button>
+          <button
+            onClick={() => setVaultTab('upload')}
+            className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${
+              vaultTab === 'upload'
+                ? 'bg-[#7C5CFC]/15 text-[#7C5CFC] border border-[#7C5CFC]/30 shadow-md shadow-[#7C5CFC]/10'
+                : 'text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            Upload to CDN (POST)
+          </button>
+          <button
+            onClick={() => setVaultTab('download')}
+            className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${
+              vaultTab === 'download'
+                ? 'bg-[#7C5CFC]/15 text-[#7C5CFC] border border-[#7C5CFC]/30 shadow-md shadow-[#7C5CFC]/10'
+                : 'text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            Download CDN Asset (GET)
+          </button>
+          <button
+            onClick={() => setVaultTab('status')}
+            className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${
+              vaultTab === 'status'
+                ? 'bg-[#7C5CFC]/15 text-[#7C5CFC] border border-[#7C5CFC]/30 shadow-md shadow-[#7C5CFC]/10'
+                : 'text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            Upload Status (GET)
+          </button>
+        </div>
+
+        {vaultTab === 'browse' && (
+          /* Media Grid View */
+          <div className="flex-1 overflow-y-auto p-6 min-h-0">
           {loading ? (
             <div className="h-full flex items-center justify-center text-zinc-500 text-sm gap-2">
               <RefreshCw className="h-6 w-6 animate-spin text-blue-500" />
@@ -345,6 +442,189 @@ export default function MediaVaultPage() {
             </div>
           )}
         </div>
+      )}
+
+      {/* Upload CDN Tab */}
+      {vaultTab === 'upload' && (
+        <div className="flex-1 overflow-y-auto p-6 min-h-0 space-y-6 text-left max-w-xl">
+          <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-4">
+            <h3 className="text-sm font-bold text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
+              Upload Media to OnlyFans CDN [POST]
+            </h3>
+            <form onSubmit={handleSimulateUpload} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-zinc-400">File Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. outfit_mirror_01.jpg"
+                    value={fileName}
+                    onChange={(e) => setFileName(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-300 focus:outline-none focus:border-[#7C5CFC]"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-zinc-400">Folder Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Outfits"
+                    value={folderNameInput}
+                    onChange={(e) => setFolderNameInput(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-300 focus:outline-none focus:border-[#7C5CFC]"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-zinc-400 font-sans">Remote Asset URL</label>
+                <input
+                  type="url"
+                  required
+                  placeholder="https://images.unsplash.com/..."
+                  value={fileUrl}
+                  onChange={(e) => setFileUrl(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-300 focus:outline-none focus:border-[#7C5CFC]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-zinc-400">File Type</label>
+                  <select
+                    value={fileType}
+                    onChange={(e) => setFileType(e.target.value as 'image' | 'video')}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-300 focus:outline-none focus:border-[#7C5CFC] cursor-pointer"
+                  >
+                    <option value="image">Image</option>
+                    <option value="video">Video</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-zinc-400">File Size (MB)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0.1"
+                    required
+                    value={customSizeMB}
+                    onChange={(e) => setCustomSizeMB(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-300 focus:outline-none focus:border-[#7C5CFC] font-semibold"
+                  />
+                </div>
+              </div>
+
+              {validationError && (
+                <div className="text-red-400 text-xs font-bold">{validationError}</div>
+              )}
+
+              <button
+                type="submit"
+                disabled={uploadLoading}
+                className="w-full py-2.5 px-4 bg-[#7C5CFC] hover:bg-[#7C5CFC]/80 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer border-0"
+              >
+                {uploadLoading ? 'Uploading CDN logs...' : 'Upload Media asset [POST]'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Download CDN Tab */}
+      {vaultTab === 'download' && (
+        <div className="flex-1 overflow-y-auto p-6 min-h-0 space-y-6 text-left max-w-xl">
+          <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-4">
+            <h3 className="text-sm font-bold text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
+              Download CDN Media Asset [GET]
+            </h3>
+            <form onSubmit={handleCdnDownload} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-zinc-400">Media / Asset ID</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. med_982739"
+                  value={searchCdnMediaId}
+                  onChange={(e) => setSearchCdnMediaId(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-[#7C5CFC] focus:outline-none focus:border-[#7C5CFC] font-extrabold"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loadingDownload}
+                className="w-full py-2.5 px-4 bg-[#7C5CFC] hover:bg-[#7C5CFC]/80 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer border-0"
+              >
+                {loadingDownload ? 'Retrieving CDN logs...' : 'Retrieve Media Details [GET]'}
+              </button>
+            </form>
+
+            {downloadError && (
+              <div className="text-red-400 text-xs font-bold">{downloadError}</div>
+            )}
+
+            {downloadedMediaInfo && (
+              <div className="bg-zinc-950 border border-zinc-850 p-4 rounded-xl space-y-3 mt-4">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-extrabold text-[#7C5CFC]">{downloadedMediaInfo.name}</span>
+                  <span className="text-[9px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded uppercase tracking-wider font-semibold">Active</span>
+                </div>
+                <div className="aspect-video w-full overflow-hidden rounded-lg border border-zinc-800">
+                  <img src={downloadedMediaInfo.url} className="w-full h-full object-cover" alt="downloaded preview" />
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-[10px] text-zinc-500 font-semibold border-t border-zinc-900 pt-2">
+                  <span>ID: {downloadedMediaInfo.mediaId}</span>
+                  <span>Size: {formatBytes(downloadedMediaInfo.fileSize)}</span>
+                  <span className="col-span-2">Uploaded: {new Date(downloadedMediaInfo.uploadedAt).toLocaleString()}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Upload status Tab */}
+      {vaultTab === 'status' && (
+        <div className="flex-1 overflow-y-auto p-6 min-h-0 space-y-6 text-left">
+          <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
+            OnlyFans CDN Upload Queue Logs [GET]
+          </h2>
+          {loadingStatus ? (
+            <div className="py-12 flex justify-center"><RefreshCw className="h-6 w-6 animate-spin text-[#7C5CFC]" /></div>
+          ) : uploadStatusList.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {uploadStatusList.map((status) => (
+                <div key={status.uploadId} className="bg-zinc-950 border border-zinc-850 p-4 rounded-xl flex flex-col justify-between h-36">
+                  <div>
+                    <div className="flex justify-between items-start">
+                      <h4 className="text-xs font-bold text-zinc-200 truncate max-w-[70%]">{status.name}</h4>
+                      <span className={`text-[8px] font-black px-1.5 py-0.5 rounded border uppercase ${
+                        status.status === 'COMPLETED'
+                          ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                          : 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+                      }`}>
+                        {status.status}
+                      </span>
+                    </div>
+                    <p className="text-[9px] text-zinc-500 mt-1">Upload ID: {status.uploadId}</p>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-[10px] text-zinc-400 font-bold mb-1">
+                      <span>Progress</span>
+                      <span>{status.progress}</span>
+                    </div>
+                    <div className="w-full bg-zinc-900 rounded-full h-1.5 overflow-hidden">
+                      <div className="bg-[#7C5CFC] h-1.5 rounded-full" style={{ width: status.progress }} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-zinc-500 text-xs">No media upload tasks found.</div>
+          )}
+        </div>
+      )}
       </div>
 
       {/* Simulator Upload Modal Drawer */}

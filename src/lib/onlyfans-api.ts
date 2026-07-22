@@ -321,4 +321,28 @@ export class OnlyFansApiClient {
     });
     return response.data;
   }
+
+  // GET /api/{account}/queue
+  async getQueue() {
+    const response = await axios.get(`${BASE_URL}/${this.accountId}/queue`, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // GET /api/{account}/queue/count
+  async getQueueCount() {
+    const response = await axios.get(`${BASE_URL}/${this.accountId}/queue/count`, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // PUT /api/{account}/queue/{queue_id}
+  async publishQueueItem(queueId: string) {
+    const response = await axios.put(`${BASE_URL}/${this.accountId}/queue/${queueId}`, {}, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
 }

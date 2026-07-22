@@ -89,6 +89,22 @@ export default function ContentQueuePage() {
     }
   }, [activeCreator]);
 
+  // Queue Items Count state
+  const [queueCount, setQueueCount] = useState(0);
+
+  const loadQueueCount = useCallback(async () => {
+    if (!activeCreator) return;
+    try {
+      const res = await fetch(`/api/posts/queue?creatorId=${activeCreator.id}&countOnly=true`);
+      if (res.ok) {
+        const data = await res.json();
+        setQueueCount(data.count || 0);
+      }
+    } catch (err) {
+      console.error('Error loading queue count:', err);
+    }
+  }, [activeCreator]);
+
   // Post Labels & Comments States
   const [featureMode, setFeatureMode] = useState<'posts' | 'labels' | 'comments'>('posts');
   const [labels, setLabels] = useState<string[]>([]);
@@ -140,13 +156,14 @@ export default function ContentQueuePage() {
         loadMedia();
         loadLabels();
         loadComments();
+        loadQueueCount();
       }
     });
 
     return () => {
       active = false;
     };
-  }, [loadPosts, loadMedia, loadLabels, loadComments]);
+  }, [loadPosts, loadMedia, loadLabels, loadComments, loadQueueCount]);
 
   // Handle post scheduling submit
   const handleComposeSubmit = async (e: React.FormEvent) => {
@@ -207,19 +224,20 @@ export default function ContentQueuePage() {
 
   // Simulate immediate publishing for a scheduled post
   const handlePublishNow = async (postId: string) => {
+    if (!activeCreator) return;
     try {
-      const res = await fetch('/api/posts', {
-        method: 'PATCH',
+      const res = await fetch('/api/posts/queue', {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          postId,
-          action: 'publish_now',
+          creatorId: activeCreator.id,
+          queueId: postId,
         }),
       });
 
       if (res.ok) {
-        const updated = await res.json();
-        setPosts((prev) => prev.map((p) => (p.id === postId ? updated : p)));
+        loadPosts();
+        loadQueueCount();
       }
     } catch (err) {
       console.error('Error simulating immediate publish:', err);
@@ -286,13 +304,18 @@ export default function ContentQueuePage() {
       <div className="flex gap-4 border-b border-zinc-800 pb-3">
         <button
           onClick={() => setFeatureMode('posts')}
-          className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${
+          className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 ${
             featureMode === 'posts'
               ? 'bg-[#7C5CFC]/15 text-[#7C5CFC] border border-[#7C5CFC]/30 shadow-md shadow-[#7C5CFC]/10'
               : 'text-zinc-500 hover:text-zinc-300'
           }`}
         >
-          Posts Queue
+          <span>Posts Queue</span>
+          {queueCount > 0 && (
+            <span className="text-[10px] bg-[#7C5CFC]/20 text-[#7C5CFC] px-1.5 py-0.2 rounded-md font-black">
+              {queueCount}
+            </span>
+          )}
         </button>
         <button
           onClick={() => setFeatureMode('labels')}
