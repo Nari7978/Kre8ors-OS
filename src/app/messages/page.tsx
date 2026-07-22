@@ -452,6 +452,52 @@ export default function MessagesPage() {
     }
   };
 
+  const handleActionsSelect = async (action: string, msg: Message) => {
+    if (!activeCreator) return;
+    const msgAny = msg as any;
+    if (action === 'like') {
+      try {
+        const isCurrentlyLiked = msgAny.isLiked ?? false;
+        const res = await fetch('/api/messages/like', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            creatorId: activeCreator.id,
+            messageId: msg.id,
+            unlike: isCurrentlyLiked,
+          }),
+        });
+        if (res.ok) {
+          setMessages((prev) =>
+            prev.map((m) => (m.id === msg.id ? { ...m, isLiked: !isCurrentlyLiked } as any : m))
+          );
+        }
+      } catch (err) {
+        console.error('Error liking message:', err);
+      }
+    } else if (action === 'pin') {
+      try {
+        const isCurrentlyPinned = msgAny.isPinned ?? false;
+        const res = await fetch('/api/messages/pin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            creatorId: activeCreator.id,
+            messageId: msg.id,
+            unpin: isCurrentlyPinned,
+          }),
+        });
+        if (res.ok) {
+          setMessages((prev) =>
+            prev.map((m) => (m.id === msg.id ? { ...m, isPinned: !isCurrentlyPinned } as any : m))
+          );
+        }
+      } catch (err) {
+        console.error('Error pinning message:', err);
+      }
+    }
+  };
+
   // Save tags & notes
   const handleSaveNotes = async () => {
     if (!selectedFan) return;
@@ -568,6 +614,7 @@ export default function MessagesPage() {
           messagesEndRef={messagesEndRef}
           onUnlockMessage={handleUnlockMessage}
           unlockingMessageId={unlockingMessageId}
+          onActionsSelect={handleActionsSelect}
         />
         {selectedFan && (
           <MessageInput

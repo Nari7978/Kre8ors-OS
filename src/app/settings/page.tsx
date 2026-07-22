@@ -129,6 +129,67 @@ export default function SettingsPage() {
     loadPreferences();
   }, [activeCreator]);
 
+  // OnlyFans Settings state and handlers
+  const [settingsTab, setSettingsTab] = useState<'agency' | 'onlyfans'>('agency');
+  const [welcomeMessage, setWelcomeMessage] = useState('');
+  const [blockedCountries, setBlockedCountries] = useState('');
+  const [drmEnabled, setDrmEnabled] = useState(true);
+  const [loadingOF, setLoadingOF] = useState(false);
+
+  const loadOnlyFansSettings = async () => {
+    if (!activeCreator) return;
+    setLoadingOF(true);
+    try {
+      const res = await fetch(`/api/settings/onlyfans?creatorId=${activeCreator.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setWelcomeMessage(data.welcomeMessage || '');
+        setBlockedCountries(data.blockedCountries?.join(', ') || '');
+        setDrmEnabled(data.drmEnabled ?? true);
+      }
+    } catch (err) {
+      console.error('Error loading OnlyFans settings:', err);
+    } finally {
+      setLoadingOF(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeCreator && settingsTab === 'onlyfans') {
+      loadOnlyFansSettings();
+    }
+  }, [activeCreator, settingsTab]);
+
+  const handleSaveOnlyFansSetting = async (type: 'welcome' | 'blocked-countries' | 'drm', value: any) => {
+    if (!activeCreator) return;
+    setSaving(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+    try {
+      const res = await fetch('/api/settings/onlyfans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          creatorId: activeCreator.id,
+          type,
+          welcomeMessage: type === 'welcome' ? value : undefined,
+          blockedCountries: type === 'blocked-countries' ? value.split(',').map((s: string) => s.trim().toUpperCase()).filter(Boolean) : undefined,
+          drmEnabled: type === 'drm' ? value : undefined,
+        }),
+      });
+      if (res.ok) {
+        setSuccessMsg('OnlyFans setting saved successfully!');
+        loadOnlyFansSettings();
+      } else {
+        setErrorMsg('Failed to update OnlyFans setting.');
+      }
+    } catch (err) {
+      setErrorMsg('Error connecting to backend API.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // Handle Save
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -317,13 +378,39 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      {/* Secondary Settings Tabs */}
+      <div className="flex gap-4 border-b border-zinc-800 pb-3">
+        <button
+          onClick={() => setSettingsTab('agency')}
+          className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${
+            settingsTab === 'agency'
+              ? 'bg-[#7C5CFC]/15 text-[#7C5CFC] border border-[#7C5CFC]/30 shadow-md shadow-[#7C5CFC]/10'
+              : 'text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          Agency Core Settings
+        </button>
+        <button
+          onClick={() => setSettingsTab('onlyfans')}
+          className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${
+            settingsTab === 'onlyfans'
+              ? 'bg-[#7C5CFC]/15 text-[#7C5CFC] border border-[#7C5CFC]/30 shadow-md shadow-[#7C5CFC]/10'
+              : 'text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          OnlyFans Options (Welcome, DRM, Countries)
+        </button>
+      </div>
+
       {loading ? (
         <div className="py-20 text-center text-zinc-500 text-sm flex items-center justify-center gap-2 bg-zinc-900/10 border border-zinc-800/60 rounded-2xl">
           <RefreshCw className="h-5 w-5 animate-spin text-blue-500" />
           Decrypting parameters from secure database vault...
         </div>
       ) : (
-        <form onSubmit={handleSaveSettings} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <>
+        {settingsTab === 'agency' && (
+          <form onSubmit={handleSaveSettings} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* Left panel inputs: OF Credentials, proxies */}
           <div className="lg:col-span-8 space-y-6">
@@ -577,7 +664,7 @@ export default function SettingsPage() {
       )}
 
       {/* Webhook Testing Simulator Card */}
-      {!loading && activeCreator && (
+      {!loading && activeCreator && settingsTab === 'agency' && (
         <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-6">
           <div>
             <h3 className="text-sm font-bold text-zinc-200 flex items-center gap-2">
@@ -732,6 +819,113 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
+      )}
+
+        {settingsTab === 'onlyfans' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start text-left">
+          {/* Welcome Message Column */}
+          <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-4 col-span-2">
+            <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
+              <Globe className="h-4 w-4 text-blue-500" />
+              Welcome Message Setup [GET/POST]
+            </h3>
+            {loadingOF ? (
+              <div className="py-6 flex justify-center"><RefreshCw className="h-5 w-5 animate-spin text-blue-500" /></div>
+            ) : (
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-zinc-400">Welcome Message Text</label>
+                  <textarea
+                    rows={5}
+                    value={welcomeMessage}
+                    onChange={(e) => setWelcomeMessage(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-300 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+                {successMsg && <div className="text-emerald-400 text-xs font-bold">{successMsg}</div>}
+                {errorMsg && <div className="text-red-400 text-xs font-bold">{errorMsg}</div>}
+                <button
+                  type="button"
+                  onClick={() => handleSaveOnlyFansSetting('welcome', welcomeMessage)}
+                  className="py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer border-0"
+                >
+                  Update Welcome Message [POST]
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Blocked Countries & DRM Column */}
+          <div className="space-y-6">
+            {/* Blocked Countries */}
+            <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-4">
+              <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
+                <Globe className="h-4 w-4 text-amber-500" />
+                Blocked Countries [GET/POST]
+              </h3>
+              {loadingOF ? (
+                <div className="py-6 flex justify-center"><RefreshCw className="h-5 w-5 animate-spin text-blue-500" /></div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-zinc-400">ISO Country Codes (Comma separated)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. US, CA, GB"
+                      value={blockedCountries}
+                      onChange={(e) => setBlockedCountries(e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-300 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleSaveOnlyFansSetting('blocked-countries', blockedCountries)}
+                    className="w-full py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer border-0"
+                  >
+                    Update Blocked Countries [POST]
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* DRM Protection */}
+            <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-4">
+              <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-800/60 pb-3">
+                <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                DRM Protection [GET/POST]
+              </h3>
+              {loadingOF ? (
+                <div className="py-6 flex justify-center"><RefreshCw className="h-5 w-5 animate-spin text-blue-500" /></div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-zinc-300">Enable DRM Protection</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nextVal = !drmEnabled;
+                        setDrmEnabled(nextVal);
+                        handleSaveOnlyFansSetting('drm', nextVal);
+                      }}
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                        drmEnabled ? 'bg-emerald-500' : 'bg-zinc-800'
+                      }`}
+                    >
+                      <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                        drmEnabled ? 'translate-x-4.5' : 'translate-x-0.5'
+                      }`} />
+                    </button>
+                  </div>
+                  <div className="text-[10px] text-zinc-500 italic">
+                    Restricts browser screenshot capabilities and blocks download extensions on OnlyFans.
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      </>
       )}
     </div>
   );

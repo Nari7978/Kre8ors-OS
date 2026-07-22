@@ -24,6 +24,39 @@ export default function FansCRMPage() {
   const [fans, setFans] = useState<Fan[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Sub-features tab options
+  const [fansTab, setFansTab] = useState<'subscribers' | 'following' | 'collections'>('subscribers');
+  const [followingList, setFollowingList] = useState<any[]>([]);
+  const [collectionsList, setCollectionsList] = useState<any[]>([]);
+  const [loadingSubFeatures, setLoadingSubFeatures] = useState(false);
+
+  const loadSubFeatures = async () => {
+    if (!activeCreator) return;
+    setLoadingSubFeatures(true);
+    try {
+      const route = fansTab === 'following' ? 'following' : 'lists';
+      const res = await fetch(`/api/fans/${route}?creatorId=${activeCreator.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (fansTab === 'following') {
+          setFollowingList(data);
+        } else {
+          setCollectionsList(data);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading sub-features:', err);
+    } finally {
+      setLoadingSubFeatures(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeCreator && (fansTab === 'following' || fansTab === 'collections')) {
+      loadSubFeatures();
+    }
+  }, [activeCreator, fansTab]);
+
   // Filter States
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'expired'>('all');
@@ -442,8 +475,44 @@ export default function FansCRMPage() {
 
   return (
     <div className="flex-1 overflow-y-auto bg-zinc-950 p-6 md:p-8 text-white space-y-8 max-w-7xl mx-auto w-full">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800/60 pb-6">
+      {/* Fans CRM Page Sub-tabs */}
+      <div className="flex gap-4 border-b border-zinc-800 pb-3">
+        <button
+          onClick={() => setFansTab('subscribers')}
+          className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${
+            fansTab === 'subscribers'
+              ? 'bg-[#7C5CFC]/15 text-[#7C5CFC] border border-[#7C5CFC]/30 shadow-md shadow-[#7C5CFC]/10'
+              : 'text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          Subscribers (Fans)
+        </button>
+        <button
+          onClick={() => setFansTab('following')}
+          className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${
+            fansTab === 'following'
+              ? 'bg-[#7C5CFC]/15 text-[#7C5CFC] border border-[#7C5CFC]/30 shadow-md shadow-[#7C5CFC]/10'
+              : 'text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          Following (OnlyFans API)
+        </button>
+        <button
+          onClick={() => setFansTab('collections')}
+          className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${
+            fansTab === 'collections'
+              ? 'bg-[#7C5CFC]/15 text-[#7C5CFC] border border-[#7C5CFC]/30 shadow-md shadow-[#7C5CFC]/10'
+              : 'text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          User Lists & Collections (OnlyFans API)
+        </button>
+      </div>
+
+      {fansTab === 'subscribers' && (
+        <>
+        {/* Page Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800/60 pb-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-zinc-100 flex items-center gap-2.5">
             <Users className="h-7 w-7 text-blue-500" />
@@ -1691,6 +1760,65 @@ export default function FansCRMPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+      </>
+      )}
+
+      {/* Following view */}
+      {fansTab === 'following' && (
+        <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-6 text-left">
+          <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
+            Following List [GET]
+          </h2>
+          {loadingSubFeatures ? (
+            <div className="py-12 flex justify-center"><RefreshCw className="h-6 w-6 animate-spin text-[#7C5CFC]" /></div>
+          ) : followingList.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {followingList.map((creator, idx) => (
+                <div key={idx} className="bg-zinc-950 border border-zinc-850 p-4 rounded-xl flex items-center gap-3">
+                  <img src={creator.avatarUrl} className="h-10 w-10 rounded-full object-cover" alt="avatar" />
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-xs font-bold text-zinc-200 truncate">{creator.displayName}</h4>
+                    <p className="text-[10px] text-zinc-500 truncate">@{creator.username}</p>
+                    <p className="text-[9px] text-[#7C5CFC] font-semibold mt-1">Followed: {new Date(creator.followedAt).toLocaleDateString()}</p>
+                  </div>
+                  <span className="text-[8px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-1.5 py-0.5 rounded font-black uppercase">Active</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-zinc-500 text-xs">Not following any accounts currently.</div>
+          )}
+        </div>
+      )}
+
+      {/* Collections view */}
+      {fansTab === 'collections' && (
+        <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm space-y-6 text-left">
+          <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
+            User Lists & Collections [GET]
+          </h2>
+          {loadingSubFeatures ? (
+            <div className="py-12 flex justify-center"><RefreshCw className="h-6 w-6 animate-spin text-[#7C5CFC]" /></div>
+          ) : collectionsList.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {collectionsList.map((list) => (
+                <div key={list.id} className="bg-zinc-950 border border-zinc-850 p-4 rounded-xl flex flex-col justify-between h-28">
+                  <div>
+                    <h4 className="text-xs font-black text-zinc-250 uppercase tracking-wide">{list.name}</h4>
+                    <p className="text-[9px] text-zinc-500 mt-1">Created: {new Date(list.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <div className="flex justify-between items-center border-t border-zinc-900 pt-2">
+                    <span className="text-[10px] font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">{list.userCount} Users</span>
+                    <span className="text-[8px] text-zinc-600 uppercase tracking-wider font-extrabold">Synced</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-zinc-500 text-xs">No collections lists found.</div>
+          )}
         </div>
       )}
     </div>

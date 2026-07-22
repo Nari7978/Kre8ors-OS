@@ -173,4 +173,152 @@ export class OnlyFansApiClient {
     });
     return response.data;
   }
+
+  // POST /api/{account}/likes
+  async likeMessage(messageId: string) {
+    const response = await axios.post(`${BASE_URL}/${this.accountId}/likes`, {
+      messageId,
+    }, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // DELETE /api/{account}/likes
+  async unlikeMessage(messageId: string) {
+    const response = await axios.delete(`${BASE_URL}/${this.accountId}/likes`, {
+      headers: getHeaders(this.token),
+      data: { messageId }
+    });
+    return response.data;
+  }
+
+  // POST /api/{account}/pins
+  async pinMessage(messageId: string) {
+    const response = await axios.post(`${BASE_URL}/${this.accountId}/pins`, {
+      messageId,
+    }, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // DELETE /api/{account}/pins
+  async unpinMessage(messageId: string) {
+    const response = await axios.delete(`${BASE_URL}/${this.accountId}/pins`, {
+      headers: getHeaders(this.token),
+      data: { messageId }
+    });
+    return response.data;
+  }
+
+  // GET /api/{account}/following
+  async getFollowing() {
+    const response = await axios.get(`${BASE_URL}/${this.accountId}/following`, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // GET /api/{account}/lists
+  async getUserListCollections() {
+    const response = await axios.get(`${BASE_URL}/${this.accountId}/lists`, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // POST /api/{account}/media/upload
+  async uploadMediaToCDN(mediaData: any) {
+    const response = await axios.post(`${BASE_URL}/${this.accountId}/media/upload`, mediaData, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // GET /api/{account}/media/{media_id}
+  async downloadMediaFromCDN(mediaId: string) {
+    const response = await axios.get(`${BASE_URL}/${this.accountId}/media/${mediaId}`, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // GET /api/{account}/media/{upload_id}/status
+  async getUploadStatus(uploadId: string) {
+    const response = await axios.get(`${BASE_URL}/${this.accountId}/media/${uploadId}/status`, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // GET /api/{account}/earnings/stats
+  async getEarningStatistics() {
+    const response = await axios.get(`${BASE_URL}/${this.accountId}/earnings/stats`, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // GET /api/{account}/earnings/chargebacks
+  async getChargebacks() {
+    const response = await axios.get(`${BASE_URL}/${this.accountId}/earnings/chargebacks`, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // GET /api/{account}/settings/welcome
+  async getWelcomeMessage() {
+    const response = await axios.get(`${BASE_URL}/${this.accountId}/settings/welcome`, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // POST /api/{account}/settings/welcome
+  async updateWelcomeMessage(text: string) {
+    const response = await axios.post(`${BASE_URL}/${this.accountId}/settings/welcome`, {
+      text,
+    }, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // GET /api/{account}/settings/blocked-countries
+  async getBlockedCountries() {
+    const response = await axios.get(`${BASE_URL}/${this.accountId}/settings/blocked-countries`, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // POST /api/{account}/settings/blocked-countries
+  async updateBlockedCountries(countries: string[]) {
+    const response = await axios.post(`${BASE_URL}/${this.accountId}/settings/blocked-countries`, {
+      countries,
+    }, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // GET /api/{account}/settings/drm
+  async getDRMStatus() {
+    const response = await axios.get(`${BASE_URL}/${this.accountId}/settings/drm`, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
+
+  // POST /api/{account}/settings/drm
+  async updateDRMStatus(enabled: boolean) {
+    const response = await axios.post(`${BASE_URL}/${this.accountId}/settings/drm`, {
+      enabled,
+    }, {
+      headers: getHeaders(this.token),
+    });
+    return response.data;
+  }
 }
