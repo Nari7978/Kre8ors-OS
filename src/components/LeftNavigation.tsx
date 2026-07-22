@@ -43,6 +43,7 @@ interface NavItem {
   name: string;
   icon: any;
   path: string;
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   badge?: number;
 }
 
@@ -51,75 +52,73 @@ interface NavSection {
   items: NavItem[];
 }
 
-// Define section menus for each top-level icon
+// Define section menus for each top-level icon matching OnlyFans API endpoints list
 const sectionMenus: Record<string, { title: string; sections: NavSection[] }> = {
   messages: {
-    title: 'Messages',
+    title: 'OnlyFans API',
     sections: [
       {
-        title: 'Chats',
+        title: 'Accounts',
         items: [
-          { name: 'List Chats', icon: MessageSquare, path: '/messages' },
-          { name: 'Chat Requests', icon: Mail, path: '/messages', badge: 12 },
-          { name: 'Pending Messages', icon: Clock, path: '/messages', badge: 8 },
-          { name: 'Archived Chats', icon: Archive, path: '/messages' },
-          { name: 'Hidden Chats', icon: EyeOff, path: '/messages' },
-          { name: 'Muted Chats', icon: VolumeX, path: '/messages' },
-          { name: 'Favorites', icon: Heart, path: '/messages' },
-          { name: 'Unread Chats', icon: BellOff, path: '/messages' },
-          { name: 'Pinned Chats', icon: Pin, path: '/messages' },
-          { name: 'Deleted Chats', icon: Trash2, path: '/messages' },
+          { name: 'Connect OnlyFans Account', icon: User, path: '/creators/onboard', method: 'POST' },
+          { name: 'Account', icon: User, path: '/creators' },
         ]
       },
       {
         title: 'Messages',
         items: [
-          { name: 'List Messages', icon: MessageCircle, path: '/messages' },
-          { name: 'Search Messages', icon: Search, path: '/messages' },
-          { name: 'Scheduled Messages', icon: CalendarClock, path: '/messages' },
-          { name: 'Saved For Later', icon: Bookmark, path: '/messages' },
+          { name: 'Chats', icon: MessageSquare, path: '/messages', method: 'GET' },
+          { name: 'Chat Messages', icon: MessageSquare, path: '/messages', method: 'GET' },
+          { name: 'Mass Messaging', icon: Send, path: '/automations', method: 'POST' },
+          { name: 'Saved For Later', icon: Bookmark, path: '/messages', method: 'GET' },
         ]
       },
       {
         title: 'Automation',
         items: [
           { name: 'Auto Reply', icon: Bot, path: '/automations' },
-          { name: 'Mass Messaging', icon: Send, path: '/automations' },
-          { name: 'Campaigns', icon: Target, path: '/automations' },
-          { name: 'Drip Sequences', icon: Workflow, path: '/automations' },
         ]
       }
     ]
   },
   content: {
-    title: 'Content',
+    title: 'Content & Posts',
     sections: [
       {
         title: 'Posts',
         items: [
-          { name: 'List Posts', icon: FileText, path: '/content' },
-          { name: 'Create Post', icon: FileText, path: '/content' },
-          { name: 'Queue Items', icon: CalendarClock, path: '/content' },
-          { name: 'Archived Posts', icon: Archive, path: '/content' },
+          { name: 'Posts', icon: FileText, path: '/content', method: 'GET' },
+          { name: 'Post Labels', icon: FileText, path: '/content', method: 'GET' },
+          { name: 'Post Comments', icon: FileText, path: '/content', method: 'POST' },
+        ]
+      },
+      {
+        title: 'Queue',
+        items: [
+          { name: 'Count Queue Items', icon: Clock, path: '/content', method: 'GET' },
+          { name: 'List Queue Items', icon: Clock, path: '/content', method: 'GET' },
+          { name: 'Publish Queue Item', icon: Clock, path: '/content', method: 'PUT' },
         ]
       },
       {
         title: 'Stories',
         items: [
-          { name: 'Active Stories', icon: Sparkles, path: '/stories' },
-          { name: 'Story Archive', icon: Archive, path: '/stories' },
+          { name: 'Stories', icon: Sparkles, path: '/stories', method: 'GET' },
+          { name: 'Story Highlights', icon: Sparkles, path: '/stories', method: 'GET' },
         ]
       }
     ]
   },
   vault: {
-    title: 'Media Vault',
+    title: 'Media & Vault',
     sections: [
       {
-        title: 'Vault',
+        title: 'Media',
         items: [
-          { name: 'Browse Vault', icon: Compass, path: '/vault' },
-          { name: 'Upload Media', icon: Compass, path: '/vault' },
+          { name: 'Media Vault', icon: Compass, path: '/vault', method: 'GET' },
+          { name: 'Media Vault Lists', icon: Compass, path: '/vault', method: 'GET' },
+          { name: 'Upload media to CDN', icon: Compass, path: '/vault', method: 'POST' },
+          { name: 'Download Media from CDN', icon: Compass, path: '/vault', method: 'GET' },
         ]
       }
     ]
@@ -128,10 +127,11 @@ const sectionMenus: Record<string, { title: string; sections: NavSection[] }> = 
     title: 'Fans & CRM',
     sections: [
       {
-        title: 'Subscribers',
+        title: 'Fans',
         items: [
-          { name: 'All Fans', icon: Users, path: '/fans' },
-          { name: 'VIP Fans', icon: Heart, path: '/fans' },
+          { name: 'Fans', icon: Users, path: '/fans', method: 'GET' },
+          { name: 'Following', icon: Users, path: '/fans', method: 'GET' },
+          { name: 'User List Collections', icon: Users, path: '/fans', method: 'GET' },
         ]
       }
     ]
@@ -142,32 +142,36 @@ const sectionMenus: Record<string, { title: string; sections: NavSection[] }> = 
       {
         title: 'Performance',
         items: [
-          { name: 'Revenue', icon: BarChart3, path: '/analytics' },
-          { name: 'Conversions', icon: Target, path: '/analytics' },
+          { name: 'Engagement / Messages', icon: Sparkles, path: '/analytics' },
+          { name: 'Earning Statistics', icon: BarChart3, path: '/analytics', method: 'GET' },
         ]
       }
     ]
   },
   earnings: {
-    title: 'Earnings',
+    title: 'Payouts & Earnings',
     sections: [
       {
-        title: 'Banking',
+        title: 'Banking & Payouts',
         items: [
-          { name: 'Transactions', icon: BarChart3, path: '/earnings' },
-          { name: 'Payouts', icon: BarChart3, path: '/earnings' },
+          { name: 'Transactions', icon: BarChart3, path: '/earnings', method: 'GET' },
+          { name: 'Payouts', icon: BarChart3, path: '/earnings', method: 'GET' },
+          { name: 'Chargebacks', icon: BarChart3, path: '/earnings', method: 'GET' },
+          { name: 'Banking', icon: BarChart3, path: '/earnings', method: 'GET' },
         ]
       }
     ]
   },
   settings: {
-    title: 'Settings',
+    title: 'OnlyFans Settings',
     sections: [
       {
-        title: 'General',
+        title: 'Settings',
         items: [
-          { name: 'Profile Settings', icon: Settings, path: '/settings' },
-          { name: 'API Keys', icon: Settings, path: '/settings' },
+          { name: 'Get Settings', icon: Settings, path: '/settings', method: 'GET' },
+          { name: 'Update Settings', icon: Settings, path: '/settings', method: 'POST' },
+          { name: 'Get Welcome Message', icon: Settings, path: '/settings', method: 'GET' },
+          { name: 'Get DRM Status', icon: Settings, path: '/settings', method: 'GET' },
         ]
       }
     ]
@@ -363,17 +367,29 @@ export default function LeftNavigation() {
                       displayBadge = activeCreatorFans.filter((_, idx) => idx % 2 === 1).length;
                     }
                     return (
-                      <Link key={item.name} href={item.path} passHref>
+                       <Link key={item.name} href={item.path} passHref>
                         <span
                           onClick={() => setActiveSubMenu(item.name)}
-                          className={`flex items-center gap-2 px-2.5 py-[7px] rounded-[7px] text-[12px] font-medium cursor-pointer transition-all ${
+                          className={`flex items-center gap-2 px-2 py-[6.5px] rounded-[7px] text-[11px] font-medium cursor-pointer transition-all ${
                             isActive
                               ? 'bg-[#7C5CFC] text-white font-semibold'
                               : 'text-[#94A3B8] hover:bg-[#14171E] hover:text-white'
                           }`}
                         >
-                          <Icon className="h-3.5 w-3.5 flex-shrink-0 opacity-70" />
+                          <Icon className="h-3.5 w-3.5 flex-shrink-0 opacity-60" />
                           <span className="truncate flex-1">{item.name}</span>
+                          
+                          {item.method && (
+                            <span className={`text-[7px] font-extrabold px-1 py-0.5 rounded-md flex-shrink-0 font-mono tracking-wider border ${
+                              item.method === 'GET' ? 'bg-[#16C784]/10 text-[#16C784] border-[#16C784]/20' :
+                              item.method === 'POST' ? 'bg-[#7C5CFC]/10 text-[#7C5CFC] border-[#7C5CFC]/20' :
+                              item.method === 'PUT' ? 'bg-[#FFC857]/10 text-[#FFC857] border-[#FFC857]/20' :
+                              'bg-[#FF5B5B]/10 text-[#FF5B5B] border-[#FF5B5B]/20'
+                            }`}>
+                              {item.method}
+                            </span>
+                          )}
+
                           {displayBadge !== undefined && displayBadge > 0 && (
                             <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
                               isActive
